@@ -1,6 +1,9 @@
 [gd_scene format=3 uid="uid://dp8kiers0ypek"]
 
 [ext_resource type="PackedScene" uid="uid://cx2278ifr1e0u" path="res://scenes/player/player.tscn" id="1_hyk8p"]
+[ext_resource type="PackedScene" uid="uid://b3ds1eskeev02" path="res://scenes/furniture/bar_counter.tscn" id="2_iuonh"]
+[ext_resource type="PackedScene" uid="uid://wfl8kjme2q47" path="res://scenes/furniture/table.tscn" id="3_k2fmo"]
+[ext_resource type="PackedScene" uid="uid://dnd6om8dg26fm" path="res://scenes/furniture/drinks_station.tscn" id="3_l3cfh"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3cfvr"]
 size = Vector2(1280, 40)
@@ -16,13 +19,10 @@ size = Vector2(40, 720)
 
 [node name="Node2D" type="Node2D" unique_id=846792139]
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=2133638235]
+[node name="floor" type="ColorRect" parent="." unique_id=2133638235]
 offset_right = 1280.0
 offset_bottom = 721.0
 color = Color(0.29887214, 0.1140675, 0.046463996, 1)
-
-[node name="Player" parent="." unique_id=1068675683 instance=ExtResource("1_hyk8p")]
-position = Vector2(1178, 337)
 
 [node name="WallTop" type="StaticBody2D" parent="." unique_id=123444724]
 
@@ -47,3 +47,21 @@ shape = SubResource("RectangleShape2D_iuonh")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="WallRight" unique_id=799588042]
 position = Vector2(1260, 360)
 shape = SubResource("RectangleShape2D_mel2l")
+
+[node name="BarCounter" parent="." unique_id=2047538336 instance=ExtResource("2_iuonh")]
+position = Vector2(130, 176)
+
+[node name="table" parent="." unique_id=1719880889 instance=ExtResource("3_k2fmo")]
+position = Vector2(470, 311)
+
+[node name="drinks_station" parent="." unique_id=1053921962 instance=ExtResource("3_l3cfh")]
+position = Vector2(246, 178)
+
+[node name="CustomerSpawnPoint" type="Marker2D" parent="." unique_id=77911572]
+position = Vector2(162, 655)
+
+[node name="CustomerTablePoint" type="Marker2D" parent="." unique_id=347858687]
+position = Vector2(418, 308)
+
+[node name="Player" parent="." unique_id=1068675683 instance=ExtResource("1_hyk8p")]
+position = Vector2(472, 404)
