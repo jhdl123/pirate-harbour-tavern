@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://bm4q7xjhroucl" path="res://assets/art/characters/32x32_customer.png" id="1_6mdqo"]
 [ext_resource type="Script" uid="uid://cjx3p8pojfaym" path="res://scenes/customers/customer.gd" id="1_yp1b7"]
+[ext_resource type="Texture2D" uid="uid://cp6r43esf7s1e" path="res://assets/art/items/16x16_grog.png" id="3_7napt"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]
 size = Vector2(32, 32)
@@ -14,3 +15,13 @@ texture = ExtResource("1_6mdqo")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1049480934]
 shape = SubResource("RectangleShape2D_mel2l")
+
+[node name="OrderIcon" type="Sprite2D" parent="." unique_id=1312589237]
+visible = false
+position = Vector2(0, -26)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("3_7napt")
+
+[node name="OrderTimer" type="Timer" parent="." unique_id=1594801418]
+wait_time = 2.0
+one_shot = true
