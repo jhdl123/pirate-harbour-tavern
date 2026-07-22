@@ -1,14 +1,24 @@
 [gd_scene format=3 uid="uid://dnd6om8dg26fm"]
 
 [ext_resource type="Texture2D" uid="uid://v53xyiijymwl" path="res://assets/art/furniture/32x32_drinks_station.png" id="1_h03td"]
+[ext_resource type="Script" uid="uid://cwxwst5xv1vu4" path="res://scenes/furniture/drinks_station.gd" id="1_lpag8"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_mel2l"]
 radius = 16.0
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]
+size = Vector2(48, 48)
+
 [node name="drinks_station" type="StaticBody2D" unique_id=1053921962]
+script = ExtResource("1_lpag8")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1803792753]
 texture = ExtResource("1_h03td")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=860533166]
 shape = SubResource("CircleShape2D_mel2l")
+
+[node name="InteractionArea" type="Area2D" parent="." unique_id=258262445 groups=["interactable"]]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=422318540]
+shape = SubResource("RectangleShape2D_mel2l")
