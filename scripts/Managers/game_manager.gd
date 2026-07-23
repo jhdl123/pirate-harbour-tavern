@@ -9,19 +9,21 @@ extends Node
 @export var tables: Array[Table]
 @export var navigation_region: NavigationRegionManager
 
-@export_category("Seat Selection")
-@export var occupied_seat_penalty: float = 1000.0
-@export var travel_distance_weight: float = 1.0
+@export_category("Configuration")
+@export var game_config: GameConfig
+
 
 signal money_changed(new_amount: int)
+
 
 var money: int = 0
 var customer_number: int = 0
 
 
-func _ready() -> void:
-	var spawn_timer: Timer = $CustomerSpawnTimer
+@onready var spawn_timer: Timer = $CustomerSpawnTimer
 
+
+func _ready() -> void:
 	spawn_timer.stop()
 
 	if !spawn_timer.timeout.is_connected(
@@ -31,17 +33,14 @@ func _ready() -> void:
 			_on_customer_spawn_timer_timeout
 		)
 
-	if navigation_region == null:
-		push_error(
-			"GameManager has no NavigationRegionManager assigned."
-		)
+	if !validate_game_references():
 		return
 
 	if !navigation_region.is_navigation_ready:
 		await navigation_region.navigation_ready
 
 	spawn_customer()
-	spawn_timer.start()
+	schedule_next_customer()
 
 
 func spawn_customer() -> void:
@@ -64,6 +63,11 @@ func spawn_customer() -> void:
 
 	entities.add_child(customer)
 	customer.global_position = customer_spawn_point.global_position
+
+	# This allows the customer to read values such as:
+	# movement speed, order delay, patience and payment.
+	if customer.has_method("configure"):
+		customer.configure(game_config)
 
 	var assigned_table: Table = assigned_chair.get_table()
 
@@ -113,22 +117,61 @@ func spawn_customer() -> void:
 		_on_customer_abandoned_seat
 	)
 
-	print(
-		customer.name,
-		" spawned at ",
-		customer.global_position,
-		" and assigned to ",
-		assigned_table.name,
-		"/",
-		assigned_chair.name,
-		". Table occupancy: ",
-		assigned_table.get_occupied_seat_count(),
-		"/",
-		assigned_table.get_chairs().size()
+	if game_config.show_debug_messages:
+		print(
+			customer.name,
+			" spawned at ",
+			customer.global_position,
+			" and assigned to ",
+			assigned_table.name,
+			"/",
+			assigned_chair.name,
+			". Table occupancy: ",
+			assigned_table.get_occupied_seat_count(),
+			"/",
+			assigned_table.get_chairs().size()
+		)
+
+
+func schedule_next_customer() -> void:
+	var next_spawn_delay: float = randf_range(
+		game_config.minimum_spawn_delay,
+		game_config.maximum_spawn_delay
 	)
+
+	spawn_timer.start(next_spawn_delay)
+
+	if game_config.show_debug_messages:
+		print(
+			"Next customer spawn attempt in ",
+			snappedf(next_spawn_delay, 0.1),
+			" seconds."
+		)
+
+
+func validate_game_references() -> bool:
+	if game_config == null:
+		push_error(
+			"GameManager has no GameConfig resource assigned."
+		)
+		return false
+
+	if navigation_region == null:
+		push_error(
+			"GameManager has no NavigationRegionManager assigned."
+		)
+		return false
+
+	return true
 
 
 func validate_spawn_references() -> bool:
+	if game_config == null:
+		push_error(
+			"GameManager has no GameConfig resource assigned."
+		)
+		return false
+
 	if customer_scene == null:
 		push_error(
 			"GameManager has no customer scene assigned."
@@ -205,12 +248,12 @@ func calculate_chair_score(
 
 	score += (
 		float(table_occupied_count)
-		* occupied_seat_penalty
+		* game_config.occupied_seat_penalty
 	)
 
 	score += (
 		travel_distance
-		* travel_distance_weight
+		* game_config.travel_distance_weight
 	)
 
 	return score
@@ -229,6 +272,7 @@ func find_customer_table(customer: Node) -> Table:
 
 func _on_customer_spawn_timer_timeout() -> void:
 	spawn_customer()
+	schedule_next_customer()
 
 
 func _on_customer_paid(amount: int) -> void:
@@ -262,4 +306,5 @@ func add_money(amount: int) -> void:
 	money += amount
 	money_changed.emit(money)
 
-	print("Money: £", money)
+	if game_config.show_debug_messages:
+		print("Money: £", money)

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="GameConfig" format=3 uid="uid://8h83yo3jwte"]
+
+[ext_resource type="Script" uid="uid://e4bv17wlfrcs" path="res://scripts/Managers/game_config.gd" id="1_4xlun"]
+
+[resource]
+script = ExtResource("1_4xlun")
+maximum_active_customers = 3
+patience_duration = 10.0
+metadata/_custom_type_script = "uid://e4bv17wlfrcs"

@@ -15,6 +15,7 @@
 [ext_resource type="Texture2D" uid="uid://btg55bec8ia17" path="res://assets/art/environment/wall_window.png" id="7_nvumn"]
 [ext_resource type="Script" uid="uid://cduu6wuftbtkl" path="res://scripts/UI/hud.gd" id="7_yyfjg"]
 [ext_resource type="Script" uid="uid://b5wcssexr0e0" path="res://scripts/Debug/navigation_debugger.gd" id="9_b1x3f"]
+[ext_resource type="Resource" uid="uid://8h83yo3jwte" path="res://resources/config/default_game_config.tres" id="15_hxu8e"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_mel2l"]
 vertices = PackedVector2Array(649, 344, 649, 253, 1219, 63.023438, 1219, 661.96875, 65.02344, 64.96875, 226, 120, 65.96875, 660.02344, 550, 344, 449, 344, 350, 344, 65.28906, 232, 226, 232, 350, 253, 226, 207.88281, 236, 210.5625, 252.28125, 206.21094, 264.21094, 194.28125, 236, 145.4375, 226, 148.10938, 550, 253, 449, 253, 65.109375, 120, 264.21094, 161.71875, 268.5625, 178, 252.28125, 149.78906)
@@ -167,6 +168,7 @@ customer_spawn_point = NodePath("../../Markers/CustomerSpawnPoint")
 customer_exit_point = NodePath("../../Markers/CustomerExitPoint")
 tables = [NodePath("../../Environment/table1"), null, null]
 navigation_region = NodePath("../../NavigationRegion2D")
+game_config = ExtResource("15_hxu8e")
 
 [node name="CustomerSpawnTimer" type="Timer" parent="Managers/GameManager" unique_id=1946290656]
 wait_time = 2.0

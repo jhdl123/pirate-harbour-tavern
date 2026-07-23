@@ -44,6 +44,7 @@ enum State {
 @onready var order_icon: Sprite2D = $OrderIcon
 @onready var order_timer: Timer = $OrderTimer
 @onready var drink_timer: Timer = $DrinkTimer
+@onready var patience_timer: Timer = $PatienceTimer
 
 var current_state: State = State.WALKING_TO_STAGING
 var reserved_chair: Chair
@@ -60,6 +61,22 @@ var stuck_check_position: Vector2
 var consecutive_stuck_checks: int = 0
 var path_refresh_count: int = 0
 
+var game_config: GameConfig
+
+func configure(config: GameConfig) -> void:
+	if config == null:
+		push_error(name + " received an empty GameConfig.")
+		return
+
+	game_config = config
+
+	movement_speed = game_config.movement_speed
+	seat_movement_speed = game_config.seat_movement_speed
+	payment_amount = game_config.drink_payment_amount
+
+	order_timer.wait_time = game_config.order_delay
+	drink_timer.wait_time = game_config.drink_duration
+	patience_timer.wait_time = game_config.patience_duration
 
 func _ready() -> void:
 	add_to_group("navigation_customers")
@@ -79,7 +96,13 @@ func _ready() -> void:
 		drink_timer.timeout.connect(
 			_on_drink_timer_timeout
 		)
-
+		
+	if !patience_timer.timeout.is_connected(
+		_on_patience_timer_timeout
+	):
+		patience_timer.timeout.connect(
+			_on_patience_timer_timeout
+		)
 	if !navigation_agent.velocity_computed.is_connected(
 		_on_navigation_agent_velocity_computed
 	):
@@ -486,20 +509,32 @@ func _on_order_timer_timeout() -> void:
 	current_state = State.ORDERING
 	order_icon.visible = true
 
-	print(name, " ordered grog")
+	patience_timer.start()
+
+	if should_show_debug_messages():
+		print(
+			name,
+			" ordered grog. Patience: ",
+			patience_timer.wait_time,
+			" seconds."
+		)
 
 
 func interact(player: Node) -> void:
 	if current_state != State.ORDERING:
-		print(
-			name,
-			" is not ready to be served."
-		)
+		if should_show_debug_messages():
+			print(
+				name,
+				" is not ready to be served."
+			)
 		return
 
 	if player.carrying_item != ItemType.Type.GROG:
-		print(name, " wants grog.")
+		if should_show_debug_messages():
+			print(name, " wants grog.")
 		return
+
+	patience_timer.stop()
 
 	player.set_carried_item(
 		ItemType.Type.NONE
@@ -512,7 +547,9 @@ func interact(player: Node) -> void:
 	current_state = State.DRINKING
 	drink_timer.start()
 
-	print(name, " was served.")
+	if should_show_debug_messages():
+		print(name, " was served.")
+
 
 func _on_drink_timer_timeout() -> void:
 	print(name, " finished drinking.")
@@ -528,9 +565,41 @@ func _on_drink_timer_timeout() -> void:
 	path_refresh_count = 0
 
 	prepare_navigation_target(exit_position)
+
+
+func _on_patience_timer_timeout() -> void:
+	if current_state != State.ORDERING:
+		return
+
+	order_icon.visible = false
+
+	if should_show_debug_messages():
+		print(
+			name,
+			" ran out of patience and is leaving."
+		)
+
+	release_reserved_chair()
+	customer_abandoned_seat.emit(self)
+
+	current_state = State.LEAVING
+	path_refresh_count = 0
+
+	prepare_navigation_target(exit_position)
+
+
+func should_show_debug_messages() -> bool:
+	if game_config == null:
+		return true
+
+	return game_config.show_debug_messages
 	
 func finish_customer() -> void:
 	stop_movement()
+
+	order_timer.stop()
+	drink_timer.stop()
+	patience_timer.stop()
 
 	navigation_agent.avoidance_enabled = false
 
