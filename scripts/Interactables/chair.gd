@@ -5,8 +5,8 @@ extends Node2D
 enum SeatState {
 	AVAILABLE,
 	RESERVED,
-	DRINK_FULL,
-	DIRTY
+	IN_USE,
+	NEEDS_CLEANING
 }
 
 
@@ -69,7 +69,7 @@ func assign_customer(new_customer: Node) -> bool:
 	return true
 
 
-func show_full_drink() -> void:
+func begin_use() -> void:
 	if current_state != SeatState.RESERVED:
 		push_warning(
 			name
@@ -78,7 +78,7 @@ func show_full_drink() -> void:
 		)
 		return
 
-	current_state = SeatState.DRINK_FULL
+	current_state = SeatState.IN_USE
 
 	_update_drink_visual()
 	_set_cleaning_interaction_enabled(false)
@@ -91,8 +91,8 @@ func show_full_drink() -> void:
 	)
 
 
-func show_empty_drink() -> void:
-	if current_state != SeatState.DRINK_FULL:
+func require_cleaning() -> void:
+	if current_state != SeatState.IN_USE:
 		push_warning(
 			name
 			+ " cannot show an empty drink from state "
@@ -101,7 +101,7 @@ func show_empty_drink() -> void:
 		return
 
 	customer = null
-	current_state = SeatState.DIRTY
+	current_state = SeatState.NEEDS_CLEANING
 
 	set_occupied_zone_enabled(false)
 	_update_drink_visual()
@@ -116,7 +116,7 @@ func show_empty_drink() -> void:
 
 
 func clean() -> void:
-	if current_state != SeatState.DIRTY:
+	if current_state != SeatState.NEEDS_CLEANING:
 		return
 
 	current_state = SeatState.AVAILABLE
@@ -133,7 +133,7 @@ func clean() -> void:
 
 
 func interact(_player: Node) -> void:
-	if current_state != SeatState.DIRTY:
+	if current_state != SeatState.NEEDS_CLEANING:
 		return
 
 	clean()
@@ -243,10 +243,10 @@ func _update_drink_visual() -> void:
 		SeatState.RESERVED:
 			drink_sprite.visible = false
 
-		SeatState.DRINK_FULL:
+		SeatState.IN_USE:
 			drink_sprite.texture = full_drink_texture
 			drink_sprite.visible = true
 
-		SeatState.DIRTY:
+		SeatState.NEEDS_CLEANING:
 			drink_sprite.texture = empty_drink_texture
 			drink_sprite.visible = true

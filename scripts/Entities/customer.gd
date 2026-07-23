@@ -506,7 +506,7 @@ func interact(player: Node) -> void:
 	)
 
 	if reserved_chair != null:
-		reserved_chair.show_full_drink()
+		reserved_chair.begin_use()
 
 	order_icon.visible = false
 	current_state = State.DRINKING
@@ -521,7 +521,7 @@ func _on_drink_timer_timeout() -> void:
 	customer_paid.emit(payment_amount)
 
 	if reserved_chair != null:
-		reserved_chair.show_empty_drink()
+		reserved_chair.require_cleaning()
 		reserved_chair = null
 
 	current_state = State.LEAVING
