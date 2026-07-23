@@ -3,7 +3,7 @@ extends Node
 @export var customer_scene: PackedScene
 @export var entities: Node2D
 @export var customer_spawn_point: Marker2D
-@export var customer_table_point: Marker2D
+@export var table: StaticBody2D
 @export var customer_exit_point: Marker2D
 
 signal money_changed(new_amount: int)
@@ -24,8 +24,12 @@ func spawn_customer() -> void:
 	entities.add_child(customer)
 
 	customer.global_position = customer_spawn_point.global_position
-	customer.set_table_target(customer_table_point.global_position)
 	customer.set_exit_target(customer_exit_point.global_position)
+
+	table.assign_customer(customer)
+	customer.set_table_target(
+		table.get_seat_position()
+	)
 
 	customer.customer_paid.connect(_on_customer_paid)
 	customer.customer_finished.connect(_on_customer_finished)
@@ -36,6 +40,7 @@ func _on_customer_paid(amount: int) -> void:
 
 
 func _on_customer_finished(_customer: Node) -> void:
+	table.clear_customer()
 	spawn_customer()
 
 func add_money(amount: int) -> void:

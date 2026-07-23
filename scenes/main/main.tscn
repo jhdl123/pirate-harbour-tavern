@@ -55,12 +55,13 @@ shape = SubResource("RectangleShape2D_mel2l")
 
 [node name="BarCounter" parent="Environment" unique_id=2047538336 instance=ExtResource("2_iuonh")]
 position = Vector2(130, 176)
+scale = Vector2(1, 2.5)
 
 [node name="table" parent="Environment" unique_id=1719880889 instance=ExtResource("3_k2fmo")]
 position = Vector2(470, 311)
 
 [node name="drinks_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
-position = Vector2(246, 178)
+position = Vector2(236, 178)
 
 [node name="Markers" type="Node2D" parent="." unique_id=1069500628]
 
@@ -78,12 +79,12 @@ position = Vector2(165, 655)
 [node name="Player" parent="Entities" unique_id=1068675683 instance=ExtResource("1_hyk8p")]
 position = Vector2(472, 404)
 
-[node name="GameManager" type="Node" parent="." unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_spawn_point", "customer_table_point", "customer_exit_point")]
+[node name="GameManager" type="Node" parent="." unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_spawn_point", "table", "customer_exit_point")]
 script = ExtResource("7_hujxm")
 customer_scene = ExtResource("2_ow5a4")
 entities = NodePath("../Entities")
 customer_spawn_point = NodePath("../Markers/CustomerSpawnPoint")
-customer_table_point = NodePath("../Markers/CustomerTablePoint")
+table = NodePath("../Environment/table")
 customer_exit_point = NodePath("../Markers/CustomerExitPoint")
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1290313818 node_paths=PackedStringArray("game_manager")]
