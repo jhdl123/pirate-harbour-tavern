@@ -7,6 +7,9 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]
 size = Vector2(32, 32)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lxoxb"]
+size = Vector2(40, 40)
+
 [node name="Customer" type="CharacterBody2D" unique_id=1185840188]
 script = ExtResource("1_yp1b7")
 
@@ -25,3 +28,12 @@ texture = ExtResource("3_7napt")
 [node name="OrderTimer" type="Timer" parent="." unique_id=1594801418]
 wait_time = 2.0
 one_shot = true
+
+[node name="DrinkTimer" type="Timer" parent="." unique_id=247956769]
+wait_time = 3.0
+one_shot = true
+
+[node name="InteractionArea" type="Area2D" parent="." unique_id=1799397582 groups=["interactable"]]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=68656273]
+shape = SubResource("RectangleShape2D_lxoxb")
