@@ -1,12 +1,23 @@
 [gd_scene format=3 uid="uid://dp8kiers0ypek"]
 
 [ext_resource type="PackedScene" uid="uid://cx2278ifr1e0u" path="res://scenes/player/player.tscn" id="1_hyk8p"]
+[ext_resource type="Script" uid="uid://bh1fgbg33b33p" path="res://scenes/main/navigation_region_2d.gd" id="1_yyfjg"]
 [ext_resource type="PackedScene" uid="uid://b3ds1eskeev02" path="res://scenes/furniture/bar_counter.tscn" id="2_iuonh"]
 [ext_resource type="PackedScene" uid="uid://dmaa2lbdhwsr8" path="res://scenes/customers/customer.tscn" id="2_ow5a4"]
 [ext_resource type="PackedScene" uid="uid://wfl8kjme2q47" path="res://scenes/furniture/table.tscn" id="3_k2fmo"]
 [ext_resource type="PackedScene" uid="uid://dnd6om8dg26fm" path="res://scenes/furniture/drinks_station.tscn" id="3_l3cfh"]
 [ext_resource type="Script" uid="uid://bowoxvrqsdjw6" path="res://scripts/Managers/game_manager.gd" id="7_hujxm"]
 [ext_resource type="Script" uid="uid://cduu6wuftbtkl" path="res://scripts/UI/hud.gd" id="7_yyfjg"]
+[ext_resource type="Script" uid="uid://b5wcssexr0e0" path="res://scripts/Debug/navigation_debugger.gd" id="9_b1x3f"]
+
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_mel2l"]
+vertices = PackedVector2Array(649, 344, 649, 253, 1219, 63.023438, 1219, 661.96875, 65.02344, 64.96875, 226, 120, 65.96875, 660.02344, 550, 344, 449, 344, 350, 344, 65.28906, 232, 226, 232, 350, 253, 226, 207.88281, 236, 210.5625, 252.28125, 206.21094, 264.21094, 194.28125, 236, 145.4375, 226, 148.10938, 550, 253, 449, 253, 65.109375, 120, 264.21094, 161.71875, 268.5625, 178, 252.28125, 149.78906)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3), PackedInt32Array(4, 2, 1, 5), PackedInt32Array(0, 3, 6, 7), PackedInt32Array(8, 7, 6), PackedInt32Array(9, 8, 6), PackedInt32Array(9, 6, 10, 11, 12), PackedInt32Array(11, 13, 14, 12), PackedInt32Array(12, 14, 15), PackedInt32Array(12, 15, 16), PackedInt32Array(17, 18, 5), PackedInt32Array(19, 7, 8, 20), PackedInt32Array(5, 21, 4), PackedInt32Array(5, 1, 19), PackedInt32Array(5, 19, 20), PackedInt32Array(5, 20, 12, 22), PackedInt32Array(12, 16, 23), PackedInt32Array(24, 17, 5), PackedInt32Array(12, 23, 22), PackedInt32Array(5, 22, 24)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(49, 49, 1235, 47, 1235, 678, 50, 676)])
+parsed_geometry_type = 1
+source_geometry_mode = 1
+source_geometry_group_name = &"navigation_geometry"
+agent_radius = 16.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3cfvr"]
 size = Vector2(1280, 40)
@@ -22,34 +33,40 @@ size = Vector2(40, 720)
 
 [node name="Main" type="Node2D" unique_id=846792139]
 
-[node name="Environment" type="Node2D" parent="." unique_id=1377672581]
+[node name="NavigationRegion2D" type="NavigationRegion2D" parent="." unique_id=2107287380]
+navigation_polygon = SubResource("NavigationPolygon_mel2l")
+script = ExtResource("1_yyfjg")
 
-[node name="floor" type="ColorRect" parent="Environment" unique_id=2133638235]
+[node name="Environment" type="Node2D" parent="." unique_id=1377672581 groups=["navigation_geometry"]]
+
+[node name="Room" type="Node2D" parent="Environment" unique_id=1135732471]
+
+[node name="floor" type="ColorRect" parent="Environment/Room" unique_id=2133638235]
 offset_right = 1280.0
 offset_bottom = 721.0
 color = Color(0.29887214, 0.1140675, 0.046463996, 1)
 
-[node name="WallTop" type="StaticBody2D" parent="Environment" unique_id=123444724]
+[node name="WallTop" type="StaticBody2D" parent="Environment/Room" unique_id=123444724]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/WallTop" unique_id=1914859328]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Room/WallTop" unique_id=1914859328]
 position = Vector2(640, 20)
 shape = SubResource("RectangleShape2D_3cfvr")
 
-[node name="WallBottom" type="StaticBody2D" parent="Environment" unique_id=620485724]
+[node name="WallBottom" type="StaticBody2D" parent="Environment/Room" unique_id=620485724]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/WallBottom" unique_id=1536411076]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Room/WallBottom" unique_id=1536411076]
 position = Vector2(640, 700)
 shape = SubResource("RectangleShape2D_hyk8p")
 
-[node name="WallLeft" type="StaticBody2D" parent="Environment" unique_id=261157790]
+[node name="WallLeft" type="StaticBody2D" parent="Environment/Room" unique_id=261157790]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/WallLeft" unique_id=899140086]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Room/WallLeft" unique_id=899140086]
 position = Vector2(20, 360)
 shape = SubResource("RectangleShape2D_iuonh")
 
-[node name="WallRight" type="StaticBody2D" parent="Environment" unique_id=878371548]
+[node name="WallRight" type="StaticBody2D" parent="Environment/Room" unique_id=878371548]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/WallRight" unique_id=799588042]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Room/WallRight" unique_id=799588042]
 position = Vector2(1260, 360)
 shape = SubResource("RectangleShape2D_mel2l")
 
@@ -57,11 +74,16 @@ shape = SubResource("RectangleShape2D_mel2l")
 position = Vector2(130, 176)
 scale = Vector2(1, 2.5)
 
-[node name="table" parent="Environment" unique_id=1719880889 instance=ExtResource("3_k2fmo")]
-position = Vector2(470, 311)
+[node name="table1" parent="Environment" unique_id=1719880889 instance=ExtResource("3_k2fmo")]
+position = Vector2(400, 300)
 
 [node name="drinks_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
 position = Vector2(236, 178)
+
+[node name="Entities" type="Node2D" parent="." unique_id=1694710147]
+
+[node name="Player" parent="Entities" unique_id=1068675683 instance=ExtResource("1_hyk8p")]
+position = Vector2(142, 98)
 
 [node name="Markers" type="Node2D" parent="." unique_id=1069500628]
 
@@ -70,11 +92,6 @@ position = Vector2(165, 655)
 
 [node name="CustomerExitPoint" type="Marker2D" parent="Markers" unique_id=769929263]
 position = Vector2(165, 655)
-
-[node name="Entities" type="Node2D" parent="." unique_id=1694710147]
-
-[node name="Player" parent="Entities" unique_id=1068675683 instance=ExtResource("1_hyk8p")]
-position = Vector2(472, 404)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1290313818 node_paths=PackedStringArray("game_manager")]
 script = ExtResource("7_yyfjg")
@@ -90,10 +107,18 @@ text = "£0"
 
 [node name="Managers" type="Node2D" parent="." unique_id=1546168761]
 
-[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_spawn_point", "table", "customer_exit_point")]
+[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_spawn_point", "customer_exit_point", "tables", "navigation_region")]
 script = ExtResource("7_hujxm")
 customer_scene = ExtResource("2_ow5a4")
 entities = NodePath("../../Entities")
 customer_spawn_point = NodePath("../../Markers/CustomerSpawnPoint")
-table = NodePath("../../Environment/table")
 customer_exit_point = NodePath("../../Markers/CustomerExitPoint")
+tables = [NodePath("../../Environment/table1"), NodePath(""), NodePath("")]
+navigation_region = NodePath("../../NavigationRegion2D")
+
+[node name="CustomerSpawnTimer" type="Timer" parent="Managers/GameManager" unique_id=1946290656]
+wait_time = 2.0
+autostart = true
+
+[node name="Node" type="Node" parent="." unique_id=1058371443]
+script = ExtResource("9_b1x3f")

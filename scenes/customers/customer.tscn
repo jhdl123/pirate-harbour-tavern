@@ -4,20 +4,34 @@
 [ext_resource type="Script" uid="uid://cjx3p8pojfaym" path="res://scripts/Entities/customer.gd" id="1_yp1b7"]
 [ext_resource type="Texture2D" uid="uid://cp6r43esf7s1e" path="res://assets/art/items/16x16_grog.png" id="3_7napt"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]
-size = Vector2(32, 32)
+[sub_resource type="CircleShape2D" id="CircleShape2D_hujxm"]
+radius = 12.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lxoxb"]
 size = Vector2(40, 40)
 
 [node name="Customer" type="CharacterBody2D" unique_id=1185840188]
+collision_layer = 2
+collision_mask = 3
 script = ExtResource("1_yp1b7")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=1516817330]
+path_desired_distance = 6.0
+target_desired_distance = 5.0
+path_max_distance = 24.0
+avoidance_enabled = true
+radius = 12.0
+neighbor_distance = 80.0
+time_horizon_agents = 0.7
+time_horizon_obstacles = 0.25
+max_speed = 120.0
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=2004869762]
 texture = ExtResource("1_6mdqo")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1049480934]
-shape = SubResource("RectangleShape2D_mel2l")
+position = Vector2(0, 4)
+shape = SubResource("CircleShape2D_hujxm")
 
 [node name="OrderIcon" type="Sprite2D" parent="." unique_id=1312589237]
 visible = false
