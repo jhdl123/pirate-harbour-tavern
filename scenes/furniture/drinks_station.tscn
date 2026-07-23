@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dnd6om8dg26fm"]
 
 [ext_resource type="Texture2D" uid="uid://v53xyiijymwl" path="res://assets/art/furniture/32x32_drinks_station.png" id="1_h03td"]
-[ext_resource type="Script" uid="uid://cwxwst5xv1vu4" path="res://scenes/furniture/drinks_station.gd" id="1_lpag8"]
+[ext_resource type="Script" uid="uid://cwxwst5xv1vu4" path="res://scripts/Interactables/drinks_station.gd" id="1_lpag8"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_mel2l"]
 radius = 16.0

@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://wfl8kjme2q47"]
 
-[ext_resource type="Script" uid="uid://wc66lhuvxmlp" path="res://scripts/table.gd" id="1_1xtif"]
+[ext_resource type="Script" uid="uid://wc66lhuvxmlp" path="res://scripts/Interactables/table.gd" id="1_1xtif"]
 [ext_resource type="Texture2D" uid="uid://dj1nka5mdap4e" path="res://assets/art/furniture/64x64_table.png" id="1_gwdqj"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]

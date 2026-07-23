@@ -5,8 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://dmaa2lbdhwsr8" path="res://scenes/customers/customer.tscn" id="2_ow5a4"]
 [ext_resource type="PackedScene" uid="uid://wfl8kjme2q47" path="res://scenes/furniture/table.tscn" id="3_k2fmo"]
 [ext_resource type="PackedScene" uid="uid://dnd6om8dg26fm" path="res://scenes/furniture/drinks_station.tscn" id="3_l3cfh"]
-[ext_resource type="Script" uid="uid://bowoxvrqsdjw6" path="res://scenes/main/game_manager.gd" id="7_hujxm"]
-[ext_resource type="Script" uid="uid://cduu6wuftbtkl" path="res://scenes/ui/hud.gd" id="7_yyfjg"]
+[ext_resource type="Script" uid="uid://bowoxvrqsdjw6" path="res://scripts/Managers/game_manager.gd" id="7_hujxm"]
+[ext_resource type="Script" uid="uid://cduu6wuftbtkl" path="res://scripts/UI/hud.gd" id="7_yyfjg"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3cfvr"]
 size = Vector2(1280, 40)
@@ -68,9 +68,6 @@ position = Vector2(236, 178)
 [node name="CustomerSpawnPoint" type="Marker2D" parent="Markers" unique_id=77911572]
 position = Vector2(165, 655)
 
-[node name="CustomerTablePoint" type="Marker2D" parent="Markers" unique_id=347858687]
-position = Vector2(421, 308)
-
 [node name="CustomerExitPoint" type="Marker2D" parent="Markers" unique_id=769929263]
 position = Vector2(165, 655)
 
@@ -79,17 +76,9 @@ position = Vector2(165, 655)
 [node name="Player" parent="Entities" unique_id=1068675683 instance=ExtResource("1_hyk8p")]
 position = Vector2(472, 404)
 
-[node name="GameManager" type="Node" parent="." unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_spawn_point", "table", "customer_exit_point")]
-script = ExtResource("7_hujxm")
-customer_scene = ExtResource("2_ow5a4")
-entities = NodePath("../Entities")
-customer_spawn_point = NodePath("../Markers/CustomerSpawnPoint")
-table = NodePath("../Environment/table")
-customer_exit_point = NodePath("../Markers/CustomerExitPoint")
-
 [node name="UI" type="CanvasLayer" parent="." unique_id=1290313818 node_paths=PackedStringArray("game_manager")]
 script = ExtResource("7_yyfjg")
-game_manager = NodePath("../GameManager")
+game_manager = NodePath("../Managers/GameManager")
 
 [node name="MoneyLabel" type="Label" parent="UI" unique_id=25987283]
 offset_left = 60.0
@@ -98,3 +87,13 @@ offset_right = 100.0
 offset_bottom = 74.0
 theme_override_font_sizes/font_size = 30
 text = "£0"
+
+[node name="Managers" type="Node2D" parent="." unique_id=1546168761]
+
+[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_spawn_point", "table", "customer_exit_point")]
+script = ExtResource("7_hujxm")
+customer_scene = ExtResource("2_ow5a4")
+entities = NodePath("../../Entities")
+customer_spawn_point = NodePath("../../Markers/CustomerSpawnPoint")
+table = NodePath("../../Environment/table")
+customer_exit_point = NodePath("../../Markers/CustomerExitPoint")
