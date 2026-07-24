@@ -2,7 +2,9 @@
 
 [ext_resource type="Texture2D" uid="uid://bm4q7xjhroucl" path="res://assets/art/characters/32x32_customer.png" id="1_6mdqo"]
 [ext_resource type="Script" uid="uid://cjx3p8pojfaym" path="res://scripts/Entities/customer.gd" id="1_yp1b7"]
+[ext_resource type="Resource" uid="uid://li3m6ppiyrot" path="res://resources/Drinks/grog.tres" id="2_h1lfo"]
 [ext_resource type="Texture2D" uid="uid://cp6r43esf7s1e" path="res://assets/art/items/16x16_grog.png" id="3_7napt"]
+[ext_resource type="Script" uid="uid://bldm5f7y8ktnb" path="res://scripts/Components/patience_bar.gd" id="5_tbamw"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hujxm"]
 radius = 12.0
@@ -14,6 +16,7 @@ size = Vector2(40, 40)
 collision_layer = 2
 collision_mask = 3
 script = ExtResource("1_yp1b7")
+default_drink = ExtResource("2_h1lfo")
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=1516817330]
 path_desired_distance = 6.0
@@ -34,7 +37,6 @@ position = Vector2(0, 4)
 shape = SubResource("CircleShape2D_hujxm")
 
 [node name="OrderIcon" type="Sprite2D" parent="." unique_id=1312589237]
-visible = false
 position = Vector2(0, -26)
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("3_7napt")
@@ -54,3 +56,28 @@ shape = SubResource("RectangleShape2D_lxoxb")
 
 [node name="PatienceTimer" type="Timer" parent="." unique_id=1412780340]
 one_shot = true
+
+[node name="PatienceBar" type="Control" parent="." unique_id=305465529]
+z_index = 10
+layout_mode = 3
+anchors_preset = 0
+offset_left = -16.0
+offset_top = 18.0
+offset_right = 16.0
+offset_bottom = 23.0
+mouse_filter = 2
+script = ExtResource("5_tbamw")
+
+[node name="Background" type="ColorRect" parent="PatienceBar" unique_id=1259063935]
+layout_mode = 0
+offset_right = 32.0
+offset_bottom = 5.0
+color = Color(0.14117648, 0.09019608, 0.05882353, 1)
+
+[node name="Fill" type="ColorRect" parent="PatienceBar" unique_id=335268722]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 31.0
+offset_bottom = 4.0
+mouse_filter = 2

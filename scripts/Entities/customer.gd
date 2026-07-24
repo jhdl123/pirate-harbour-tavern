@@ -28,14 +28,15 @@ enum State {
 @export var maximum_stuck_checks: int = 3
 @export var maximum_path_refreshes: int = 2
 
-@export_category("Customer")
-@export var payment_amount: int = 5
+@export_category("Orders")
+@export var default_drink: DrinkData
 
 @export_category("Walking Avoidance")
 @export var walking_avoidance_radius: float = 12.0
 @export var walking_avoidance_priority: float = 0.5
 @export var occupied_avoidance_radius: float = 17.0
 @export var occupied_zone_offset: float = 2.0
+
 
 @onready var navigation_agent: NavigationAgent2D = (
 	$NavigationAgent2D
@@ -45,6 +46,8 @@ enum State {
 @onready var order_timer: Timer = $OrderTimer
 @onready var drink_timer: Timer = $DrinkTimer
 @onready var patience_timer: Timer = $PatienceTimer
+@onready var patience_bar: PatienceBar = $PatienceBar
+
 
 var current_state: State = State.WALKING_TO_STAGING
 var reserved_chair: Chair
@@ -62,6 +65,8 @@ var consecutive_stuck_checks: int = 0
 var path_refresh_count: int = 0
 
 var game_config: GameConfig
+var ordered_drink: DrinkData
+
 
 func configure(config: GameConfig) -> void:
 	if config == null:
@@ -70,18 +75,55 @@ func configure(config: GameConfig) -> void:
 
 	game_config = config
 
-	movement_speed = game_config.movement_speed
-	seat_movement_speed = game_config.seat_movement_speed
-	payment_amount = game_config.drink_payment_amount
+	movement_speed = game_config.default_movement_speed
+	seat_movement_speed = game_config.default_seat_movement_speed
 
-	order_timer.wait_time = game_config.order_delay
-	drink_timer.wait_time = game_config.drink_duration
-	patience_timer.wait_time = game_config.patience_duration
+	navigation_arrival_distance = (
+		game_config.navigation_arrival_distance
+	)
+
+	seat_arrival_distance = (
+		game_config.seat_arrival_distance
+	)
+
+	stuck_check_interval = (
+		game_config.stuck_check_interval
+	)
+
+	minimum_stuck_movement = (
+		game_config.minimum_stuck_movement
+	)
+
+	maximum_stuck_checks = (
+		game_config.maximum_stuck_checks
+	)
+
+	maximum_path_refreshes = (
+		game_config.maximum_path_refreshes
+	)
+
+	walking_avoidance_radius = (
+		game_config.walking_avoidance_radius
+	)
+
+	walking_avoidance_priority = (
+		game_config.walking_avoidance_priority
+	)
+
+	order_timer.wait_time = (
+		game_config.default_order_delay
+	)
+
+	patience_timer.wait_time = (
+		game_config.default_patience_duration
+	)
+
 
 func _ready() -> void:
 	add_to_group("navigation_customers")
 
 	order_icon.visible = false
+	patience_bar.hide_bar()
 
 	if !order_timer.timeout.is_connected(
 		_on_order_timer_timeout
@@ -96,13 +138,14 @@ func _ready() -> void:
 		drink_timer.timeout.connect(
 			_on_drink_timer_timeout
 		)
-		
+
 	if !patience_timer.timeout.is_connected(
 		_on_patience_timer_timeout
 	):
 		patience_timer.timeout.connect(
 			_on_patience_timer_timeout
 		)
+
 	if !navigation_agent.velocity_computed.is_connected(
 		_on_navigation_agent_velocity_computed
 	):
@@ -112,6 +155,49 @@ func _ready() -> void:
 
 	configure_walking_avoidance()
 	stuck_check_position = global_position
+
+
+func _process(_delta: float) -> void:
+	update_patience_visual()
+
+
+func _physics_process(delta: float) -> void:
+	match current_state:
+		State.WALKING_TO_STAGING:
+			process_navigation(delta)
+
+		State.MOVING_TO_SEAT:
+			process_moving_to_seat(delta)
+
+		State.LEAVING:
+			process_navigation(delta)
+
+		State.WAITING_TO_ORDER:
+			stop_movement()
+
+		State.ORDERING:
+			stop_movement()
+
+		State.DRINKING:
+			stop_movement()
+
+
+func choose_order() -> void:
+	ordered_drink = default_drink
+
+	if ordered_drink == null:
+		push_error(
+			name + " has no default drink assigned."
+		)
+		return
+
+	order_icon.texture = (
+		ordered_drink.order_icon_texture
+	)
+
+	drink_timer.wait_time = (
+		ordered_drink.drink_duration
+	)
 
 
 func set_chair_target(chair: Chair) -> void:
@@ -217,27 +303,6 @@ func prepare_navigation_target(
 		handle_failed_path()
 
 
-func _physics_process(delta: float) -> void:
-	match current_state:
-		State.WALKING_TO_STAGING:
-			process_navigation(delta)
-
-		State.MOVING_TO_SEAT:
-			process_moving_to_seat(delta)
-
-		State.LEAVING:
-			process_navigation(delta)
-
-		State.WAITING_TO_ORDER:
-			stop_movement()
-
-		State.ORDERING:
-			stop_movement()
-
-		State.DRINKING:
-			stop_movement()
-
-
 func process_navigation(delta: float) -> void:
 	if !has_navigation_target:
 		stop_movement()
@@ -316,8 +381,8 @@ func begin_moving_to_seat() -> void:
 
 	current_state = State.MOVING_TO_SEAT
 
-	# Avoidance is deliberately disabled for the final short,
-	# reserved movement from the staging point into the chair.
+	# Avoidance is disabled for the final short movement
+	# from the staging point into the reserved chair.
 	navigation_agent.avoidance_enabled = false
 	navigation_agent.velocity = Vector2.ZERO
 
@@ -363,23 +428,28 @@ func arrive_at_seat() -> void:
 	stop_movement()
 	reset_stuck_detection()
 
-	# The chair now supplies a fixed obstacle for other customers.
-	# This stops the seated customer being treated as a movable agent.
 	navigation_agent.avoidance_enabled = false
 	navigation_agent.velocity = Vector2.ZERO
 
 	reserved_chair.set_occupied_zone_enabled(true)
 
+	choose_order()
+
+	if ordered_drink == null:
+		handle_invalid_destination()
+		return
+
 	current_state = State.WAITING_TO_ORDER
 	order_timer.start()
 
-	print(
-		name,
-		" seated at ",
-		reserved_chair.get_table().name,
-		"/",
-		reserved_chair.name
-	)
+	if should_show_debug_messages():
+		print(
+			name,
+			" seated at ",
+			reserved_chair.get_table().name,
+			"/",
+			reserved_chair.name
+		)
 
 
 func update_stuck_detection(delta: float) -> void:
@@ -437,13 +507,14 @@ func refresh_current_path() -> void:
 		handle_failed_path()
 		return
 
-	print(
-		name,
-		" refreshing navigation path. Attempt ",
-		path_refresh_count,
-		"/",
-		maximum_path_refreshes
-	)
+	if should_show_debug_messages():
+		print(
+			name,
+			" refreshing navigation path. Attempt ",
+			path_refresh_count,
+			"/",
+			maximum_path_refreshes
+		)
 
 	prepare_navigation_target(
 		requested_target_position
@@ -479,14 +550,21 @@ func handle_failed_path() -> void:
 func handle_invalid_destination() -> void:
 	reset_stuck_detection()
 
+	order_timer.stop()
+	patience_timer.stop()
+
+	order_icon.visible = false
+	patience_bar.hide_bar()
+
 	if current_state == State.LEAVING:
 		finish_customer()
 		return
 
-	print(
-		name,
-		" could not reach its chair and will leave."
-	)
+	if should_show_debug_messages():
+		print(
+			name,
+			" could not reach its chair and will leave."
+		)
 
 	release_reserved_chair()
 	customer_abandoned_seat.emit(self)
@@ -505,16 +583,50 @@ func release_reserved_chair() -> void:
 	reserved_chair = null
 
 
+func update_patience_visual() -> void:
+	if current_state != State.ORDERING:
+		return
+
+	if patience_timer.is_stopped():
+		return
+
+	if patience_timer.wait_time <= 0.0:
+		patience_bar.set_patience_ratio(0.0)
+		return
+
+	var remaining_ratio: float = (
+		patience_timer.time_left
+		/ patience_timer.wait_time
+	)
+
+	patience_bar.set_patience_ratio(
+		remaining_ratio
+	)
+
+
 func _on_order_timer_timeout() -> void:
+	if ordered_drink == null:
+		handle_invalid_destination()
+		return
+
 	current_state = State.ORDERING
 	order_icon.visible = true
 
-	patience_timer.start()
+	if (
+		game_config == null
+		or !game_config.disable_patience
+	):
+		patience_timer.start()
+		patience_bar.show_bar()
+	else:
+		patience_bar.hide_bar()
 
 	if should_show_debug_messages():
 		print(
 			name,
-			" ordered grog. Patience: ",
+			" ordered ",
+			ordered_drink.display_name,
+			". Patience: ",
 			patience_timer.wait_time,
 			" seconds."
 		)
@@ -529,42 +641,82 @@ func interact(player: Node) -> void:
 			)
 		return
 
-	if player.carrying_item != ItemType.Type.GROG:
+	if ordered_drink == null:
+		return
+
+	if player.carrying_item != ordered_drink.item_type:
 		if should_show_debug_messages():
-			print(name, " wants grog.")
+			print(
+				name,
+				" wants ",
+				ordered_drink.display_name,
+				"."
+			)
 		return
 
 	patience_timer.stop()
+	patience_bar.hide_bar()
 
 	player.set_carried_item(
 		ItemType.Type.NONE
 	)
 
 	if reserved_chair != null:
-		reserved_chair.begin_use()
+		reserved_chair.begin_use(
+			ordered_drink
+		)
 
 	order_icon.visible = false
 	current_state = State.DRINKING
 	drink_timer.start()
 
 	if should_show_debug_messages():
-		print(name, " was served.")
+		print(
+			name,
+			" was served ",
+			ordered_drink.display_name,
+			"."
+		)
 
 
 func _on_drink_timer_timeout() -> void:
-	print(name, " finished drinking.")
-	print(name, " paid £", payment_amount)
+	if ordered_drink == null:
+		push_error(
+			name
+			+ " finished drinking without valid drink data."
+		)
+		return
 
-	customer_paid.emit(payment_amount)
+	if should_show_debug_messages():
+		print(
+			name,
+			" finished drinking ",
+			ordered_drink.display_name,
+			"."
+		)
+
+		print(
+			name,
+			" paid £",
+			ordered_drink.sale_price
+		)
+
+	customer_paid.emit(
+		ordered_drink.sale_price
+	)
 
 	if reserved_chair != null:
 		reserved_chair.require_cleaning()
 		reserved_chair = null
 
+	ordered_drink = null
+
 	current_state = State.LEAVING
 	path_refresh_count = 0
 
-	prepare_navigation_target(exit_position)
+	prepare_navigation_target(
+		exit_position
+	)
 
 
 func _on_patience_timer_timeout() -> void:
@@ -572,6 +724,7 @@ func _on_patience_timer_timeout() -> void:
 		return
 
 	order_icon.visible = false
+	patience_bar.hide_bar()
 
 	if should_show_debug_messages():
 		print(
@@ -582,10 +735,13 @@ func _on_patience_timer_timeout() -> void:
 	release_reserved_chair()
 	customer_abandoned_seat.emit(self)
 
+	ordered_drink = null
 	current_state = State.LEAVING
 	path_refresh_count = 0
 
-	prepare_navigation_target(exit_position)
+	prepare_navigation_target(
+		exit_position
+	)
 
 
 func should_show_debug_messages() -> bool:
@@ -593,13 +749,17 @@ func should_show_debug_messages() -> bool:
 		return true
 
 	return game_config.show_debug_messages
-	
+
+
 func finish_customer() -> void:
 	stop_movement()
 
 	order_timer.stop()
 	drink_timer.stop()
 	patience_timer.stop()
+
+	order_icon.visible = false
+	patience_bar.hide_bar()
 
 	navigation_agent.avoidance_enabled = false
 

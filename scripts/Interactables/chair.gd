@@ -18,14 +18,12 @@ enum SeatState {
 @export var occupied_avoidance_radius: float = 22.0
 @export var occupied_zone_offset: float = 4.0
 
-@export_category("Drink Visuals")
-@export var full_drink_texture: Texture2D
-@export var empty_drink_texture: Texture2D
 
 var current_state: SeatState = SeatState.AVAILABLE
 var customer: Node = null
 
 var occupied_obstacle: NavigationObstacle2D
+var active_drink: DrinkData
 
 @onready var seat_point: Marker2D = $SeatPoint
 @onready var drink_sprite: Sprite2D = $DrinkPoint/DrinkSprite
@@ -69,15 +67,22 @@ func assign_customer(new_customer: Node) -> bool:
 	return true
 
 
-func begin_use() -> void:
+func begin_use(drink: DrinkData) -> void:
 	if current_state != SeatState.RESERVED:
 		push_warning(
 			name
-			+ " cannot show a full drink from state "
+			+ " cannot begin use from state "
 			+ str(current_state)
 		)
 		return
 
+	if drink == null:
+		push_error(
+			name + " received empty DrinkData."
+		)
+		return
+
+	active_drink = drink
 	current_state = SeatState.IN_USE
 
 	_update_drink_visual()
@@ -87,7 +92,9 @@ func begin_use() -> void:
 		get_table().name,
 		"/",
 		name,
-		" now has a full drink."
+		" now has ",
+		active_drink.display_name,
+		"."
 	)
 
 
@@ -120,6 +127,7 @@ func clean() -> void:
 		return
 
 	current_state = SeatState.AVAILABLE
+	active_drink = null
 
 	_update_drink_visual()
 	_set_cleaning_interaction_enabled(false)
@@ -141,12 +149,13 @@ func interact(_player: Node) -> void:
 
 func clear_customer() -> void:
 	customer = null
+	active_drink = null
 	current_state = SeatState.AVAILABLE
 
 	set_occupied_zone_enabled(false)
 	_update_drink_visual()
 	_set_cleaning_interaction_enabled(false)
-
+	
 
 func contains_customer(target_customer: Node) -> bool:
 	return customer == target_customer
@@ -244,9 +253,23 @@ func _update_drink_visual() -> void:
 			drink_sprite.visible = false
 
 		SeatState.IN_USE:
-			drink_sprite.texture = full_drink_texture
+			if active_drink == null:
+				drink_sprite.visible = false
+				return
+
+			drink_sprite.texture = (
+				active_drink.full_glass_texture
+			)
+
 			drink_sprite.visible = true
 
 		SeatState.NEEDS_CLEANING:
-			drink_sprite.texture = empty_drink_texture
+			if active_drink == null:
+				drink_sprite.visible = false
+				return
+
+			drink_sprite.texture = (
+				active_drink.empty_glass_texture
+			)
+
 			drink_sprite.visible = true
