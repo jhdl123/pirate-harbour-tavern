@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://bhy0bke7neken" path="res://scripts/Entities/player.gd" id="1_dovo2"]
 [ext_resource type="Texture2D" uid="uid://kt0mqj58mwym" path="res://assets/art/characters/32x32_player.png" id="2_dovo2"]
-[ext_resource type="Resource" uid="uid://cyysif1k68qxm" path="res://Data/Actions/test_action.tres" id="2_lvxji"]
 [ext_resource type="Script" uid="uid://c2m0xv7m5pi6e" path="res://systems/actions/action_runner.gd" id="3_gmlin"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]
@@ -16,7 +15,7 @@ radius = 24.0
 collision_layer = 2
 collision_mask = 3
 script = ExtResource("1_dovo2")
-test_action = ExtResource("2_lvxji")
+
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=143007967]
 texture = ExtResource("2_dovo2")

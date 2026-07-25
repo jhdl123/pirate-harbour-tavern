@@ -255,6 +255,21 @@ func _on_action_completed(
 		action.display_name
 	)
 
+func _unhandled_input(
+	event: InputEvent
+) -> void:
+	if not event.is_action_pressed("ui_cancel"):
+		return
+
+	if not action_runner.is_running:
+		return
+
+	var cancelled_successfully: bool = (
+		action_runner.cancel_current_action()
+	)
+
+	if cancelled_successfully:
+		get_viewport().set_input_as_handled()
 
 func _on_action_cancelled(
 	action: ActionDefinition

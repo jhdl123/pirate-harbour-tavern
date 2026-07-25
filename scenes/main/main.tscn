@@ -15,14 +15,14 @@
 [ext_resource type="Texture2D" uid="uid://btg55bec8ia17" path="res://assets/art/environment/wall_window.png" id="7_nvumn"]
 [ext_resource type="Script" uid="uid://cduu6wuftbtkl" path="res://scripts/UI/hud.gd" id="7_yyfjg"]
 [ext_resource type="Script" uid="uid://b5wcssexr0e0" path="res://scripts/Debug/navigation_debugger.gd" id="9_b1x3f"]
-[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="11_s17dp"]
 [ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="12_37hlw"]
 [ext_resource type="PackedScene" uid="uid://djtgijinluyir" path="res://scenes/environment/CustomerDoor.tscn" id="12_nvumn"]
 [ext_resource type="Texture2D" uid="uid://drq6sfj4t3g13" path="res://assets/art/furniture/32x32_drinks_staion_02.png" id="12_p8abn"]
 [ext_resource type="Resource" uid="uid://8h83yo3jwte" path="res://resources/config/default_game_config.tres" id="15_hxu8e"]
-[ext_resource type="Script" uid="uid://bc5lnr8hbl0hj" path="res://systems/time/tempscript.gd" id="16_p8abn"]
+[ext_resource type="Script" uid="uid://bc5lnr8hbl0hj" path="res://systems/time/time_display.gd" id="16_p8abn"]
 [ext_resource type="Resource" uid="uid://c313r83roveas" path="res://resources/CustomerTypes/sailor_impatient.tres" id="17_necax"]
 [ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="17_r4lks"]
+[ext_resource type="Script" uid="uid://c6l48rvdmuu4i" path="res://systems/economy/economy_manager.gd" id="17_s17dp"]
 [ext_resource type="Resource" uid="uid://vy3njv4nqfn" path="res://resources/CustomerTypes/sailor.tres" id="18_r4lks"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_mel2l"]
@@ -148,7 +148,6 @@ position = Vector2(400, 300)
 
 [node name="Grog_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
 position = Vector2(236, 178)
-served_drink = ExtResource("11_s17dp")
 
 [node name="Ale_station" parent="Environment" unique_id=1835805780 instance=ExtResource("3_l3cfh")]
 position = Vector2(290, 178)
@@ -167,9 +166,9 @@ position = Vector2(142, 98)
 [node name="CustomerDoor" parent="Markers" unique_id=1979632710 instance=ExtResource("12_nvumn")]
 position = Vector2(172, 730)
 
-[node name="UI" type="CanvasLayer" parent="." unique_id=1290313818 node_paths=PackedStringArray("game_manager")]
+[node name="UI" type="CanvasLayer" parent="." unique_id=1290313818 node_paths=PackedStringArray("economy_manager")]
 script = ExtResource("7_yyfjg")
-game_manager = NodePath("../Managers/GameManager")
+economy_manager = NodePath("../Managers/EconomyManager")
 
 [node name="MoneyLabel" type="Label" parent="UI" unique_id=25987283]
 offset_left = 60.0
@@ -188,13 +187,17 @@ script = ExtResource("16_p8abn")
 
 [node name="Managers" type="Node2D" parent="." unique_id=1546168761]
 
-[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_door", "tables", "navigation_region")]
+[node name="EconomyManager" type="Node" parent="Managers" unique_id=272770657]
+script = ExtResource("17_s17dp")
+
+[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_door", "tables", "navigation_region", "economy_manager")]
 script = ExtResource("7_hujxm")
 customer_scene = ExtResource("2_ow5a4")
 entities = NodePath("../../Entities")
 customer_door = NodePath("../../Markers/CustomerDoor")
 tables = [NodePath("../../Environment/table1")]
 navigation_region = NodePath("../../NavigationRegion2D")
+economy_manager = NodePath("../EconomyManager")
 game_config = ExtResource("15_hxu8e")
 customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtResource("18_r4lks")])
 

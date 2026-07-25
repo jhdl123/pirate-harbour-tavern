@@ -132,8 +132,5 @@ shape = SubResource("CircleShape2D_3cfvr")
 [node name="CleanableComponent" type="Node" parent="." unique_id=1564395643]
 script = ExtResource("4_5bhwd")
 
-[node name="CleaningTimer" type="Timer" parent="CleanableComponent" unique_id=1759013644]
-one_shot = true
-
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1832064770]
 libraries/ = SubResource("AnimationLibrary_e7krt")

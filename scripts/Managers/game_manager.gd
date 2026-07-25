@@ -1,15 +1,13 @@
 extends Node
 
 
-signal money_changed(new_amount: int)
-
-
 @export_category("Scene References")
 @export var customer_scene: PackedScene
 @export var entities: Node2D
 @export var customer_door: CustomerDoor
 @export var tables: Array[Table]
 @export var navigation_region: NavigationRegionManager
+@export var economy_manager: EconomyManager
 
 @export_category("Configuration")
 @export var game_config: GameConfig
@@ -18,7 +16,6 @@ signal money_changed(new_amount: int)
 @export var customer_types: Array[CustomerType]
 
 
-var money: int = 0
 var customer_number: int = 0
 var active_customers: Array[Node] = []
 
@@ -39,8 +36,9 @@ func _ready() -> void:
 	if !validate_game_references():
 		return
 	
-	money = game_config.starting_money
-	money_changed.emit(money)
+	economy_manager.initialise(
+	game_config.starting_money
+)
 		
 	configure_tables()
 	connect_cleaning_signals()
@@ -268,6 +266,12 @@ func validate_game_references() -> bool:
 			"GameManager has no GameConfig resource assigned."
 		)
 		return false
+	if economy_manager == null:
+		push_error(
+			"GameManager has no EconomyManager assigned."
+		)
+		return false
+		
 
 	if navigation_region == null:
 		push_error(
@@ -443,7 +447,21 @@ func _on_customer_spawn_timer_timeout() -> void:
 func _on_customer_paid(
 	amount: int
 ) -> void:
-	add_money(amount)
+	var amount_added: int = economy_manager.add_money(
+		amount,
+		&"customer_payment"
+	)
+
+	if (
+		amount_added > 0
+		and game_config.show_debug_messages
+	):
+		print(
+			"Customer payment: £",
+			amount_added,
+			". Money: £",
+			economy_manager.get_money()
+		)
 
 func configure_tables() -> void:
 	for current_table: Table in tables:
@@ -477,41 +495,28 @@ func _on_cleaning_cost_requested(
 	amount: int,
 	reason: String
 ) -> void:
-	remove_money(
-		amount,
-		reason
-	)
-
-func remove_money(
-	amount: int,
-	reason: String = ""
-) -> void:
 	if amount <= 0:
 		return
 
-	money = maxi(
-		0,
-		money - amount
+	var amount_removed: int = (
+		economy_manager.deduct_money(
+			amount,
+			StringName(reason)
+		)
 	)
 
-	money_changed.emit(money)
-
 	if game_config.show_debug_messages:
-		if reason.is_empty():
-			print(
-				"Money reduced by £",
-				amount,
-				". Money: £",
-				money
-			)
-		else:
-			print(
-				reason,
-				" cost £",
-				amount,
-				". Money: £",
-				money
-			)
+		print(
+			reason,
+			" requested a £",
+			amount,
+			" charge. Removed £",
+			amount_removed,
+			". Money: £",
+			economy_manager.get_money()
+		)
+
+
 
 func _on_customer_abandoned_seat(
 	customer: Node
@@ -532,17 +537,4 @@ func _on_customer_finished(
 			active_customers.size(),
 			"/",
 			game_config.maximum_active_customers
-		)
-
-
-func add_money(
-	amount: int
-) -> void:
-	money += amount
-	money_changed.emit(money)
-
-	if game_config.show_debug_messages:
-		print(
-			"Money: £",
-			money
 		)

@@ -7,4 +7,5 @@ script = ExtResource("1_y8awc")
 action_id = &"clean_empty_glass"
 display_name = "Clean Empty Glass"
 description = "Remove an empty glass and clean the seating area."
+duration_seconds = 3.0
 metadata/_custom_type_script = "uid://d2dw4edpnxqab"

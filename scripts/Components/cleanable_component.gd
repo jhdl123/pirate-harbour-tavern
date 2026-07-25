@@ -6,6 +6,7 @@ signal cleaning_started(task: CleaningTask)
 signal cleaning_cancelled(task: CleaningTask)
 signal task_changed(task: CleaningTask)
 signal cleaning_completed
+
 signal complication_triggered(
 	task: CleaningTask,
 	cost: int
@@ -15,26 +16,21 @@ signal complication_triggered(
 @export_category("Configuration")
 @export var game_config: GameConfig
 
+
 @export_category("Starting State")
 @export var starting_task: CleaningTask
 
 
-var current_task: CleaningTask
+var current_task: CleaningTask = null
 var is_cleaning: bool = false
+
 var complication_chance_multiplier: float = 1.0
 
-
-@onready var cleaning_timer: Timer = $CleaningTimer
+var active_action_runner: ActionRunner = null
+var active_action: ActionDefinition = null
 
 
 func _ready() -> void:
-	if !cleaning_timer.timeout.is_connected(
-		_on_cleaning_timer_timeout
-	):
-		cleaning_timer.timeout.connect(
-			_on_cleaning_timer_timeout
-		)
-
 	if starting_task != null:
 		set_cleaning_task(starting_task)
 	else:
@@ -54,7 +50,8 @@ func has_cleaning_task() -> bool:
 func can_start_cleaning() -> bool:
 	return (
 		current_task != null
-		and !is_cleaning
+		and not is_cleaning
+		and current_task.has_valid_action()
 	)
 
 
@@ -88,15 +85,52 @@ func clear_cleaning_task() -> void:
 	cleaning_completed.emit()
 
 
-func start_cleaning() -> bool:
-	if !can_start_cleaning():
+func start_cleaning(
+	action_runner: ActionRunner
+) -> bool:
+	if not can_start_cleaning():
 		return false
 
+	if action_runner == null:
+		push_warning(
+			"CleanableComponent received no ActionRunner."
+		)
+		return false
+
+	if action_runner.is_running:
+		return false
+
+	var requested_action: ActionDefinition = (
+		current_task.get_action()
+	)
+
+	if requested_action == null:
+		push_warning(
+			current_task.display_name
+			+ " has no ActionDefinition assigned."
+		)
+		return false
+
+	active_action_runner = action_runner
+	active_action = requested_action
 	is_cleaning = true
 
-	cleaning_timer.start(
-		current_task.cleaning_duration
+	connect_action_runner_signals()
+
+	var action_started_successfully: bool = (
+		active_action_runner.start_action(
+			active_action
+		)
 	)
+
+	if not action_started_successfully:
+		disconnect_action_runner_signals()
+
+		active_action_runner = null
+		active_action = null
+		is_cleaning = false
+
+		return false
 
 	cleaning_started.emit(current_task)
 
@@ -104,27 +138,104 @@ func start_cleaning() -> bool:
 
 
 func cancel_cleaning() -> void:
-	if !is_cleaning:
+	if not is_cleaning:
 		return
 
+	if active_action_runner != null:
+		if active_action_runner.is_running:
+			active_action_runner.force_cancel_current_action()
+			return
+
+	finish_cancellation()
+
+
+func connect_action_runner_signals() -> void:
+	if active_action_runner == null:
+		return
+
+	if not active_action_runner.action_completed.is_connected(
+		_on_action_completed
+	):
+		active_action_runner.action_completed.connect(
+			_on_action_completed
+		)
+
+	if not active_action_runner.action_cancelled.is_connected(
+		_on_action_cancelled
+	):
+		active_action_runner.action_cancelled.connect(
+			_on_action_cancelled
+		)
+
+
+func disconnect_action_runner_signals() -> void:
+	if active_action_runner == null:
+		return
+
+	if active_action_runner.action_completed.is_connected(
+		_on_action_completed
+	):
+		active_action_runner.action_completed.disconnect(
+			_on_action_completed
+		)
+
+	if active_action_runner.action_cancelled.is_connected(
+		_on_action_cancelled
+	):
+		active_action_runner.action_cancelled.disconnect(
+			_on_action_cancelled
+		)
+
+
+func _on_action_completed(
+	completed_action: ActionDefinition
+) -> void:
+	if not is_cleaning:
+		return
+
+	if completed_action != active_action:
+		return
+
+	disconnect_action_runner_signals()
+
+	active_action_runner = null
+	active_action = null
+	is_cleaning = false
+
+	resolve_completed_cleaning()
+
+
+func _on_action_cancelled(
+	cancelled_action: ActionDefinition
+) -> void:
+	if not is_cleaning:
+		return
+
+	if cancelled_action != active_action:
+		return
+
+	finish_cancellation()
+
+
+func finish_cancellation() -> void:
 	var cancelled_task: CleaningTask = current_task
 
+	disconnect_action_runner_signals()
+
+	active_action_runner = null
+	active_action = null
 	is_cleaning = false
-	cleaning_timer.stop()
 
 	if cancelled_task != null:
 		cleaning_cancelled.emit(cancelled_task)
 
 
-func _on_cleaning_timer_timeout() -> void:
+func resolve_completed_cleaning() -> void:
 	if current_task == null:
-		is_cleaning = false
 		complication_chance_multiplier = 1.0
 		return
 
 	var completed_task: CleaningTask = current_task
-
-	is_cleaning = false
 
 	if should_trigger_complication(
 		completed_task

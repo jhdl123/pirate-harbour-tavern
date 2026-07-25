@@ -110,3 +110,48 @@ func spend_money(
 	)
 
 	return true
+
+## Removes up to the available amount.
+##
+## Useful for unavoidable costs such as damage or penalties.
+## Returns the amount actually removed.
+func deduct_money(
+	amount: int,
+	reason: StringName = &""
+) -> int:
+	if amount <= 0:
+		return 0
+
+	var amount_removed: int = mini(
+		amount,
+		current_money
+	)
+
+	if amount_removed <= 0:
+		transaction_failed.emit(
+			amount,
+			reason
+		)
+		return 0
+
+	var previous_amount: int = current_money
+	current_money -= amount_removed
+
+	money_spent.emit(
+		amount_removed,
+		reason
+	)
+
+	money_changed.emit(
+		previous_amount,
+		current_money,
+		-amount_removed
+	)
+
+	if amount_removed < amount:
+		transaction_failed.emit(
+			amount - amount_removed,
+			reason
+		)
+
+	return amount_removed

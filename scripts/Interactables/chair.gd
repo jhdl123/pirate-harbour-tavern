@@ -240,14 +240,39 @@ func require_cleaning() -> void:
 
 
 func interact(
-	_player: Node
+	player: Node
 ) -> void:
 	if not cleanable.can_start_cleaning():
 		return
 
-	if cleanable.start_cleaning():
-		_update_cleaning_interaction()
+	if player == null:
+		return
 
+	if not player.has_method(
+		"get_action_runner"
+	):
+		push_warning(
+			name
+			+ " was interacted with by an object "
+			+ "without an ActionRunner."
+		)
+		return
+
+	var player_action_runner: ActionRunner = (
+		player.get_action_runner()
+	)
+
+	if player_action_runner == null:
+		push_warning(
+			name
+			+ " could not access the player's ActionRunner."
+		)
+		return
+
+	if cleanable.start_cleaning(
+		player_action_runner
+	):
+		_update_cleaning_interaction()
 
 func clear_customer() -> void:
 	customer = null
@@ -352,7 +377,6 @@ func _update_occupied_obstacle_position() -> void:
 func _update_cleaning_interaction() -> void:
 	var should_enable: bool = (
 		cleanable.has_cleaning_task()
-		and not cleanable.is_cleaning
 	)
 
 	interaction_area.monitoring = should_enable
@@ -362,7 +386,6 @@ func _update_cleaning_interaction() -> void:
 		interaction_area.collision_layer = 1
 	else:
 		interaction_area.collision_layer = 0
-
 
 func _update_drink_visual() -> void:
 	if cleanable.has_cleaning_task():

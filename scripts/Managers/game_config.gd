@@ -9,8 +9,6 @@ extends Resource
 @export var maximum_active_customers: int = 12
 @export var maximum_door_queue_size: int = 5
 
-@export_category("Customer Timing")
-@export var default_drink_duration: float = 8.0
 
 @export_category("Customer Movement")
 @export var navigation_arrival_distance: float = 6.0
@@ -28,14 +26,9 @@ extends Resource
 @export var walking_avoidance_radius: float = 12.0
 @export var walking_avoidance_priority: float = 0.5
 
-@export_category("Cleaning")
-@export var cleaning_duration: float = 1.0
-@export_range(0.0, 1.0, 0.01) var broken_glass_chance: float = 0.15
-@export var broken_glass_cleaning_duration: float = 1.5
 
-@export_category("Economy")
 @export var starting_money: int = 0
-@export var broken_glass_cost: int = 2
+
 
 @export_category("Door")
 @export var door_opening_duration: float = 0.35

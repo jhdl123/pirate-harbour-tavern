@@ -1,14 +1,16 @@
 [gd_resource type="Resource" script_class="CleaningTask" format=3 uid="uid://smgc86wqrc5a"]
 
 [ext_resource type="Script" uid="uid://5qmpipipxlp2" path="res://scripts/data/cleaning_task.gd" id="1_bgrfl"]
+[ext_resource type="Resource" uid="uid://d4hf58sct0ibe" path="res://Data/Actions/cleaning/clean_empty_glass.tres" id="1_v1shr"]
 [ext_resource type="Resource" uid="uid://b5n3q6g3pap3b" path="res://resources/CleaningTask/broken_glass.tres" id="1_wa58n"]
-[ext_resource type="Texture2D" uid="uid://cct8e1k0ufipy" path="res://assets/art/items/drinks/16x16_grog_empty.png" id="3_v1shr"]
+[ext_resource type="Texture2D" uid="uid://cct8e1k0ufipy" path="res://assets/art/items/drinks/16x16_grog_empty.png" id="4_1pcx1"]
 
 [resource]
 script = ExtResource("1_bgrfl")
 display_name = "Empty Glass"
 description = "An empty glass left by a customer."
-task_texture = ExtResource("3_v1shr")
+action_definition = ExtResource("1_v1shr")
+task_texture = ExtResource("4_1pcx1")
 complication_chance = 0.5
 complication_task = ExtResource("1_wa58n")
 complication_cost = 2
