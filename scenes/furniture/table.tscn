@@ -7,7 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://13k06q025yll" path="res://assets/art/furniture/40x40_chair_front.png" id="5_8t28f"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]
-size = Vector2(67, 59)
+size = Vector2(67, 47)
 
 [node name="table" type="StaticBody2D" unique_id=1719880889]
 script = ExtResource("1_1xtif")
@@ -16,7 +16,7 @@ script = ExtResource("1_1xtif")
 texture = ExtResource("1_gwdqj")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1213118664]
-position = Vector2(-0.5, -1.5)
+position = Vector2(-0.5, -7.5)
 shape = SubResource("RectangleShape2D_mel2l")
 
 [node name="Chairs" type="Node2D" parent="." unique_id=770114582]
@@ -24,8 +24,11 @@ shape = SubResource("RectangleShape2D_mel2l")
 [node name="chairLeft" parent="Chairs" unique_id=1416925628 instance=ExtResource("3_hnlri")]
 position = Vector2(-53, -5)
 
-[node name="DrinkSprite" parent="Chairs/chairLeft/DrinkPoint" parent_id_path=PackedInt32Array(1416925628, 108340923) index="0" unique_id=1534625117]
-position = Vector2(-18, -5)
+[node name="DrinkPoint" parent="Chairs/chairLeft" index="2" unique_id=108340923]
+position = Vector2(33, -13)
+
+[node name="Icon" parent="Chairs/chairLeft/DrinkPoint/CleaningIndicator" parent_id_path=PackedInt32Array(1416925628, 41051304) index="0" unique_id=546821950]
+position = Vector2(0, 0)
 
 [node name="chairBottom" parent="Chairs" unique_id=1487173228 instance=ExtResource("3_hnlri")]
 position = Vector2(-1, 33)
@@ -38,10 +41,13 @@ texture = ExtResource("4_h0p5r")
 position = Vector2(-2, 5)
 
 [node name="DrinkPoint" parent="Chairs/chairBottom" index="2" unique_id=108340923]
-position = Vector2(-22, -48)
+position = Vector2(0, -45)
 
-[node name="DrinkSprite" parent="Chairs/chairBottom/DrinkPoint" index="0" unique_id=1534625117]
-position = Vector2(19, 4)
+[node name="Icon" parent="Chairs/chairBottom/DrinkPoint/CleaningIndicator" parent_id_path=PackedInt32Array(1487173228, 41051304) index="0" unique_id=546821950]
+position = Vector2(0, 0)
+
+[node name="CollisionShape2D" parent="Chairs/chairBottom/InteractionArea" parent_id_path=PackedInt32Array(1487173228, 1438960033) index="0" unique_id=559164605]
+position = Vector2(1, 0)
 
 [node name="chairTop" parent="Chairs" unique_id=1143766741 instance=ExtResource("3_hnlri")]
 position = Vector2(-4, -53)
@@ -52,8 +58,11 @@ texture = ExtResource("5_8t28f")
 [node name="SeatPoint" parent="Chairs/chairTop" index="1" unique_id=345260681]
 position = Vector2(-1, 4)
 
-[node name="DrinkSprite" parent="Chairs/chairTop/DrinkPoint" parent_id_path=PackedInt32Array(1143766741, 108340923) index="0" unique_id=1534625117]
-position = Vector2(-48, 32)
+[node name="DrinkPoint" parent="Chairs/chairTop" index="2" unique_id=108340923]
+position = Vector2(0, 25)
+
+[node name="Icon" parent="Chairs/chairTop/DrinkPoint/CleaningIndicator" parent_id_path=PackedInt32Array(1143766741, 41051304) index="0" unique_id=546821950]
+position = Vector2(0, 0)
 
 [node name="chairRight" parent="Chairs" unique_id=2135557456 instance=ExtResource("3_hnlri")]
 position = Vector2(47, -6)
@@ -65,8 +74,11 @@ flip_h = true
 [node name="SeatPoint" parent="Chairs/chairRight" index="1" unique_id=345260681]
 position = Vector2(-1, 1)
 
-[node name="DrinkSprite" parent="Chairs/chairRight/DrinkPoint" parent_id_path=PackedInt32Array(2135557456, 108340923) index="0" unique_id=1534625117]
-position = Vector2(-75, -5)
+[node name="DrinkPoint" parent="Chairs/chairRight" index="2" unique_id=108340923]
+position = Vector2(-30, -10)
+
+[node name="Icon" parent="Chairs/chairRight/DrinkPoint/CleaningIndicator" parent_id_path=PackedInt32Array(2135557456, 41051304) index="0" unique_id=546821950]
+position = Vector2(0, 0)
 
 [editable path="Chairs/chairLeft"]
 [editable path="Chairs/chairBottom"]

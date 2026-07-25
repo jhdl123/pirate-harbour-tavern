@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3 uid="uid://ptruohkabman"]
+
+[ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="1_i7n1g"]
+[ext_resource type="Texture2D" uid="uid://boqe0wg4y4kwx" path="res://assets/art/items/drinks/16x16_ale_broken.png" id="1_vfukt"]
+[ext_resource type="Texture2D" uid="uid://dcdjnr6xoseiq" path="res://assets/art/items/drinks/16x16_ale.png" id="2_kiewq"]
+[ext_resource type="Texture2D" uid="uid://bhd5tthhkfc5x" path="res://assets/art/items/drinks/16x16_ale_empty.png" id="3_85aeh"]
+
+[resource]
+script = ExtResource("1_i7n1g")
+order_icon_texture = ExtResource("2_kiewq")
+carried_texture = ExtResource("2_kiewq")
+full_container_texture = ExtResource("2_kiewq")
+empty_container_texture = ExtResource("3_85aeh")
+broken_container_texture = ExtResource("1_vfukt")
+item_id = &"ale"
+display_name = "Ale"
+description = "A mug of tavern ale."
+category = 0
+inventory_icon = ExtResource("2_kiewq")
+maximum_stack_size = 12
+base_sell_price = 7
+metadata/_custom_type_script = "uid://bmwkoswb21je6"

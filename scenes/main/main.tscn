@@ -15,7 +15,15 @@
 [ext_resource type="Texture2D" uid="uid://btg55bec8ia17" path="res://assets/art/environment/wall_window.png" id="7_nvumn"]
 [ext_resource type="Script" uid="uid://cduu6wuftbtkl" path="res://scripts/UI/hud.gd" id="7_yyfjg"]
 [ext_resource type="Script" uid="uid://b5wcssexr0e0" path="res://scripts/Debug/navigation_debugger.gd" id="9_b1x3f"]
+[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="11_s17dp"]
+[ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="12_37hlw"]
+[ext_resource type="PackedScene" uid="uid://djtgijinluyir" path="res://scenes/environment/CustomerDoor.tscn" id="12_nvumn"]
+[ext_resource type="Texture2D" uid="uid://drq6sfj4t3g13" path="res://assets/art/furniture/32x32_drinks_staion_02.png" id="12_p8abn"]
 [ext_resource type="Resource" uid="uid://8h83yo3jwte" path="res://resources/config/default_game_config.tres" id="15_hxu8e"]
+[ext_resource type="Script" uid="uid://bc5lnr8hbl0hj" path="res://systems/time/tempscript.gd" id="16_p8abn"]
+[ext_resource type="Resource" uid="uid://c313r83roveas" path="res://resources/CustomerTypes/sailor_impatient.tres" id="17_necax"]
+[ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="17_r4lks"]
+[ext_resource type="Resource" uid="uid://vy3njv4nqfn" path="res://resources/CustomerTypes/sailor.tres" id="18_r4lks"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_mel2l"]
 vertices = PackedVector2Array(649, 344, 649, 253, 1219, 63.023438, 1219, 661.96875, 65.02344, 64.96875, 226, 120, 65.96875, 660.02344, 550, 344, 449, 344, 350, 344, 65.28906, 232, 226, 232, 350, 253, 226, 207.88281, 236, 210.5625, 252.28125, 206.21094, 264.21094, 194.28125, 236, 145.4375, 226, 148.10938, 550, 253, 449, 253, 65.109375, 120, 264.21094, 161.71875, 268.5625, 178, 252.28125, 149.78906)
@@ -71,8 +79,11 @@ sources/5 = SubResource("TileSetAtlasSource_r4lks")
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3cfvr"]
 size = Vector2(1280, 40)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nvumn"]
+size = Vector2(122.25, 40)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hyk8p"]
-size = Vector2(1280, 40)
+size = Vector2(1082, 40)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_iuonh"]
 size = Vector2(40, 720)
@@ -88,6 +99,7 @@ navigation_polygon = SubResource("NavigationPolygon_mel2l")
 script = ExtResource("1_yyfjg")
 
 [node name="Environment" type="Node2D" parent="." unique_id=1377672581 groups=["navigation_geometry"]]
+position = Vector2(3, 0)
 
 [node name="Room" type="Node2D" parent="Environment" unique_id=1135732471]
 
@@ -107,8 +119,12 @@ shape = SubResource("RectangleShape2D_3cfvr")
 
 [node name="WallBottom" type="StaticBody2D" parent="Environment/Room" unique_id=620485724]
 
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Environment/Room/WallBottom" unique_id=1218653593]
+position = Vector2(63.875, 700)
+shape = SubResource("RectangleShape2D_nvumn")
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Room/WallBottom" unique_id=1536411076]
-position = Vector2(640, 701)
+position = Vector2(739, 701)
 shape = SubResource("RectangleShape2D_hyk8p")
 
 [node name="WallLeft" type="StaticBody2D" parent="Environment/Room" unique_id=261157790]
@@ -130,8 +146,16 @@ scale = Vector2(1, 2.5)
 [node name="table1" parent="Environment" unique_id=1719880889 instance=ExtResource("3_k2fmo")]
 position = Vector2(400, 300)
 
-[node name="drinks_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
+[node name="Grog_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
 position = Vector2(236, 178)
+served_drink = ExtResource("11_s17dp")
+
+[node name="Ale_station" parent="Environment" unique_id=1835805780 instance=ExtResource("3_l3cfh")]
+position = Vector2(290, 178)
+served_drink = ExtResource("12_37hlw")
+
+[node name="Sprite2D" parent="Environment/Ale_station" index="0" unique_id=1803792753]
+texture = ExtResource("12_p8abn")
 
 [node name="Entities" type="Node2D" parent="." unique_id=1694710147]
 
@@ -140,11 +164,8 @@ position = Vector2(142, 98)
 
 [node name="Markers" type="Node2D" parent="." unique_id=1069500628]
 
-[node name="CustomerSpawnPoint" type="Marker2D" parent="Markers" unique_id=77911572]
-position = Vector2(165, 655)
-
-[node name="CustomerExitPoint" type="Marker2D" parent="Markers" unique_id=769929263]
-position = Vector2(165, 655)
+[node name="CustomerDoor" parent="Markers" unique_id=1979632710 instance=ExtResource("12_nvumn")]
+position = Vector2(172, 730)
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1290313818 node_paths=PackedStringArray("game_manager")]
 script = ExtResource("7_yyfjg")
@@ -158,17 +179,24 @@ offset_bottom = 74.0
 theme_override_font_sizes/font_size = 30
 text = "£0"
 
+[node name="TimeLabel" type="Label" parent="UI" unique_id=1008571156]
+offset_left = 175.0
+offset_top = 56.0
+offset_right = 268.0
+offset_bottom = 92.0
+script = ExtResource("16_p8abn")
+
 [node name="Managers" type="Node2D" parent="." unique_id=1546168761]
 
-[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_spawn_point", "customer_exit_point", "tables", "navigation_region")]
+[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_door", "tables", "navigation_region")]
 script = ExtResource("7_hujxm")
 customer_scene = ExtResource("2_ow5a4")
 entities = NodePath("../../Entities")
-customer_spawn_point = NodePath("../../Markers/CustomerSpawnPoint")
-customer_exit_point = NodePath("../../Markers/CustomerExitPoint")
-tables = [NodePath("../../Environment/table1"), null, null]
+customer_door = NodePath("../../Markers/CustomerDoor")
+tables = [NodePath("../../Environment/table1")]
 navigation_region = NodePath("../../NavigationRegion2D")
 game_config = ExtResource("15_hxu8e")
+customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtResource("18_r4lks")])
 
 [node name="CustomerSpawnTimer" type="Timer" parent="Managers/GameManager" unique_id=1946290656]
 wait_time = 2.0
@@ -176,3 +204,5 @@ autostart = true
 
 [node name="Node" type="Node" parent="." unique_id=1058371443]
 script = ExtResource("9_b1x3f")
+
+[editable path="Environment/Ale_station"]

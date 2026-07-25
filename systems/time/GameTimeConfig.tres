@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="GameTimeConfig" format=3 uid="uid://brkynsyow5x33"]
+
+[ext_resource type="Script" uid="uid://bthb5q2icbck6" path="res://systems/time/game_time_config.gd" id="1_mgmmc"]
+
+[resource]
+script = ExtResource("1_mgmmc")
+metadata/_custom_type_script = "uid://bthb5q2icbck6"

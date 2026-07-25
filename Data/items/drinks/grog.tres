@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3 uid="uid://daaltvd55kxky"]
+
+[ext_resource type="Texture2D" uid="uid://cp6r43esf7s1e" path="res://assets/art/items/drinks/16x16_grog.png" id="1_ax3qy"]
+[ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="1_iprwb"]
+[ext_resource type="Texture2D" uid="uid://cct8e1k0ufipy" path="res://assets/art/items/drinks/16x16_grog_empty.png" id="2_mphei"]
+
+[resource]
+script = ExtResource("1_iprwb")
+order_icon_texture = ExtResource("1_ax3qy")
+carried_texture = ExtResource("1_ax3qy")
+full_container_texture = ExtResource("1_ax3qy")
+empty_container_texture = ExtResource("2_mphei")
+broken_container_texture = ExtResource("1_ax3qy")
+item_id = &"grog"
+display_name = "Grog"
+description = "A basic mug of tavern grog."
+category = 0
+inventory_icon = ExtResource("1_ax3qy")
+maximum_stack_size = 12
+base_sell_price = 5
+metadata/_custom_type_script = "uid://bmwkoswb21je6"

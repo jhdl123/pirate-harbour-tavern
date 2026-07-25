@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bm4q7xjhroucl"
-path="res://.godot/imported/32x32_customer.png-d8aae5efd06133b6c8399724d310de1e.ctex"
+uid="uid://dj2dpmkr4uk0a"
+path="res://.godot/imported/16x16_water_empty.png-422b669727040e5485ac7cb64e1c9882.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/characters/32x32_customer.png"
-dest_files=["res://.godot/imported/32x32_customer.png-d8aae5efd06133b6c8399724d310de1e.ctex"]
+source_file="res://assets/art/items/drinks/16x16_water_empty.png"
+dest_files=["res://.godot/imported/16x16_water_empty.png-422b669727040e5485ac7cb64e1c9882.ctex"]
 
 [params]
 

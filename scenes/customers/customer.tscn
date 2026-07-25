@@ -1,9 +1,8 @@
 [gd_scene format=3 uid="uid://dmaa2lbdhwsr8"]
 
-[ext_resource type="Texture2D" uid="uid://bm4q7xjhroucl" path="res://assets/art/characters/32x32_customer.png" id="1_6mdqo"]
+[ext_resource type="Texture2D" uid="uid://bm4q7xjhroucl" path="res://assets/art/characters/32x32_sailor01.png" id="1_6mdqo"]
 [ext_resource type="Script" uid="uid://cjx3p8pojfaym" path="res://scripts/Entities/customer.gd" id="1_yp1b7"]
-[ext_resource type="Resource" uid="uid://li3m6ppiyrot" path="res://resources/Drinks/grog.tres" id="2_h1lfo"]
-[ext_resource type="Texture2D" uid="uid://cp6r43esf7s1e" path="res://assets/art/items/16x16_grog.png" id="3_7napt"]
+[ext_resource type="Texture2D" uid="uid://cp6r43esf7s1e" path="res://assets/art/items/drinks/16x16_grog.png" id="3_7napt"]
 [ext_resource type="Script" uid="uid://bldm5f7y8ktnb" path="res://scripts/Components/patience_bar.gd" id="5_tbamw"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hujxm"]
@@ -16,7 +15,6 @@ size = Vector2(40, 40)
 collision_layer = 2
 collision_mask = 3
 script = ExtResource("1_yp1b7")
-default_drink = ExtResource("2_h1lfo")
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=1516817330]
 path_desired_distance = 6.0

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ActionDefinition" format=3 uid="uid://d4hf58sct0ibe"]
+
+[ext_resource type="Script" uid="uid://d2dw4edpnxqab" path="res://systems/actions/action_definition.gd" id="1_y8awc"]
+
+[resource]
+script = ExtResource("1_y8awc")
+action_id = &"clean_empty_glass"
+display_name = "Clean Empty Glass"
+description = "Remove an empty glass and clean the seating area."
+metadata/_custom_type_script = "uid://d2dw4edpnxqab"

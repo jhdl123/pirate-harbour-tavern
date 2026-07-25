@@ -4,5 +4,7 @@
 
 [resource]
 script = ExtResource("1_atm1d")
-maximum_active_customers = 1
+maximum_active_customers = 4
+default_order_delay = 1.0
+default_patience_duration = 5.0
 metadata/_custom_type_script = "uid://e4bv17wlfrcs"

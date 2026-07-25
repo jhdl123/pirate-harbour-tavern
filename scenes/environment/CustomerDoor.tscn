@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://djtgijinluyir"]
+
+[ext_resource type="Script" uid="uid://cvvaglmvgft8r" path="res://scripts/Interactables/customer_door.gd" id="1_ejebt"]
+
+[node name="CustomerDoor" type="Node2D" unique_id=1979632710]
+script = ExtResource("1_ejebt")
+
+[node name="OutsidePoint" type="Marker2D" parent="." unique_id=121323886]
+position = Vector2(0, 134)
+
+[node name="InsidePoint" type="Marker2D" parent="." unique_id=76369252]
+position = Vector2(0, -116)

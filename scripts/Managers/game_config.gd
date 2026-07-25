@@ -2,6 +2,7 @@ class_name GameConfig
 extends Resource
 
 
+
 @export_category("Customer Spawning")
 @export var minimum_spawn_delay: float = 2.0
 @export var maximum_spawn_delay: float = 10.0
@@ -9,13 +10,9 @@ extends Resource
 @export var maximum_door_queue_size: int = 5
 
 @export_category("Customer Timing")
-@export var default_order_delay: float = 2.0
-@export var default_patience_duration: float = 15.0
 @export var default_drink_duration: float = 8.0
 
 @export_category("Customer Movement")
-@export var default_movement_speed: float = 120.0
-@export var default_seat_movement_speed: float = 45.0
 @export var navigation_arrival_distance: float = 6.0
 @export var seat_arrival_distance: float = 2.0
 

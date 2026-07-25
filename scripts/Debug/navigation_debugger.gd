@@ -430,17 +430,21 @@ func _get_state_name(customer: Node) -> String:
 
 	match state_value:
 		0:
-			return "WALKING_TO_STAGING"
+			return "ENTERING"
 		1:
-			return "MOVING_TO_SEAT"
+			return "WALKING_TO_STAGING"
 		2:
-			return "WAITING_TO_ORDER"
+			return "MOVING_TO_SEAT"
 		3:
-			return "ORDERING"
+			return "WAITING_TO_ORDER"
 		4:
-			return "DRINKING"
+			return "ORDERING"
 		5:
-			return "LEAVING"
+			return "DRINKING"
+		6:
+			return "LEAVING_TO_DOOR"
+		7:
+			return "EXITING"
 		_:
 			return "UNKNOWN_%d" % state_value
 

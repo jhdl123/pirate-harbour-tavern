@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cp6r43esf7s1e"
-path="res://.godot/imported/16x16_grog.png-004641cd4cf2bacfd9a40f5dee187be8.ctex"
+uid="uid://6ad81w61hhgn"
+path="res://.godot/imported/16x16_grog_broken.png-bcfb4a84360c42066b9c721ce0166523.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/items/16x16_grog.png"
-dest_files=["res://.godot/imported/16x16_grog.png-004641cd4cf2bacfd9a40f5dee187be8.ctex"]
+source_file="res://assets/art/items/drinks/16x16_grog_broken.png"
+dest_files=["res://.godot/imported/16x16_grog_broken.png-bcfb4a84360c42066b9c721ce0166523.ctex"]
 
 [params]
 

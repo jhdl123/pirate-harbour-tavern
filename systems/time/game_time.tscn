@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://bc6h1jcwxngnu"]
+
+[ext_resource type="Script" uid="uid://cb1nebsvd3mqd" path="res://systems/time/game_time.gd" id="1_pcprh"]
+[ext_resource type="Resource" uid="uid://brkynsyow5x33" path="res://systems/time/GameTimeConfig.tres" id="2_je0au"]
+
+[node name="TimeManager" type="Node2D" unique_id=1781892110]
+script = ExtResource("1_pcprh")
+config = ExtResource("2_je0au")

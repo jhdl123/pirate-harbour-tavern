@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CleaningTask" format=3 uid="uid://b5n3q6g3pap3b"]
+
+[ext_resource type="Script" uid="uid://5qmpipipxlp2" path="res://scripts/data/cleaning_task.gd" id="1_g71mf"]
+[ext_resource type="Texture2D" uid="uid://6ad81w61hhgn" path="res://assets/art/items/drinks/16x16_grog_broken.png" id="2_lvoj2"]
+
+[resource]
+script = ExtResource("1_g71mf")
+display_name = "Broken Glass"
+description = "Sharp broken glass that must be cleared."
+task_texture = ExtResource("2_lvoj2")
+cleaning_duration = 1.5
+metadata/_custom_type_script = "uid://5qmpipipxlp2"

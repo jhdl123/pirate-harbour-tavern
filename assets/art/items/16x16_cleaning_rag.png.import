@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cct8e1k0ufipy"
-path="res://.godot/imported/16x16_grog_empty.png-59f04934a8e6e2cfb976736dca89d0bc.ctex"
+uid="uid://cfm7jews6ryea"
+path="res://.godot/imported/16x16_cleaning_rag.png-fbce6ec3795ea261e1b5166411459658.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/items/16x16_grog_empty.png"
-dest_files=["res://.godot/imported/16x16_grog_empty.png-59f04934a8e6e2cfb976736dca89d0bc.ctex"]
+source_file="res://assets/art/items/16x16_cleaning_rag.png"
+dest_files=["res://.godot/imported/16x16_cleaning_rag.png-fbce6ec3795ea261e1b5166411459658.ctex"]
 
 [params]
 

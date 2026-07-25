@@ -7,12 +7,14 @@ signal customer_abandoned_seat(customer: Node)
 
 
 enum State {
+	ENTERING,
 	WALKING_TO_STAGING,
 	MOVING_TO_SEAT,
 	WAITING_TO_ORDER,
 	ORDERING,
 	DRINKING,
-	LEAVING
+	LEAVING_TO_DOOR,
+	EXITING
 }
 
 
@@ -22,14 +24,13 @@ enum State {
 @export var navigation_arrival_distance: float = 6.0
 @export var seat_arrival_distance: float = 2.0
 
+
 @export_category("Stuck Detection")
 @export var stuck_check_interval: float = 0.5
 @export var minimum_stuck_movement: float = 1.0
 @export var maximum_stuck_checks: int = 3
 @export var maximum_path_refreshes: int = 2
 
-@export_category("Orders")
-@export var default_drink: DrinkData
 
 @export_category("Walking Avoidance")
 @export var walking_avoidance_radius: float = 12.0
@@ -42,6 +43,7 @@ enum State {
 	$NavigationAgent2D
 )
 
+@onready var customer_sprite: Sprite2D = $Sprite2D
 @onready var order_icon: Sprite2D = $OrderIcon
 @onready var order_timer: Timer = $OrderTimer
 @onready var drink_timer: Timer = $DrinkTimer
@@ -49,10 +51,12 @@ enum State {
 @onready var patience_bar: PatienceBar = $PatienceBar
 
 
-var current_state: State = State.WALKING_TO_STAGING
+var current_state: State = State.ENTERING
 var reserved_chair: Chair
 
-var exit_position: Vector2
+var entrance_inside_position: Vector2
+var entrance_outside_position: Vector2
+
 var active_target_position: Vector2
 var requested_target_position: Vector2
 
@@ -65,19 +69,35 @@ var consecutive_stuck_checks: int = 0
 var path_refresh_count: int = 0
 
 var game_config: GameConfig
-var ordered_drink: DrinkData
+var ordered_drink: DrinkDefinition
+var customer_type: CustomerType
+var payment_multiplier: float = 1.0
 
 
-func configure(config: GameConfig) -> void:
+func configure(
+	config: GameConfig,
+	new_customer_type: CustomerType
+) -> void:
 	if config == null:
-		push_error(name + " received an empty GameConfig.")
+		push_error(
+			name + " received an empty GameConfig."
+		)
+		return
+
+	if new_customer_type == null:
+		push_error(
+			name + " received an empty CustomerType."
+		)
 		return
 
 	game_config = config
+	customer_type = new_customer_type
 
-	movement_speed = game_config.default_movement_speed
-	seat_movement_speed = game_config.default_seat_movement_speed
+	apply_game_config()
+	apply_customer_type()
 
+
+func apply_game_config() -> void:
 	navigation_arrival_distance = (
 		game_config.navigation_arrival_distance
 	)
@@ -110,13 +130,37 @@ func configure(config: GameConfig) -> void:
 		game_config.walking_avoidance_priority
 	)
 
+
+func apply_customer_type() -> void:
+	movement_speed = customer_type.movement_speed
+
+	seat_movement_speed = (
+		customer_type.seat_movement_speed
+	)
+
 	order_timer.wait_time = (
-		game_config.default_order_delay
+		customer_type.order_delay
 	)
 
 	patience_timer.wait_time = (
-		game_config.default_patience_duration
+		customer_type.patience_duration
 	)
+
+	payment_multiplier = (
+		customer_type.payment_multiplier
+	)
+
+	if customer_type.customer_texture != null:
+		customer_sprite.texture = (
+			customer_type.customer_texture
+		)
+	else:
+		push_warning(
+			customer_type.display_name
+			+ " has no customer texture assigned."
+		)
+
+	navigation_agent.max_speed = movement_speed
 
 
 func _ready() -> void:
@@ -125,28 +169,28 @@ func _ready() -> void:
 	order_icon.visible = false
 	patience_bar.hide_bar()
 
-	if !order_timer.timeout.is_connected(
+	if not order_timer.timeout.is_connected(
 		_on_order_timer_timeout
 	):
 		order_timer.timeout.connect(
 			_on_order_timer_timeout
 		)
 
-	if !drink_timer.timeout.is_connected(
+	if not drink_timer.timeout.is_connected(
 		_on_drink_timer_timeout
 	):
 		drink_timer.timeout.connect(
 			_on_drink_timer_timeout
 		)
 
-	if !patience_timer.timeout.is_connected(
+	if not patience_timer.timeout.is_connected(
 		_on_patience_timer_timeout
 	):
 		patience_timer.timeout.connect(
 			_on_patience_timer_timeout
 		)
 
-	if !navigation_agent.velocity_computed.is_connected(
+	if not navigation_agent.velocity_computed.is_connected(
 		_on_navigation_agent_velocity_computed
 	):
 		navigation_agent.velocity_computed.connect(
@@ -157,20 +201,30 @@ func _ready() -> void:
 	stuck_check_position = global_position
 
 
-func _process(_delta: float) -> void:
+func _process(
+	_delta: float
+) -> void:
 	update_patience_visual()
 
 
-func _physics_process(delta: float) -> void:
+func _physics_process(
+	delta: float
+) -> void:
 	match current_state:
+		State.ENTERING:
+			process_navigation(delta)
+
 		State.WALKING_TO_STAGING:
 			process_navigation(delta)
 
 		State.MOVING_TO_SEAT:
 			process_moving_to_seat(delta)
 
-		State.LEAVING:
+		State.LEAVING_TO_DOOR:
 			process_navigation(delta)
+
+		State.EXITING:
+			process_exiting(delta)
 
 		State.WAITING_TO_ORDER:
 			stop_movement()
@@ -183,12 +237,17 @@ func _physics_process(delta: float) -> void:
 
 
 func choose_order() -> void:
-	ordered_drink = default_drink
+	ordered_drink = (
+		choose_drink_from_customer_type()
+	)
 
 	if ordered_drink == null:
 		push_error(
-			name + " has no default drink assigned."
+			name
+			+ " could not choose a valid drink."
 		)
+
+		begin_leaving()
 		return
 
 	order_icon.texture = (
@@ -196,11 +255,72 @@ func choose_order() -> void:
 	)
 
 	drink_timer.wait_time = (
-		ordered_drink.drink_duration
+		ordered_drink.drink_duration_seconds
 	)
 
 
-func set_chair_target(chair: Chair) -> void:
+func choose_drink_from_customer_type() -> DrinkDefinition:
+	if customer_type == null:
+		push_error(
+			name + " has no CustomerType."
+		)
+		return null
+
+	var valid_drinks: Array[DrinkDefinition] = []
+
+	for drink: DrinkDefinition in (
+		customer_type.available_drinks
+	):
+		if drink == null:
+			continue
+
+		if not valid_drinks.has(drink):
+			valid_drinks.append(drink)
+
+	if valid_drinks.is_empty():
+		push_error(
+			customer_type.display_name
+			+ " has no available drinks."
+		)
+
+		return null
+
+	var preferred: DrinkDefinition = (
+		customer_type.preferred_drink
+	)
+
+	var preferred_is_valid: bool = (
+		preferred != null
+		and valid_drinks.has(preferred)
+	)
+
+	if (
+		preferred_is_valid
+		and randf()
+		< customer_type.preferred_drink_chance
+	):
+		return preferred
+
+	var alternative_drinks: Array[DrinkDefinition] = []
+
+	for drink: DrinkDefinition in valid_drinks:
+		if drink == preferred:
+			continue
+
+		alternative_drinks.append(drink)
+
+	if not alternative_drinks.is_empty():
+		return alternative_drinks.pick_random()
+
+	if preferred_is_valid:
+		return preferred
+
+	return valid_drinks.pick_random()
+
+
+func set_chair_target(
+	chair: Chair
+) -> void:
 	if chair == null:
 		push_error(
 			"Customer received an empty chair target."
@@ -208,23 +328,26 @@ func set_chair_target(chair: Chair) -> void:
 		return
 
 	reserved_chair = chair
-	current_state = State.WALKING_TO_STAGING
+	current_state = State.ENTERING
 	path_refresh_count = 0
 
 	prepare_navigation_target(
-		reserved_chair.get_staging_position()
+		entrance_inside_position
 	)
 
 
-func set_exit_target(
-	new_exit_position: Vector2
+func set_door_targets(
+	inside_position: Vector2,
+	outside_position: Vector2
 ) -> void:
-	exit_position = new_exit_position
+	entrance_inside_position = inside_position
+	entrance_outside_position = outside_position
 
 
 func configure_walking_avoidance() -> void:
 	navigation_agent.avoidance_enabled = true
 	navigation_agent.radius = walking_avoidance_radius
+
 	navigation_agent.avoidance_priority = (
 		walking_avoidance_priority
 	)
@@ -254,7 +377,7 @@ func prepare_navigation_target(
 	):
 		await get_tree().physics_frame
 
-	if !is_inside_tree():
+	if not is_inside_tree():
 		return
 
 	if this_request_id != navigation_request_id:
@@ -291,7 +414,7 @@ func prepare_navigation_target(
 
 	await get_tree().physics_frame
 
-	if !is_inside_tree():
+	if not is_inside_tree():
 		return
 
 	if this_request_id != navigation_request_id:
@@ -299,12 +422,14 @@ func prepare_navigation_target(
 
 	has_navigation_target = true
 
-	if !navigation_agent.is_target_reachable():
+	if not navigation_agent.is_target_reachable():
 		handle_failed_path()
 
 
-func process_navigation(delta: float) -> void:
-	if !has_navigation_target:
+func process_navigation(
+	delta: float
+) -> void:
+	if not has_navigation_target:
 		stop_movement()
 		return
 
@@ -339,8 +464,9 @@ func _on_navigation_agent_velocity_computed(
 	safe_velocity: Vector2
 ) -> void:
 	if (
-		current_state != State.WALKING_TO_STAGING
-		and current_state != State.LEAVING
+		current_state != State.ENTERING
+		and current_state != State.WALKING_TO_STAGING
+		and current_state != State.LEAVING_TO_DOOR
 	):
 		return
 
@@ -349,7 +475,7 @@ func _on_navigation_agent_velocity_computed(
 
 
 func has_reached_navigation_target() -> bool:
-	if !has_navigation_target:
+	if not has_navigation_target:
 		return false
 
 	return (
@@ -367,11 +493,84 @@ func handle_navigation_arrival() -> void:
 	path_refresh_count = 0
 
 	match current_state:
+		State.ENTERING:
+			begin_walking_to_staging()
+
 		State.WALKING_TO_STAGING:
 			begin_moving_to_seat()
 
-		State.LEAVING:
+		State.LEAVING_TO_DOOR:
+			begin_exiting()
+
+		State.EXITING:
 			finish_customer()
+
+
+func begin_walking_to_staging() -> void:
+	if reserved_chair == null:
+		handle_invalid_destination()
+		return
+
+	current_state = State.WALKING_TO_STAGING
+
+	prepare_navigation_target(
+		reserved_chair.get_staging_position()
+	)
+
+
+func begin_exiting() -> void:
+	current_state = State.EXITING
+
+	has_navigation_target = false
+	navigation_agent.avoidance_enabled = false
+	navigation_agent.velocity = Vector2.ZERO
+
+	stop_movement()
+	reset_stuck_detection()
+
+
+func process_exiting(
+	delta: float
+) -> void:
+	var distance_to_exit: float = (
+		global_position.distance_to(
+			entrance_outside_position
+		)
+	)
+
+	if distance_to_exit <= navigation_arrival_distance:
+		finish_customer()
+		return
+
+	var movement_direction: Vector2 = (
+		global_position.direction_to(
+			entrance_outside_position
+		)
+	)
+
+	velocity = movement_direction * movement_speed
+	move_and_slide()
+
+	update_stuck_detection(delta)
+
+
+func begin_leaving() -> void:
+	order_timer.stop()
+	patience_timer.stop()
+	drink_timer.stop()
+
+	order_icon.visible = false
+	patience_bar.hide_bar()
+
+	release_reserved_chair()
+	customer_abandoned_seat.emit(self)
+
+	current_state = State.LEAVING_TO_DOOR
+	path_refresh_count = 0
+
+	prepare_navigation_target(
+		entrance_inside_position
+	)
 
 
 func begin_moving_to_seat() -> void:
@@ -381,15 +580,15 @@ func begin_moving_to_seat() -> void:
 
 	current_state = State.MOVING_TO_SEAT
 
-	# Avoidance is disabled for the final short movement
-	# from the staging point into the reserved chair.
 	navigation_agent.avoidance_enabled = false
 	navigation_agent.velocity = Vector2.ZERO
 
 	reset_stuck_detection()
 
 
-func process_moving_to_seat(delta: float) -> void:
+func process_moving_to_seat(
+	delta: float
+) -> void:
 	if reserved_chair == null:
 		handle_invalid_destination()
 		return
@@ -399,7 +598,9 @@ func process_moving_to_seat(delta: float) -> void:
 	)
 
 	var distance_to_seat: float = (
-		global_position.distance_to(seat_position)
+		global_position.distance_to(
+			seat_position
+		)
 	)
 
 	if distance_to_seat <= seat_arrival_distance:
@@ -407,7 +608,9 @@ func process_moving_to_seat(delta: float) -> void:
 		return
 
 	var movement_direction: Vector2 = (
-		global_position.direction_to(seat_position)
+		global_position.direction_to(
+			seat_position
+		)
 	)
 
 	velocity = (
@@ -452,7 +655,9 @@ func arrive_at_seat() -> void:
 		)
 
 
-func update_stuck_detection(delta: float) -> void:
+func update_stuck_detection(
+	delta: float
+) -> void:
 	stuck_elapsed += delta
 
 	if stuck_elapsed < stuck_check_interval:
@@ -488,9 +693,19 @@ func update_stuck_detection(delta: float) -> void:
 		handle_invalid_destination()
 		return
 
+	if current_state == State.EXITING:
+		push_warning(
+			name
+			+ " became stuck while passing through the exit."
+		)
+
+		finish_customer()
+		return
+
 	if (
-		current_state == State.WALKING_TO_STAGING
-		or current_state == State.LEAVING
+		current_state == State.ENTERING
+		or current_state == State.WALKING_TO_STAGING
+		or current_state == State.LEAVING_TO_DOOR
 	):
 		refresh_current_path()
 
@@ -556,23 +771,20 @@ func handle_invalid_destination() -> void:
 	order_icon.visible = false
 	patience_bar.hide_bar()
 
-	if current_state == State.LEAVING:
+	if (
+		current_state == State.LEAVING_TO_DOOR
+		or current_state == State.EXITING
+	):
 		finish_customer()
 		return
 
 	if should_show_debug_messages():
 		print(
 			name,
-			" could not reach its chair and will leave."
+			" could not reach its destination and will leave."
 		)
 
-	release_reserved_chair()
-	customer_abandoned_seat.emit(self)
-
-	current_state = State.LEAVING
-	path_refresh_count = 0
-
-	prepare_navigation_target(exit_position)
+	begin_leaving()
 
 
 func release_reserved_chair() -> void:
@@ -614,7 +826,7 @@ func _on_order_timer_timeout() -> void:
 
 	if (
 		game_config == null
-		or !game_config.disable_patience
+		or not game_config.disable_patience
 	):
 		patience_timer.start()
 		patience_bar.show_bar()
@@ -632,34 +844,60 @@ func _on_order_timer_timeout() -> void:
 		)
 
 
-func interact(player: Node) -> void:
+func interact(
+	player: Node
+) -> void:
 	if current_state != State.ORDERING:
 		if should_show_debug_messages():
 			print(
 				name,
 				" is not ready to be served."
 			)
+
 		return
 
 	if ordered_drink == null:
 		return
 
-	if player.carrying_item != ordered_drink.item_type:
+	if not player.has_method(
+		"get_carried_drink"
+	):
+		push_error(
+			name
+			+ " was interacted with by an invalid player."
+		)
+
+		return
+
+	var player_drink: DrinkDefinition = (
+		player.get_carried_drink()
+	)
+
+	if player_drink != ordered_drink:
 		if should_show_debug_messages():
-			print(
-				name,
-				" wants ",
-				ordered_drink.display_name,
-				"."
-			)
+			if player_drink == null:
+				print(
+					name,
+					" wants ",
+					ordered_drink.display_name,
+					", but the player is carrying nothing."
+				)
+			else:
+				print(
+					name,
+					" wants ",
+					ordered_drink.display_name,
+					", not ",
+					player_drink.display_name,
+					"."
+				)
+
 		return
 
 	patience_timer.stop()
 	patience_bar.hide_bar()
 
-	player.set_carried_item(
-		ItemType.Type.NONE
-	)
+	player.clear_carried_drink()
 
 	if reserved_chair != null:
 		reserved_chair.begin_use(
@@ -683,9 +921,17 @@ func _on_drink_timer_timeout() -> void:
 	if ordered_drink == null:
 		push_error(
 			name
-			+ " finished drinking without valid drink data."
+			+ " finished drinking without a valid "
+			+ "DrinkDefinition."
 		)
 		return
+
+	var payment_amount: int = roundi(
+		float(
+			ordered_drink.base_sell_price
+		)
+		* payment_multiplier
+	)
 
 	if should_show_debug_messages():
 		print(
@@ -698,12 +944,10 @@ func _on_drink_timer_timeout() -> void:
 		print(
 			name,
 			" paid £",
-			ordered_drink.sale_price
+			payment_amount
 		)
 
-	customer_paid.emit(
-		ordered_drink.sale_price
-	)
+	customer_paid.emit(payment_amount)
 
 	if reserved_chair != null:
 		reserved_chair.require_cleaning()
@@ -711,12 +955,7 @@ func _on_drink_timer_timeout() -> void:
 
 	ordered_drink = null
 
-	current_state = State.LEAVING
-	path_refresh_count = 0
-
-	prepare_navigation_target(
-		exit_position
-	)
+	begin_leaving()
 
 
 func _on_patience_timer_timeout() -> void:
@@ -732,16 +971,8 @@ func _on_patience_timer_timeout() -> void:
 			" ran out of patience and is leaving."
 		)
 
-	release_reserved_chair()
-	customer_abandoned_seat.emit(self)
-
 	ordered_drink = null
-	current_state = State.LEAVING
-	path_refresh_count = 0
-
-	prepare_navigation_target(
-		exit_position
-	)
+	begin_leaving()
 
 
 func should_show_debug_messages() -> bool:

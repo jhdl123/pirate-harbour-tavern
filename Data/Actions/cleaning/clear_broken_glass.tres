@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ActionDefinition" format=3 uid="uid://f1wh1pys3o33"]
+
+[ext_resource type="Script" uid="uid://d2dw4edpnxqab" path="res://systems/actions/action_definition.gd" id="1_fvvsv"]
+
+[resource]
+script = ExtResource("1_fvvsv")
+action_id = &"clear_broken_glass"
+display_name = "Clear Broken Glass"
+description = "Carefully clear broken glass from the seating area"
+duration_seconds = 1.5
+metadata/_custom_type_script = "uid://d2dw4edpnxqab"

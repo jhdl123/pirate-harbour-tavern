@@ -1,23 +1,26 @@
 extends Node
 
 
+signal money_changed(new_amount: int)
+
+
 @export_category("Scene References")
 @export var customer_scene: PackedScene
 @export var entities: Node2D
-@export var customer_spawn_point: Marker2D
-@export var customer_exit_point: Marker2D
+@export var customer_door: CustomerDoor
 @export var tables: Array[Table]
 @export var navigation_region: NavigationRegionManager
 
 @export_category("Configuration")
 @export var game_config: GameConfig
 
-
-signal money_changed(new_amount: int)
+@export_category("Customer Types")
+@export var customer_types: Array[CustomerType]
 
 
 var money: int = 0
 var customer_number: int = 0
+var active_customers: Array[Node] = []
 
 
 @onready var spawn_timer: Timer = $CustomerSpawnTimer
@@ -35,6 +38,12 @@ func _ready() -> void:
 
 	if !validate_game_references():
 		return
+	
+	money = game_config.starting_money
+	money_changed.emit(money)
+		
+	configure_tables()
+	connect_cleaning_signals()
 
 	if !navigation_region.is_navigation_ready:
 		await navigation_region.navigation_ready
@@ -47,29 +56,69 @@ func spawn_customer() -> void:
 	if !validate_spawn_references():
 		return
 
-	if !navigation_region.is_navigation_ready:
-		print(
-			"Customer spawn delayed: navigation is updating."
-		)
+	if has_reached_customer_limit():
+		if game_config.show_debug_messages:
+			print(
+				"Customer not spawned. Active customers: ",
+				active_customers.size(),
+				"/",
+				game_config.maximum_active_customers
+			)
+
 		return
 
-	var assigned_chair: Chair = find_best_available_chair()
+	if !navigation_region.is_navigation_ready:
+		if game_config.show_debug_messages:
+			print(
+				"Customer spawn delayed: navigation is updating."
+			)
+
+		return
+
+	var assigned_chair: Chair = (
+		find_best_available_chair()
+	)
 
 	if assigned_chair == null:
-		print("No seats currently available.")
+		if game_config.show_debug_messages:
+			print("No seats currently available.")
+
+		return
+
+	var selected_customer_type: CustomerType = (
+		choose_customer_type()
+	)
+
+	if selected_customer_type == null:
+		push_error(
+			"No valid CustomerType is available."
+		)
 		return
 
 	var customer: Node = customer_scene.instantiate()
 
 	entities.add_child(customer)
-	customer.global_position = customer_spawn_point.global_position
 
-	# This allows the customer to read values such as:
-	# movement speed, order delay, patience and payment.
+	customer.global_position = (
+		customer_door.get_spawn_position()
+	)
+
 	if customer.has_method("configure"):
-		customer.configure(game_config)
+		customer.configure(
+			game_config,
+			selected_customer_type
+		)
+	else:
+		push_error(
+			"Customer scene does not have a configure() function."
+		)
 
-	var assigned_table: Table = assigned_chair.get_table()
+		customer.queue_free()
+		return
+
+	var assigned_table: Table = (
+		assigned_chair.get_table()
+	)
 
 	if assigned_table == null:
 		push_error(
@@ -95,10 +144,23 @@ func spawn_customer() -> void:
 		return
 
 	customer_number += 1
-	customer.name = "Customer%d" % customer_number
 
-	customer.set_exit_target(
-		customer_exit_point.global_position
+	var safe_type_name: String = (
+		selected_customer_type.display_name
+			.replace(" ", "")
+	)
+
+	if safe_type_name.is_empty():
+		safe_type_name = "Customer"
+
+	customer.name = "%s%d" % [
+		safe_type_name,
+		customer_number
+	]
+
+	customer.set_door_targets(
+		customer_door.get_inside_position(),
+		customer_door.get_exit_position()
 	)
 
 	customer.set_chair_target(
@@ -117,12 +179,18 @@ func spawn_customer() -> void:
 		_on_customer_abandoned_seat
 	)
 
+	active_customers.append(customer)
+
 	if game_config.show_debug_messages:
 		print(
 			customer.name,
-			" spawned at ",
-			customer.global_position,
-			" and assigned to ",
+			" spawned as ",
+			selected_customer_type.display_name,
+			". Active customers: ",
+			active_customers.size(),
+			"/",
+			game_config.maximum_active_customers,
+			". Assigned to ",
 			assigned_table.name,
 			"/",
 			assigned_chair.name,
@@ -131,6 +199,41 @@ func spawn_customer() -> void:
 			"/",
 			assigned_table.get_chairs().size()
 		)
+
+
+func choose_customer_type() -> CustomerType:
+	var valid_types: Array[CustomerType] = []
+	var total_weight: float = 0.0
+
+	for current_type: CustomerType in customer_types:
+		if current_type == null:
+			continue
+
+		if current_type.spawn_weight <= 0.0:
+			continue
+
+		valid_types.append(current_type)
+		total_weight += current_type.spawn_weight
+
+	if valid_types.is_empty():
+		return null
+
+	var random_weight: float = randf_range(
+		0.0,
+		total_weight
+	)
+
+	var accumulated_weight: float = 0.0
+
+	for current_type: CustomerType in valid_types:
+		accumulated_weight += (
+			current_type.spawn_weight
+		)
+
+		if random_weight <= accumulated_weight:
+			return current_type
+
+	return valid_types.back()
 
 
 func schedule_next_customer() -> void:
@@ -147,6 +250,16 @@ func schedule_next_customer() -> void:
 			snappedf(next_spawn_delay, 0.1),
 			" seconds."
 		)
+
+
+func has_reached_customer_limit() -> bool:
+	if game_config.ignore_customer_limit:
+		return false
+
+	return (
+		active_customers.size()
+		>= game_config.maximum_active_customers
+	)
 
 
 func validate_game_references() -> bool:
@@ -172,6 +285,28 @@ func validate_spawn_references() -> bool:
 		)
 		return false
 
+	if customer_types.is_empty():
+		push_error(
+			"GameManager has no CustomerType resources assigned."
+		)
+		return false
+
+	var has_valid_customer_type: bool = false
+
+	for current_type: CustomerType in customer_types:
+		if (
+			current_type != null
+			and current_type.spawn_weight > 0.0
+		):
+			has_valid_customer_type = true
+			break
+
+	if !has_valid_customer_type:
+		push_error(
+			"GameManager has no CustomerType with a positive spawn weight."
+		)
+		return false
+
 	if customer_scene == null:
 		push_error(
 			"GameManager has no customer scene assigned."
@@ -184,21 +319,34 @@ func validate_spawn_references() -> bool:
 		)
 		return false
 
-	if customer_spawn_point == null:
+	if customer_door == null:
 		push_error(
-			"GameManager has no customer spawn point assigned."
-		)
-		return false
-
-	if customer_exit_point == null:
-		push_error(
-			"GameManager has no customer exit point assigned."
+			"GameManager has no CustomerDoor assigned."
 		)
 		return false
 
 	if navigation_region == null:
 		push_error(
 			"GameManager has no navigation region assigned."
+		)
+		return false
+
+	if tables.is_empty():
+		push_error(
+			"GameManager has no tables assigned."
+		)
+		return false
+
+	var has_valid_table: bool = false
+
+	for current_table: Table in tables:
+		if current_table != null:
+			has_valid_table = true
+			break
+
+	if !has_valid_table:
+		push_error(
+			"GameManager has no valid Table references assigned."
 		)
 		return false
 
@@ -217,10 +365,14 @@ func find_best_available_chair() -> Chair:
 			current_table.get_occupied_seat_count()
 		)
 
-		for chair: Chair in current_table.get_available_chairs():
-			var chair_score: float = calculate_chair_score(
-				chair,
-				occupied_count
+		for chair: Chair in (
+			current_table.get_available_chairs()
+		):
+			var chair_score: float = (
+				calculate_chair_score(
+					chair,
+					occupied_count
+				)
 			)
 
 			if chair_score < best_score:
@@ -239,7 +391,7 @@ func calculate_chair_score(
 	)
 
 	var travel_distance: float = (
-		customer_spawn_point.global_position.distance_to(
+		customer_door.get_inside_position().distance_to(
 			staging_position
 		)
 	)
@@ -259,7 +411,9 @@ func calculate_chair_score(
 	return score
 
 
-func find_customer_table(customer: Node) -> Table:
+func find_customer_table(
+	customer: Node
+) -> Table:
 	for current_table: Table in tables:
 		if current_table == null:
 			continue
@@ -270,14 +424,94 @@ func find_customer_table(customer: Node) -> Table:
 	return null
 
 
+func clear_customer_reservation(
+	customer: Node
+) -> void:
+	var customer_table: Table = (
+		find_customer_table(customer)
+	)
+
+	if customer_table != null:
+		customer_table.clear_customer(customer)
+
+
 func _on_customer_spawn_timer_timeout() -> void:
 	spawn_customer()
 	schedule_next_customer()
 
 
-func _on_customer_paid(amount: int) -> void:
+func _on_customer_paid(
+	amount: int
+) -> void:
 	add_money(amount)
 
+func configure_tables() -> void:
+	for current_table: Table in tables:
+		if current_table == null:
+			continue
+
+		for chair: Chair in current_table.get_chairs():
+			if chair == null:
+				continue
+
+			chair.configure(game_config)
+
+
+func connect_cleaning_signals() -> void:
+	for current_table: Table in tables:
+		if current_table == null:
+			continue
+
+		for chair: Chair in current_table.get_chairs():
+			if chair == null:
+				continue
+
+			if !chair.cleaning_cost_requested.is_connected(
+				_on_cleaning_cost_requested
+			):
+				chair.cleaning_cost_requested.connect(
+					_on_cleaning_cost_requested
+				)
+
+func _on_cleaning_cost_requested(
+	amount: int,
+	reason: String
+) -> void:
+	remove_money(
+		amount,
+		reason
+	)
+
+func remove_money(
+	amount: int,
+	reason: String = ""
+) -> void:
+	if amount <= 0:
+		return
+
+	money = maxi(
+		0,
+		money - amount
+	)
+
+	money_changed.emit(money)
+
+	if game_config.show_debug_messages:
+		if reason.is_empty():
+			print(
+				"Money reduced by £",
+				amount,
+				". Money: £",
+				money
+			)
+		else:
+			print(
+				reason,
+				" cost £",
+				amount,
+				". Money: £",
+				money
+			)
 
 func _on_customer_abandoned_seat(
 	customer: Node
@@ -286,25 +520,29 @@ func _on_customer_abandoned_seat(
 
 
 func _on_customer_finished(
-	_customer: Node
-) -> void:
-	pass
-
-
-func clear_customer_reservation(
 	customer: Node
 ) -> void:
-	var customer_table: Table = find_customer_table(
-		customer
-	)
+	active_customers.erase(customer)
+	clear_customer_reservation(customer)
 
-	if customer_table != null:
-		customer_table.clear_customer(customer)
+	if game_config.show_debug_messages:
+		print(
+			customer.name,
+			" finished. Active customers: ",
+			active_customers.size(),
+			"/",
+			game_config.maximum_active_customers
+		)
 
 
-func add_money(amount: int) -> void:
+func add_money(
+	amount: int
+) -> void:
 	money += amount
 	money_changed.emit(money)
 
 	if game_config.show_debug_messages:
-		print("Money: £", money)
+		print(
+			"Money: £",
+			money
+		)
