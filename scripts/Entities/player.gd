@@ -1,5 +1,15 @@
 extends CharacterBody2D
 
+## The player character.
+##
+## Carrying is delegated to the [ItemCarrier] component, which owns the single
+## carried [ItemSlot] and the carried sprite. The player script no longer stores
+## a carried drink of its own, so there is exactly one source of truth for what
+## is in the player's hands.
+##
+## The [InventoryComponent] is attached and ready but intentionally unused: no
+## gameplay puts items into it yet and there is no UI.
+
 
 @export_category("Movement")
 @export var movement_speed: float = 250.0
@@ -13,7 +23,6 @@ extends CharacterBody2D
 @export var default_camera_zoom: float = 1.0
 
 
-var carried_drink: DrinkDefinition = null
 var target_camera_zoom: float = 1.0
 
 
@@ -23,18 +32,20 @@ var target_camera_zoom: float = 1.0
 	$InteractionDetector
 )
 
-@onready var carried_item_sprite: Sprite2D = (
-	$CarriedItemSprite
-)
-
 @onready var action_runner: ActionRunner = (
 	$ActionRunner
 )
 
+@onready var item_carrier: ItemCarrier = (
+	$ItemCarrier
+)
+
+@onready var inventory: InventoryComponent = (
+	$InventoryComponent
+)
+
 
 func _ready() -> void:
-	update_carried_drink_visual()
-
 	target_camera_zoom = clampf(
 		default_camera_zoom,
 		minimum_camera_zoom,
@@ -140,47 +151,46 @@ func update_camera_zoom(
 	camera.zoom = Vector2.ONE * new_zoom
 
 
-func is_carrying_drink() -> bool:
-	return carried_drink != null
+# --- Carrying ----------------------------------------------------------------
+#
+# Interactables should ask for the carrier and move items with
+# ItemTransferService rather than reaching into the player's state.
+
+## The component that owns whatever is in the player's hands.
+func get_item_carrier() -> ItemCarrier:
+	return item_carrier
 
 
+## The player's personal inventory component.
+func get_inventory() -> InventoryComponent:
+	return inventory
+
+
+## The carried slot, ready to be passed to [ItemTransferService].
+func get_carried_slot() -> ItemSlot:
+	return item_carrier.get_slot()
+
+
+func is_carrying() -> bool:
+	return item_carrier.is_carrying()
+
+
+## An independent copy of the carried stack. Empty when the hands are free.
+func get_carried_stack() -> ItemStack:
+	return item_carrier.get_carried_stack()
+
+
+func get_carried_definition() -> ItemDefinition:
+	return item_carrier.get_carried_definition()
+
+
+## The carried item as a drink, or null when it is not a drink.
+##
+## Derived read-only convenience for drink-specific gameplay such as serving a
+## customer. It is not stored state: the carrier's slot remains the only source
+## of truth for what the player is holding.
 func get_carried_drink() -> DrinkDefinition:
-	return carried_drink
-
-
-func set_carried_drink(
-	drink: DrinkDefinition
-) -> void:
-	carried_drink = drink
-	update_carried_drink_visual()
-
-
-func clear_carried_drink() -> void:
-	carried_drink = null
-	update_carried_drink_visual()
-
-
-func update_carried_drink_visual() -> void:
-	if carried_drink == null:
-		carried_item_sprite.texture = null
-		carried_item_sprite.visible = false
-		return
-
-	if carried_drink.carried_texture == null:
-		push_warning(
-			carried_drink.display_name
-			+ " has no carried texture assigned."
-		)
-
-		carried_item_sprite.texture = null
-		carried_item_sprite.visible = false
-		return
-
-	carried_item_sprite.texture = (
-		carried_drink.carried_texture
-	)
-
-	carried_item_sprite.visible = true
+	return item_carrier.get_carried_definition() as DrinkDefinition
 
 
 func try_interact() -> void:
@@ -255,6 +265,7 @@ func _on_action_completed(
 		action.display_name
 	)
 
+
 func _unhandled_input(
 	event: InputEvent
 ) -> void:
@@ -270,6 +281,7 @@ func _unhandled_input(
 
 	if cancelled_successfully:
 		get_viewport().set_input_as_handled()
+
 
 func _on_action_cancelled(
 	action: ActionDefinition

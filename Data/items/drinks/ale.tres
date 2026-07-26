@@ -7,16 +7,17 @@
 
 [resource]
 script = ExtResource("1_i7n1g")
-order_icon_texture = ExtResource("2_kiewq")
-carried_texture = ExtResource("2_kiewq")
-full_container_texture = ExtResource("2_kiewq")
-empty_container_texture = ExtResource("3_85aeh")
-broken_container_texture = ExtResource("1_vfukt")
 item_id = &"ale"
 display_name = "Ale"
 description = "A mug of tavern ale."
-category = 0
+tags = Array[StringName]([&"prepared_drink", &"service_item"])
 inventory_icon = ExtResource("2_kiewq")
-maximum_stack_size = 12
+world_texture = ExtResource("2_kiewq")
+carried_texture = ExtResource("2_kiewq")
+maximum_stack_size = 1
+preferred_destination = 1
 base_sell_price = 7
+order_icon_texture = ExtResource("2_kiewq")
+empty_container_texture = ExtResource("3_85aeh")
+broken_container_texture = ExtResource("1_vfukt")
 metadata/_custom_type_script = "uid://bmwkoswb21je6"

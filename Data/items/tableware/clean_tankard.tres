@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" uid="uid://dhrer24xmcsff" path="res://systems/items/item_definition.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bhd5tthhkfc5x" path="res://assets/art/items/drinks/16x16_ale_empty.png" id="2_tex"]
+
+[resource]
+script = ExtResource("1_script")
+item_id = &"clean_tankard"
+display_name = "Clean Tankard"
+description = "A clean tankard ready to be filled."
+tags = Array[StringName]([&"tableware", &"clean_tableware", &"small_item"])
+inventory_icon = ExtResource("2_tex")
+world_texture = ExtResource("2_tex")
+carried_texture = ExtResource("2_tex")
+maximum_stack_size = 8
+preferred_destination = 0
+base_buy_price = 1
+base_sell_price = 1
+metadata/_custom_type_script = "uid://dhrer24xmcsff"

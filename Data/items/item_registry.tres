@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemRegistry" format=3]
+
+[ext_resource type="Script" path="res://systems/items/item_registry.gd" id="1_registry"]
+[ext_resource type="Script" uid="uid://dhrer24xmcsff" path="res://systems/items/item_definition.gd" id="2_itemdef"]
+[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="3_grog"]
+[ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="4_ale"]
+[ext_resource type="Resource" path="res://Data/items/tableware/clean_tankard.tres" id="5_clean_tankard"]
+[ext_resource type="Resource" path="res://Data/items/tableware/dirty_tankard.tres" id="6_dirty_tankard"]
+[ext_resource type="Resource" path="res://Data/items/waste/broken_glass.tres" id="7_broken_glass"]
+[ext_resource type="Resource" path="res://Data/items/tools/cleaning_rag.tres" id="8_cleaning_rag"]
+[ext_resource type="Resource" path="res://Data/items/stock/ale_keg.tres" id="9_ale_keg"]
+[ext_resource type="Resource" path="res://Data/items/stock/grog_barrel.tres" id="10_grog_barrel"]
+
+[resource]
+script = ExtResource("1_registry")
+definitions = Array[ExtResource("2_itemdef")]([ExtResource("3_grog"), ExtResource("4_ale"), ExtResource("5_clean_tankard"), ExtResource("6_dirty_tankard"), ExtResource("7_broken_glass"), ExtResource("8_cleaning_rag"), ExtResource("9_ale_keg"), ExtResource("10_grog_barrel")])

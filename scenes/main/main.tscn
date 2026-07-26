@@ -140,17 +140,17 @@ position = Vector2(1260, 360)
 shape = SubResource("RectangleShape2D_mel2l")
 
 [node name="BarCounter" parent="Environment" unique_id=2047538336 instance=ExtResource("2_iuonh")]
-position = Vector2(130, 176)
-scale = Vector2(1, 2.5)
+position = Vector2(120, 178)
+scale = Vector2(1.8, 2.5)
 
 [node name="table1" parent="Environment" unique_id=1719880889 instance=ExtResource("3_k2fmo")]
 position = Vector2(400, 300)
 
 [node name="Grog_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
-position = Vector2(236, 178)
+position = Vector2(450, 178)
 
 [node name="Ale_station" parent="Environment" unique_id=1835805780 instance=ExtResource("3_l3cfh")]
-position = Vector2(290, 178)
+position = Vector2(510, 178)
 served_drink = ExtResource("12_37hlw")
 
 [node name="Sprite2D" parent="Environment/Ale_station" index="0" unique_id=1803792753]
@@ -159,7 +159,7 @@ texture = ExtResource("12_p8abn")
 [node name="Entities" type="Node2D" parent="." unique_id=1694710147]
 
 [node name="Player" parent="Entities" unique_id=1068675683 instance=ExtResource("1_hyk8p")]
-position = Vector2(142, 98)
+position = Vector2(223, 359)
 
 [node name="Markers" type="Node2D" parent="." unique_id=1069500628]
 

@@ -39,7 +39,29 @@ Completed:
 - Domain-specific resources can contain generic resources.
 - `CleaningTask` contains an `ActionDefinition` rather than inheriting all action behaviour.
 - `Chair` contains a `CleanableComponent`.
-- `Player` contains an `ActionRunner`.
+- `Player` contains an `ActionRunner`, an `ItemCarrier` and an `InventoryComponent`.
+- `ItemSlot` contains an `ItemSlotRules` resource rather than hard-coding filters,
+  so one slot script serves hands, bar slots, crates and backpacks.
+
+### Data over enums
+
+- An enum is a hard-coded list, so adding a value always means editing a script.
+- `ItemDefinition.tags` is an `Array[StringName]` on a resource, so a brand-new
+  item group can be typed into the Inspector with no code change.
+- The old `ItemCategory` enum was removed for exactly this reason.
+
+### Avoiding item duplication and loss
+
+- Reference types are shared, so two slots holding the same `ItemStack` object
+  would silently duplicate items.
+- `ItemSlot` copies anything put in and copies anything handed out, so a stack
+  always has exactly one owner.
+- `ItemTransferService` validates the whole transaction before mutating either
+  side, and never empties the source before the destination is confirmed.
+- Signals connected with a lambda capture `self` by strong reference. A
+  `RefCounted` object owning a child that stores such a connection creates a
+  reference cycle that never frees. `ItemContainer` uses a bound method callable
+  instead.
 
 ### Managers and ownership
 
@@ -58,6 +80,9 @@ Completed:
 ## Current understanding checks
 
 - To change a drink's value, edit `Base Sell Price` on its `DrinkDefinition` resource.
+- To let a new kind of item into the backpack, edit `Rejected Tags` on the
+  player's `InventoryComponent`, not the inventory script.
+- To find out why a transfer failed, read the returned `ItemTransferResult`.
 - To change cleaning time, edit `Duration Seconds` on the linked `ActionDefinition`.
 - To change broken-glass probability/cost, edit the empty-glass `CleaningTask`.
 - To change a customer type's speed or patience, edit its `CustomerType` resource.
@@ -66,4 +91,8 @@ Completed:
 
 ## Next learning focus
 
-Create a generic interaction layer so chairs, drink stations, counters, storage and future workstations share one predictable contract without adding object-specific logic to the player.
+Connect the item system to real scene objects by building bar service slots, so
+a visible sprite is driven purely by an `ItemSlot` change signal. Then create a
+generic interaction layer so chairs, drink stations, counters, storage and future
+workstations share one predictable contract without adding object-specific logic
+to the player.

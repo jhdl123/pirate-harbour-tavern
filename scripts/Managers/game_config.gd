@@ -39,6 +39,10 @@ extends Resource
 
 @export_category("Testing")
 @export var show_debug_messages: bool = true
+
+## Prints item transfer outcomes. Off by default: item transfers happen often
+## enough that logging them would drown normal gameplay output.
+@export var show_item_debug_messages: bool = false
 @export var disable_patience: bool = false
 @export var disable_broken_glass: bool = false
 @export var ignore_customer_limit: bool = false

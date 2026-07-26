@@ -860,7 +860,7 @@ func interact(
 		return
 
 	if not player.has_method(
-		"get_carried_drink"
+		"get_item_carrier"
 	):
 		push_error(
 			name
@@ -869,13 +869,27 @@ func interact(
 
 		return
 
-	var player_drink: DrinkDefinition = (
-		player.get_carried_drink()
+	var carrier: ItemCarrier = player.get_item_carrier()
+
+	if carrier == null:
+		push_error(
+			name
+			+ " could not access the player's ItemCarrier."
+		)
+
+		return
+
+	var carried_definition: ItemDefinition = (
+		carrier.get_carried_definition()
 	)
 
-	if player_drink != ordered_drink:
+	# Compare stable item ids, never display names.
+	if (
+		carried_definition == null
+		or carried_definition.item_id != ordered_drink.item_id
+	):
 		if should_show_debug_messages():
-			if player_drink == null:
+			if carried_definition == null:
 				print(
 					name,
 					" wants ",
@@ -888,7 +902,7 @@ func interact(
 					" wants ",
 					ordered_drink.display_name,
 					", not ",
-					player_drink.display_name,
+					carried_definition.display_name,
 					"."
 				)
 
@@ -897,7 +911,9 @@ func interact(
 	patience_timer.stop()
 	patience_bar.hide_bar()
 
-	player.clear_carried_drink()
+	# The drink leaves the item system here: the customer consumes it.
+	# Future work: hand it to a chair service slot instead of clearing it.
+	carrier.clear_carried_item()
 
 	if reserved_chair != null:
 		reserved_chair.begin_use(

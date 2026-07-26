@@ -36,12 +36,15 @@ The project prioritises systems that are:
 - easy to balance without changing scripts;
 - readable enough to support learning and debugging.
 
-Examples include `DrinkDefinition`, `CustomerType`, `CleaningTask`, `ActionDefinition`, `GameConfig` and `EconomyManager`.
+Examples include `ItemDefinition`, `DrinkDefinition`, `ItemContainer`, `CustomerType`, `CleaningTask`, `ActionDefinition`, `GameConfig` and `EconomyManager`.
 
 ## Core architecture
 
 ```text
-DrinkDefinition → drink price, timing, visuals and break multiplier
+ItemDefinition  → item identity, tags, stack size, textures and prices
+DrinkDefinition → an ItemDefinition plus drink timing and break multiplier
+ItemContainer   → reusable slots for hands, backpacks, storage and stations
+ItemTransferService → the one place items move between slots
 CustomerType    → spawning, speed, patience and drink preferences
 CleaningTask    → cleaning state, complication chance, cost and next task
 ActionDefinition→ duration, movement blocking and cancellation
@@ -50,7 +53,8 @@ EconomyManager  → owns all money changes
 GameConfig      → global spawning, navigation, door and test settings
 ```
 
-See [Architecture](docs/ARCHITECTURE.md) for the current system flow.
+See [Architecture](docs/ARCHITECTURE.md) for the current system flow and
+[Item System](docs/ITEM_SYSTEM.md) for items, inventory and transfers.
 
 ## Changing game balance
 
@@ -71,8 +75,9 @@ Most common values can be edited without touching code. See [Configuration and B
 Data/                         Item and action resource instances
 resources/                    Customer, cleaning and global config resources
 scenes/                       Godot scenes
-scripts/                      Gameplay scripts and domain resources
+scripts/                      Gameplay scripts, components and domain resources
 systems/                      Reusable action, economy, item, inventory and time systems
+tests/                        Technical validation scenes, not part of gameplay
 docs/                         Project documentation
 assets/                       Art and other game assets
 ```
@@ -96,6 +101,12 @@ Completed foundations include:
 - cleaning tasks and broken-glass complications;
 - generic timed actions with movement blocking and cancellation;
 - centralised economy and HUD updates;
-- configurable navigation and debugging values.
+- configurable navigation and debugging values;
+- a generic item, slot, container and transfer foundation;
+- a reusable carrier component replacing drink-specific carrying;
+- a 12-slot personal inventory component, ready but not yet used.
 
-The next planned foundation is a more formal generic interaction layer, followed by a usable bar counter for placing and swapping carried drinks.
+The next planned foundation is a usable bar counter with service slots for
+placing and swapping carried items, followed by chair service slots, storage
+containers and drink stock. See [Item System](docs/ITEM_SYSTEM.md) for how those
+should connect.

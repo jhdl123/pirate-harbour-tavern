@@ -3,6 +3,8 @@
 [ext_resource type="Script" uid="uid://bhy0bke7neken" path="res://scripts/Entities/player.gd" id="1_dovo2"]
 [ext_resource type="Texture2D" uid="uid://kt0mqj58mwym" path="res://assets/art/characters/32x32_player.png" id="2_dovo2"]
 [ext_resource type="Script" uid="uid://c2m0xv7m5pi6e" path="res://systems/actions/action_runner.gd" id="3_gmlin"]
+[ext_resource type="Script" path="res://scripts/Components/item_carrier.gd" id="4_carrier"]
+[ext_resource type="Script" path="res://scripts/Components/inventory_component.gd" id="5_invent"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]
 custom_solver_bias = 1.0
@@ -38,3 +40,12 @@ position_smoothing_speed = 6.0
 
 [node name="ActionRunner" type="Node" parent="." unique_id=1324444992]
 script = ExtResource("3_gmlin")
+
+[node name="ItemCarrier" type="Node" parent="." unique_id=1324444993 node_paths=PackedStringArray("carried_sprite")]
+script = ExtResource("4_carrier")
+carried_sprite = NodePath("../CarriedItemSprite")
+
+[node name="InventoryComponent" type="Node" parent="." unique_id=1324444994]
+script = ExtResource("5_invent")
+container_id = &"player_backpack"
+slot_count = 12

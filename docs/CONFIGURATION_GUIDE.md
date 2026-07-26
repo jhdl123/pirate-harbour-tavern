@@ -102,24 +102,53 @@ Fields:
 
 ```text
 Visuals → Inventory Icon
+Visuals → World Texture
+Visuals → Carried Texture
 Drink Visuals → Order Icon Texture
-Drink Visuals → Carried Texture
-Drink Visuals → Full Container Texture
 Drink Visuals → Empty Container Texture
 Drink Visuals → Broken Container Texture
 ```
 
 Keep these assigned when duplicating a drink resource.
 
+`World Texture` and `Carried Texture` now live on `ItemDefinition` rather than
+`DrinkDefinition`, because every item needs them. `World Texture` replaced the
+old `Full Container Texture`.
+
+### Drink classification
+
+Fields:
+
+```text
+Classification → Tags
+Inventory → Maximum Stack Size
+Inventory → Preferred Destination
+```
+
+Prepared drinks must be tagged `prepared_drink` and `service_item`, use a
+maximum stack size of 1, and set `Preferred Destination` to `CARRIER`. The
+drinks station warns if a served drink is missing the `prepared_drink` tag.
+
+A future serving tray carries several drinks through several visible slots, not
+by stacking them into one slot, so the stack size stays at 1.
+
 ### Adding a new drink
+
+Full step-by-step instructions, including tags and the item registry, are in
+[Item System — How to add a drink](ITEM_SYSTEM.md#how-to-add-a-drink).
+
+In short:
 
 1. Duplicate an existing drink resource in `Data/items/drinks/`.
 2. Give it a unique `Item Id` that will remain stable.
 3. Change its display name, description, price, timing and textures.
-4. Open each applicable `CustomerType` resource.
-5. Add the drink to `Available Drinks`.
-6. Optionally assign it as `Preferred Drink` and set the preference chance.
-7. Add or configure a drinks station that supplies the new resource.
+4. Set `Tags` to `prepared_drink` and `service_item`, stack size 1 and
+   `Preferred Destination` to `CARRIER`.
+5. Open each applicable `CustomerType` resource.
+6. Add the drink to `Available Drinks`.
+7. Optionally assign it as `Preferred Drink` and set the preference chance.
+8. Add or configure a drinks station that supplies the new resource.
+9. Add the resource to `Data/items/item_registry.tres`.
 
 ---
 
@@ -508,3 +537,58 @@ When the game feels too rushed or too slow, adjust in this order:
 7. Break chance and break cost.
 
 This order helps avoid using higher rewards to disguise a service loop that is fundamentally too fast or congested.
+
+---
+
+## Items, inventory and containers
+
+Item resources live in:
+
+```text
+Data/items/
+    drinks/     grog.tres, ale.tres
+    tableware/  clean_tankard.tres, dirty_tankard.tres
+    waste/      broken_glass.tres
+    tools/      cleaning_rag.tres
+    stock/      ale_keg.tres, grog_barrel.tres
+    item_registry.tres
+```
+
+Only the drinks are used by gameplay today. The rest are foundations for
+storage, cleaning and stock, and are deliberately not wired into the tavern yet.
+
+Every item exposes the same configurable fields — id, tags, stack size, prices,
+textures and preferred destination. See
+[Item System — How to add an item](ITEM_SYSTEM.md#how-to-add-an-item).
+
+### Player carrying and inventory
+
+Configured on `scenes/player/player.tscn`:
+
+```text
+Player/ItemCarrier
+    Visuals → Carried Sprite        (../CarriedItemSprite)
+    Slot Rules → Carry Capacity     1
+    Slot Rules → Accepted Tags      empty (hands accept anything)
+    Slot Rules → Rejected Tags      empty
+
+Player/InventoryComponent
+    Layout → Container Id           player_backpack
+    Layout → Slot Count             12
+    Rules → Default Slot Capacity   99
+    Rules → Rejected Tags           prepared_drink, bulky_item
+```
+
+There is no weight system. Capacity is slot count plus each item's own maximum
+stack size. The inventory has no UI yet and nothing puts items into it.
+
+### Item debug output
+
+```text
+GameConfig → Testing → Show Item Debug Messages
+```
+
+Off by default. Item transfers happen often enough that logging them would
+drown normal gameplay output. The drinks station has its own
+`Show Transfer Messages` export for the same reason.
+

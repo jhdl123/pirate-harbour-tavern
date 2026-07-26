@@ -420,10 +420,10 @@ func _update_drink_visual() -> void:
 				drink_sprite.visible = false
 				return
 
-			if active_drink.full_container_texture == null:
+			if active_drink.world_texture == null:
 				push_warning(
 					active_drink.display_name
-					+ " has no full container texture assigned."
+					+ " has no world texture assigned."
 				)
 
 				drink_sprite.texture = null
@@ -431,7 +431,7 @@ func _update_drink_visual() -> void:
 				return
 
 			drink_sprite.texture = (
-				active_drink.full_container_texture
+				active_drink.world_texture
 			)
 
 			drink_sprite.visible = true
