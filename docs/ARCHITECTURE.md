@@ -65,6 +65,96 @@ mutating either side. Items are never duplicated, lost or silently overwritten.
 Full detail, including how to add items and how future bar slots, trays and
 storage should connect, is in [Item System](ITEM_SYSTEM.md).
 
+## Interaction
+
+```text
+Player
+├── InteractionDetector   Area2D   "who is within reach"
+└── InteractionSelector   Node     "which one do we mean"
+        ├── scoring: distance + priority + stickiness
+        ├── TAB cycling with a manual hold
+        ├── highlight lifecycle
+        └── prompt signals
+                │
+                └── InteractionSelectionRules (Resource)
+
+Interactive object
+├── Interactable          Area2D   the object's whole public surface
+├── InteractionHighlight  Node     reusable default highlight
+└── root node             the provider: all gameplay lives here
+
+UI (CanvasLayer)
+└── InteractionPrompt              the ONE prompt in the game
+```
+
+The framework detects, selects, highlights, prompts and executes. It holds no
+gameplay state and knows no object types. Objects answer three questions —
+"am I worth offering", "what could this actor do", "do this thing" — and
+perform the work with the systems they already own.
+
+```text
+E pressed
+    └── player.try_interact()
+            └── selector.perform_primary()
+                    └── interactable.perform(request)
+                            └── BarCounter.perform_interaction()
+                                    └── ItemTransferService.transfer(...)
+```
+
+The player knows nothing about bars, stations, customers or storage. The
+selector moves an opaque `action.id` and `action.data` from the object that
+offered them back to that same object.
+
+Bar Counter and Drinks Station implement the full protocol. Chair and Customer
+run on a legacy fallback that gives them highlighting and prompts without any
+change to their scripts.
+
+Full detail, including how to create a new interactable and how future
+secondary actions and mouse interaction plug in, is in
+[Interaction System](INTERACTION_SYSTEM.md).
+
+## Navigation and reservation
+
+```text
+Actor (CharacterBody2D)
+├── NavigationAgent2D
+├── ActorMovement      owns velocity and the ONE move_and_slide()
+│       └── ActorMovementProfile (Resource)
+└── ActorNavigation    path, steering, arrival, avoidance, recovery
+        └── ActorNavigationProfile (Resource)
+
+NavigationDestination  value object: "go here, like this"
+    └── optional Reservable, so losing a claim invalidates the journey
+
+NavigationService      static: map readiness, projection, reachability, cost
+
+Reservable             Node: FREE -> RESERVED -> OCCUPIED, with expiry
+ReservationService     static: search and claim across a set
+ApproachPoint          Marker2D: "stand here to use me", reservable
+```
+
+An actor asks for a destination and is told when it arrives:
+
+```text
+customer.gd  ──move_to──>  ActorNavigation  ──request_velocity──>  ActorMovement
+     ^                            │
+     └────destination_reached─────┘
+          destination_failed
+```
+
+The customer state machine is unchanged - enter, stage, sit, order, drink, pay,
+leave - but it no longer measures distances, manages an agent, or writes
+velocity. Staff, NPCs and animals become the same two components with different
+profile resources.
+
+Seat state moved off `Chair` and onto the generic `Reservable`, so queue slots,
+station approach points and future workstations claim themselves with the same
+two-stage rules and the same expiry safety net. `Chair` keeps its whole public
+API, so `Table`, `GameManager` and `Customer` are untouched.
+
+Full detail, including why each old behaviour was wrong and how future staff
+reuse the system unchanged, is in [Navigation System](NAVIGATION_SYSTEM.md).
+
 ## Cleaning and actions
 
 ```text
@@ -87,6 +177,44 @@ Player
 ```
 
 The chair owns the cleaning state. The player owns performance of the timed action. Cleaning does not use a chair-specific timer.
+
+## World time and simulation
+
+```text
+Simulation (autoload)          the authoritative "is the game running"
+    ├── SimulationState        enum + stable ids
+    ├── SimulationStateRules   Resource: what each state permits
+    └── state stack            push/pop, so dialogue and menus restore cleanly
+
+WorldTime (autoload)           the one authoritative clock
+    ├── WorldClock             the model. Plain object, no node, no signals.
+    ├── TimeScheduler          "call me at this world time"
+    ├── GameTimeStamp          a moment, as a comparable value
+    ├── GameTimeConfig         calendar, rate, speeds, formatting
+    └── TimeFormatter          moments and durations into text
+```
+
+`Simulation` knows nothing about time; `WorldTime` asks it for permission each
+frame. That one-way dependency is what lets fast-forward, dialogue and cutscenes
+arrive later without either framework learning the other's internals.
+
+The distinction that matters most:
+
+```text
+signals     react to the moment the world is in now; a large skip
+            collapses them, so a listener may miss one
+scheduler   never misses; every booking inside a skipped window fires,
+            in order, with the clock standing at the booked moment
+```
+
+A HUD reads signals. A wage payment, a delivery or a production run books with
+the scheduler. No gameplay system creates a `Timer` for world progression.
+
+Both frameworks serialise through `to_dictionary()` / `apply_dictionary()`, and
+simulation state is saved by stable string id rather than enum integer.
+
+Full detail, including how future systems subscribe and how save/load
+integrates, is in [Simulation System](SIMULATION_SYSTEM.md).
 
 ## Economy
 
@@ -142,6 +270,19 @@ This supports future save/load sessions and makes dependencies visible in the sc
 - UI observes systems through signals rather than owning gameplay data.
 - The player should not directly edit customer or economy state.
 - Interactable objects request actions through the player's `ActionRunner`.
+- Anything representing world progression books with `WorldTime`, never a `Timer`.
+- No system decides for itself whether it should update; it asks `Simulation`.
+- Nothing stores its own day/hour/minute; it stores a `GameTimeStamp` or asks.
+- Time is never formatted outside `TimeFormatter`.
+- Only `ActorMovement` writes an AI actor's velocity or calls `move_and_slide()`.
+- Navigation is never toggled off to solve a movement problem; use `park()`
+  and the final-approach radius instead.
+- Anything claimable by one actor uses `Reservable`, never its own state enum.
+- Actors ask for a `NavigationDestination`; they do not measure their own arrival.
+- The player never knows what it is interacting with; it asks the `InteractionSelector` to run whatever the selected object offered.
+- Interaction determines *what is selected* and *what was requested*. The object performs the work with its own existing systems.
+- There is exactly one interaction prompt, on the HUD. World objects never carry their own labels.
+- An object never searches for the player; the actor arrives in the `InteractionRequest`.
 - New balance values should normally be exported to resources/configuration.
 - Stable IDs should not be renamed after save data begins using them.
 - Items move only through `ItemTransferService`, never by editing a slot directly.

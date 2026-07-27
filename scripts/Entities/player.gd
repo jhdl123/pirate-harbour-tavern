@@ -7,6 +7,12 @@ extends CharacterBody2D
 ## a carried drink of its own, so there is exactly one source of truth for what
 ## is in the player's hands.
 ##
+## Interaction is delegated to the [InteractionSelector] component, which owns
+## target selection, highlighting and prompts. The player script knows nothing
+## about bars, drink stations, customers or storage: it turns key presses into
+## "run the primary action" and "cycle target", and the selector hands those to
+## whichever object is selected.
+##
 ## The [InventoryComponent] is attached and ready but intentionally unused: no
 ## gameplay puts items into it yet and there is no UI.
 
@@ -23,13 +29,26 @@ extends CharacterBody2D
 @export var default_camera_zoom: float = 1.0
 
 
+@export_category("Interaction Input")
+
+## Input action that runs the selected object's primary action.
+@export var primary_interaction_action: StringName = &"player_interact"
+
+## Input action that moves the selection to the next object in range.
+@export var cycle_target_action: StringName = &"player_cycle_target"
+
+
 var target_camera_zoom: float = 1.0
 
 
 @onready var camera: Camera2D = $Camera2D
 
-@onready var interaction_detector: Area2D = (
+@onready var interaction_detector: InteractionDetector = (
 	$InteractionDetector
+)
+
+@onready var interaction_selector: InteractionSelector = (
+	$InteractionSelector
 )
 
 @onready var action_runner: ActionRunner = (
@@ -86,6 +105,14 @@ func _ready() -> void:
 func _physics_process(
 	_delta: float
 ) -> void:
+	# Pausing freezes the player along with everything else. Time *speed*
+	# deliberately does not touch them: the world runs faster, the player walks
+	# at a constant real pace, so serving stays precise during fast-forward.
+	if not Simulation.accepts_input():
+		velocity = Vector2.ZERO
+		move_and_slide()
+		return
+
 	if action_runner.is_movement_blocked():
 		velocity = Vector2.ZERO
 		move_and_slide()
@@ -108,10 +135,23 @@ func _process(
 	handle_camera_zoom_input()
 	update_camera_zoom(delta)
 
+	if not Simulation.accepts_input():
+		return
+
+	# Selection keeps running while an action plays out, so the highlight and
+	# prompt stay on screen, but the keys are ignored until the actor is free.
+	if action_runner.is_running:
+		return
+
 	if Input.is_action_just_pressed(
-		"player_interact"
+		primary_interaction_action
 	):
 		try_interact()
+
+	if Input.is_action_just_pressed(
+		cycle_target_action
+	):
+		cycle_interaction_target()
 
 
 func handle_camera_zoom_input() -> void:
@@ -193,28 +233,36 @@ func get_carried_drink() -> DrinkDefinition:
 	return item_carrier.get_carried_definition() as DrinkDefinition
 
 
-func try_interact() -> void:
+# --- Interaction -------------------------------------------------------------
+#
+# The player deliberately has no knowledge of what it is interacting with. It
+# asks the selector to run whatever the selected object offered, and the object
+# performs that action using the item, cleaning and serving systems it already
+# owns.
+
+## Runs the primary action on the currently selected interactable.
+func try_interact() -> bool:
 	if action_runner.is_running:
-		return
+		return false
 
-	var nearby_areas: Array[Area2D] = (
-		interaction_detector.get_overlapping_areas()
-	)
+	return interaction_selector.perform_primary()
 
-	for area: Area2D in nearby_areas:
-		if not area.is_in_group("interactable"):
-			continue
 
-		var interactable_object: Node = area.get_parent()
+## Moves the selection to the next interactable in range.
+func cycle_interaction_target() -> bool:
+	return interaction_selector.cycle_next()
 
-		if not interactable_object.has_method(
-			"interact"
-		):
-			continue
 
-		interactable_object.interact(self)
-		return
+## The interaction component, for UI and debug tools.
+func get_interaction_selector() -> InteractionSelector:
+	return interaction_selector
 
+
+func get_interaction_detector() -> InteractionDetector:
+	return interaction_detector
+
+
+# --- Timed actions -----------------------------------------------------------
 
 func start_action(
 	action: ActionDefinition

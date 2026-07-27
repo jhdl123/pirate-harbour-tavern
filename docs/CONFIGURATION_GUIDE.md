@@ -592,3 +592,22 @@ Off by default. Item transfers happen often enough that logging them would
 drown normal gameplay output. The drinks station has its own
 `Show Transfer Messages` export for the same reason.
 
+## World time durations
+
+Every gameplay duration is measured in **world minutes**, not real seconds. At
+the default rate one world minute is one real second, so the numbers read the
+same as before while now pausing, scaling and skipping correctly.
+
+| Value | Where |
+|---|---|
+| Order delay | `CustomerType.order_delay_minutes` |
+| Patience | `CustomerType.patience_duration_minutes` |
+| Drinking time | `DrinkDefinition.drink_duration_minutes` |
+| Spawn interval | `GameConfig.minimum/maximum_spawn_delay_minutes` |
+| Cleaning | `ActionDefinition.duration_seconds`, run through world time |
+
+To change how fast the whole game feels, edit `game_minutes_per_real_second` in
+`Data/time/default_time_config.tres`. Doubling it halves every duration above at
+once, with no other file touched.
+
+See [Simulation System](SIMULATION_SYSTEM.md).

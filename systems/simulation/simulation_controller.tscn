@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://systems/simulation/simulation_controller.gd" id="1_simctrl"]
+[ext_resource type="Resource" path="res://Data/simulation/default_state_rules.tres" id="2_simrules"]
+
+[node name="Simulation" type="Node"]
+script = ExtResource("1_simctrl")
+state_rules = ExtResource("2_simrules")
+initial_state = 2

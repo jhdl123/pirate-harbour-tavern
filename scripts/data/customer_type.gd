@@ -21,8 +21,17 @@ var spawn_weight: float = 1.0
 
 @export_category("Service")
 
-@export var order_delay: float = 2.0
-@export var patience_duration: float = 15.0
+## World minutes between sitting down and placing an order.
+##
+## World time, not real seconds: at the default rate one game minute is one
+## real second, so these numbers feel identical to the old ones at normal speed
+## while now pausing, scaling and skipping correctly.
+@export_range(0, 600, 1)
+var order_delay_minutes: int = 2
+
+## World minutes a customer will wait to be served before leaving.
+@export_range(0, 600, 1)
+var patience_duration_minutes: int = 15
 
 
 @export_category("Drink Preferences")

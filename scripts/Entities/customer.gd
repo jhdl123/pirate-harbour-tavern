@@ -45,10 +45,31 @@ enum State {
 
 @onready var customer_sprite: Sprite2D = $Sprite2D
 @onready var order_icon: Sprite2D = $OrderIcon
-@onready var order_timer: Timer = $OrderTimer
-@onready var drink_timer: Timer = $DrinkTimer
-@onready var patience_timer: Timer = $PatienceTimer
+## Bookings with WorldTime, replacing three real-time Timer nodes.
+##
+## A Timer keeps counting while the game is paused, ignores time speed, cannot
+## be skipped and cannot be saved. A booking does all four correctly, which is
+## the whole reason the scheduler exists.
+var _order_event: ScheduledTimeEvent = null
+var _drink_event: ScheduledTimeEvent = null
+var _patience_event: ScheduledTimeEvent = null
+
+## World minute the current patience window ends, for the bar.
+var _patience_end_minutes: float = 0.0
+var _patience_total_minutes: int = 0
+
+var _order_delay_minutes: int = 2
+var _patience_duration_minutes: int = 15
+var _drink_duration_minutes: int = 8
 @onready var patience_bar: PatienceBar = $PatienceBar
+
+@onready var actor_movement: ActorMovement = (
+	$ActorMovement
+)
+
+@onready var actor_navigation: ActorNavigation = (
+	$ActorNavigation
+)
 
 
 var current_state: State = State.ENTERING
@@ -57,21 +78,13 @@ var reserved_chair: Chair
 var entrance_inside_position: Vector2
 var entrance_outside_position: Vector2
 
-var active_target_position: Vector2
-var requested_target_position: Vector2
-
-var has_navigation_target: bool = false
-var navigation_request_id: int = 0
-
-var stuck_elapsed: float = 0.0
-var stuck_check_position: Vector2
-var consecutive_stuck_checks: int = 0
-var path_refresh_count: int = 0
 
 var game_config: GameConfig
 var ordered_drink: DrinkDefinition
 var customer_type: CustomerType
 var payment_multiplier: float = 1.0
+
+var _profiles_are_private: bool = false
 
 
 func configure(
@@ -130,6 +143,8 @@ func apply_game_config() -> void:
 		game_config.walking_avoidance_priority
 	)
 
+	_apply_tuning_to_profiles()
+
 
 func apply_customer_type() -> void:
 	movement_speed = customer_type.movement_speed
@@ -138,13 +153,8 @@ func apply_customer_type() -> void:
 		customer_type.seat_movement_speed
 	)
 
-	order_timer.wait_time = (
-		customer_type.order_delay
-	)
-
-	patience_timer.wait_time = (
-		customer_type.patience_duration
-	)
+	_order_delay_minutes = customer_type.order_delay_minutes
+	_patience_duration_minutes = customer_type.patience_duration_minutes
 
 	payment_multiplier = (
 		customer_type.payment_multiplier
@@ -160,7 +170,68 @@ func apply_customer_type() -> void:
 			+ " has no customer texture assigned."
 		)
 
-	navigation_agent.max_speed = movement_speed
+	_apply_tuning_to_profiles()
+
+
+## Copies the shared navigation resources so this actor owns its own tuning.
+##
+## Profiles are Resources, so without this every customer would be writing its
+## personal speed onto the one asset the whole tavern shares. Idempotent: safe
+## to call again if an actor is reconfigured.
+func _create_private_profiles() -> void:
+	if _profiles_are_private:
+		return
+
+	if actor_movement != null and actor_movement.profile != null:
+		actor_movement.profile = actor_movement.profile.duplicate()
+
+	if actor_navigation != null and actor_navigation.profile != null:
+		actor_navigation.profile = actor_navigation.profile.duplicate()
+
+	_profiles_are_private = true
+
+
+## Pushes this customer's exported and configured values onto its profiles.
+##
+## This is the seam between the old per-customer exports plus [GameConfig] and
+## the new profile resources. Anything a future actor type wants to vary lives
+## in the profile; this method simply feeds it.
+func _apply_tuning_to_profiles() -> void:
+	if actor_movement == null or actor_navigation == null:
+		return
+
+	_create_private_profiles()
+
+	if actor_movement.profile != null:
+		actor_movement.profile.maximum_speed = movement_speed
+		actor_movement.profile.careful_speed = seat_movement_speed
+
+	if actor_navigation.profile != null:
+		actor_navigation.profile.avoidance_radius = (
+			walking_avoidance_radius
+		)
+
+		actor_navigation.profile.avoidance_priority = (
+			walking_avoidance_priority
+		)
+
+		actor_navigation.profile.stuck_check_interval = (
+			stuck_check_interval
+		)
+
+		actor_navigation.profile.stuck_minimum_movement = (
+			minimum_stuck_movement
+		)
+
+		actor_navigation.profile.stuck_checks_before_recovery = (
+			maximum_stuck_checks
+		)
+
+		actor_navigation.profile.maximum_recovery_attempts = (
+			maxi(maximum_path_refreshes, 1)
+		)
+
+	actor_navigation.set_profile(actor_navigation.profile)
 
 
 func _ready() -> void:
@@ -169,36 +240,21 @@ func _ready() -> void:
 	order_icon.visible = false
 	patience_bar.hide_bar()
 
-	if not order_timer.timeout.is_connected(
-		_on_order_timer_timeout
+	_apply_tuning_to_profiles()
+
+	if not actor_navigation.destination_reached.is_connected(
+		_on_destination_reached
 	):
-		order_timer.timeout.connect(
-			_on_order_timer_timeout
+		actor_navigation.destination_reached.connect(
+			_on_destination_reached
 		)
 
-	if not drink_timer.timeout.is_connected(
-		_on_drink_timer_timeout
+	if not actor_navigation.destination_failed.is_connected(
+		_on_destination_failed
 	):
-		drink_timer.timeout.connect(
-			_on_drink_timer_timeout
+		actor_navigation.destination_failed.connect(
+			_on_destination_failed
 		)
-
-	if not patience_timer.timeout.is_connected(
-		_on_patience_timer_timeout
-	):
-		patience_timer.timeout.connect(
-			_on_patience_timer_timeout
-		)
-
-	if not navigation_agent.velocity_computed.is_connected(
-		_on_navigation_agent_velocity_computed
-	):
-		navigation_agent.velocity_computed.connect(
-			_on_navigation_agent_velocity_computed
-		)
-
-	configure_walking_avoidance()
-	stuck_check_position = global_position
 
 
 func _process(
@@ -208,32 +264,12 @@ func _process(
 
 
 func _physics_process(
-	delta: float
+	_delta: float
 ) -> void:
-	match current_state:
-		State.ENTERING:
-			process_navigation(delta)
-
-		State.WALKING_TO_STAGING:
-			process_navigation(delta)
-
-		State.MOVING_TO_SEAT:
-			process_moving_to_seat(delta)
-
-		State.LEAVING_TO_DOOR:
-			process_navigation(delta)
-
-		State.EXITING:
-			process_exiting(delta)
-
-		State.WAITING_TO_ORDER:
-			stop_movement()
-
-		State.ORDERING:
-			stop_movement()
-
-		State.DRINKING:
-			stop_movement()
+	# Movement is owned by ActorNavigation and ActorMovement. The customer only
+	# decides *where* to go and what to do on arrival, which is the whole point
+	# of the split: this state machine works identically for a bartender.
+	pass
 
 
 func choose_order() -> void:
@@ -254,9 +290,7 @@ func choose_order() -> void:
 		ordered_drink.order_icon_texture
 	)
 
-	drink_timer.wait_time = (
-		ordered_drink.drink_duration_seconds
-	)
+	_drink_duration_minutes = ordered_drink.drink_duration_minutes
 
 
 func choose_drink_from_customer_type() -> DrinkDefinition:
@@ -329,10 +363,11 @@ func set_chair_target(
 
 	reserved_chair = chair
 	current_state = State.ENTERING
-	path_refresh_count = 0
 
-	prepare_navigation_target(
-		entrance_inside_position
+	_travel_to(
+		entrance_inside_position,
+		navigation_arrival_distance,
+		"tavern entrance"
 	)
 
 
@@ -344,154 +379,54 @@ func set_door_targets(
 	entrance_outside_position = outside_position
 
 
-func configure_walking_avoidance() -> void:
-	navigation_agent.avoidance_enabled = true
-	navigation_agent.radius = walking_avoidance_radius
-
-	navigation_agent.avoidance_priority = (
-		walking_avoidance_priority
-	)
-
-	navigation_agent.velocity = Vector2.ZERO
-
-
-func prepare_navigation_target(
-	new_target: Vector2
+## Sends this customer somewhere, through the shared navigation framework.
+##
+## Every journey the customer makes goes through here, so there is exactly one
+## place that knows how a destination is described.
+func _travel_to(
+	world_position: Vector2,
+	arrival_distance: float,
+	label: String
 ) -> void:
-	navigation_request_id += 1
+	actor_navigation.unpark()
 
-	var this_request_id: int = navigation_request_id
-
-	has_navigation_target = false
-	requested_target_position = new_target
-
-	stop_movement()
-	reset_stuck_detection()
-	configure_walking_avoidance()
-
-	while (
-		is_inside_tree()
-		and NavigationServer2D.map_get_iteration_id(
-			navigation_agent.get_navigation_map()
-		) == 0
-	):
-		await get_tree().physics_frame
-
-	if not is_inside_tree():
-		return
-
-	if this_request_id != navigation_request_id:
-		return
-
-	var navigation_map: RID = (
-		navigation_agent.get_navigation_map()
-	)
-
-	active_target_position = (
-		NavigationServer2D.map_get_closest_point(
-			navigation_map,
-			requested_target_position
+	actor_navigation.move_to(
+		NavigationDestination.to_position(
+			world_position,
+			arrival_distance,
+			label
 		)
 	)
 
-	var projection_distance: float = (
-		requested_target_position.distance_to(
-			active_target_position
-		)
-	)
 
-	if projection_distance > 12.0:
-		push_warning(
-			name
-			+ " target was projected "
-			+ str(projection_distance)
-			+ " pixels onto the navigation mesh."
-		)
-
-	navigation_agent.target_position = (
-		active_target_position
-	)
-
-	await get_tree().physics_frame
-
-	if not is_inside_tree():
-		return
-
-	if this_request_id != navigation_request_id:
-		return
-
-	has_navigation_target = true
-
-	if not navigation_agent.is_target_reachable():
-		handle_failed_path()
-
-
-func process_navigation(
-	delta: float
+## Sends this customer to a spot it must reach precisely, slowly.
+##
+## The seat, and later any workstation position that has to be stood on exactly.
+func _travel_to_exactly(
+	world_position: Vector2,
+	arrival_distance: float,
+	speed_scale: float,
+	label: String
 ) -> void:
-	if not has_navigation_target:
-		stop_movement()
-		return
+	actor_navigation.unpark()
 
-	if navigation_agent.is_navigation_finished():
-		if has_reached_navigation_target():
-			handle_navigation_arrival()
-		else:
-			handle_failed_path()
-
-		return
-
-	var next_path_position: Vector2 = (
-		navigation_agent.get_next_path_position()
-	)
-
-	var movement_direction: Vector2 = (
-		global_position.direction_to(
-			next_path_position
+	actor_navigation.move_to(
+		NavigationDestination.to_exact_position(
+			world_position,
+			arrival_distance,
+			speed_scale,
+			label
 		)
 	)
 
-	var desired_velocity: Vector2 = (
-		movement_direction * movement_speed
-	)
 
-	navigation_agent.velocity = desired_velocity
-
-	update_stuck_detection(delta)
-
-
-func _on_navigation_agent_velocity_computed(
-	safe_velocity: Vector2
+## The navigation framework reports that this customer arrived.
+##
+## Replaces the old per-state arrival checks: the customer no longer measures
+## distances, it is simply told.
+func _on_destination_reached(
+	_destination: NavigationDestination
 ) -> void:
-	if (
-		current_state != State.ENTERING
-		and current_state != State.WALKING_TO_STAGING
-		and current_state != State.LEAVING_TO_DOOR
-	):
-		return
-
-	velocity = safe_velocity
-	move_and_slide()
-
-
-func has_reached_navigation_target() -> bool:
-	if not has_navigation_target:
-		return false
-
-	return (
-		global_position.distance_to(
-			active_target_position
-		)
-		<= navigation_arrival_distance
-	)
-
-
-func handle_navigation_arrival() -> void:
-	has_navigation_target = false
-	stop_movement()
-	reset_stuck_detection()
-	path_refresh_count = 0
-
 	match current_state:
 		State.ENTERING:
 			begin_walking_to_staging()
@@ -499,11 +434,40 @@ func handle_navigation_arrival() -> void:
 		State.WALKING_TO_STAGING:
 			begin_moving_to_seat()
 
+		State.MOVING_TO_SEAT:
+			arrive_at_seat()
+
 		State.LEAVING_TO_DOOR:
 			begin_exiting()
 
 		State.EXITING:
 			finish_customer()
+
+
+## The navigation framework gave up on the current destination.
+##
+## By the time this fires the actor has already tried sidestepping and
+## re-planning, so this really is the end of the road for that destination.
+func _on_destination_failed(
+	destination: NavigationDestination,
+	reason: StringName
+) -> void:
+	if should_show_debug_messages():
+		print(
+			name,
+			" could not reach ",
+			"its destination" if destination == null else destination.get_label(),
+			" (",
+			reason,
+			")."
+		)
+
+	if current_state == State.EXITING:
+		# Already outside and on the way out; there is nothing left to salvage.
+		finish_customer()
+		return
+
+	handle_invalid_destination()
 
 
 func begin_walking_to_staging() -> void:
@@ -513,51 +477,29 @@ func begin_walking_to_staging() -> void:
 
 	current_state = State.WALKING_TO_STAGING
 
-	prepare_navigation_target(
-		reserved_chair.get_staging_position()
+	_travel_to(
+		reserved_chair.get_staging_position(),
+		navigation_arrival_distance,
+		"seat staging point"
 	)
 
 
 func begin_exiting() -> void:
 	current_state = State.EXITING
 
-	has_navigation_target = false
-	navigation_agent.avoidance_enabled = false
-	navigation_agent.velocity = Vector2.ZERO
-
-	stop_movement()
-	reset_stuck_detection()
-
-
-func process_exiting(
-	delta: float
-) -> void:
-	var distance_to_exit: float = (
-		global_position.distance_to(
-			entrance_outside_position
-		)
+	# The outside marker sits beyond the navigation mesh, so this is an exact
+	# destination: the framework paths as far as the mesh allows and then walks
+	# the remaining distance directly, with avoidance still running.
+	_travel_to_exactly(
+		entrance_outside_position,
+		navigation_arrival_distance,
+		1.0,
+		"tavern exit"
 	)
-
-	if distance_to_exit <= navigation_arrival_distance:
-		finish_customer()
-		return
-
-	var movement_direction: Vector2 = (
-		global_position.direction_to(
-			entrance_outside_position
-		)
-	)
-
-	velocity = movement_direction * movement_speed
-	move_and_slide()
-
-	update_stuck_detection(delta)
 
 
 func begin_leaving() -> void:
-	order_timer.stop()
-	patience_timer.stop()
-	drink_timer.stop()
+	_cancel_all_scheduled()
 
 	order_icon.visible = false
 	patience_bar.hide_bar()
@@ -566,10 +508,11 @@ func begin_leaving() -> void:
 	customer_abandoned_seat.emit(self)
 
 	current_state = State.LEAVING_TO_DOOR
-	path_refresh_count = 0
 
-	prepare_navigation_target(
-		entrance_inside_position
+	_travel_to(
+		entrance_inside_position,
+		navigation_arrival_distance,
+		"door, leaving"
 	)
 
 
@@ -580,47 +523,25 @@ func begin_moving_to_seat() -> void:
 
 	current_state = State.MOVING_TO_SEAT
 
-	navigation_agent.avoidance_enabled = false
-	navigation_agent.velocity = Vector2.ZERO
+	# A seat sits inside furniture and therefore off the navigation mesh. The
+	# framework handles that as a final approach rather than as a special case
+	# here, and unlike the old code it keeps avoidance running all the way in.
+	var seat_speed_scale: float = 1.0
 
-	reset_stuck_detection()
-
-
-func process_moving_to_seat(
-	delta: float
-) -> void:
-	if reserved_chair == null:
-		handle_invalid_destination()
-		return
-
-	var seat_position: Vector2 = (
-		reserved_chair.get_seat_position()
-	)
-
-	var distance_to_seat: float = (
-		global_position.distance_to(
-			seat_position
+	if actor_movement.profile.maximum_speed > 0.0:
+		seat_speed_scale = clampf(
+			seat_movement_speed
+			/ actor_movement.profile.maximum_speed,
+			0.05,
+			1.0
 		)
+
+	_travel_to_exactly(
+		reserved_chair.get_seat_position(),
+		seat_arrival_distance,
+		seat_speed_scale,
+		"seat"
 	)
-
-	if distance_to_seat <= seat_arrival_distance:
-		arrive_at_seat()
-		return
-
-	var movement_direction: Vector2 = (
-		global_position.direction_to(
-			seat_position
-		)
-	)
-
-	velocity = (
-		movement_direction
-		* seat_movement_speed
-	)
-
-	move_and_slide()
-
-	update_stuck_detection(delta)
 
 
 func arrive_at_seat() -> void:
@@ -628,11 +549,10 @@ func arrive_at_seat() -> void:
 		handle_invalid_destination()
 		return
 
-	stop_movement()
-	reset_stuck_detection()
-
-	navigation_agent.avoidance_enabled = false
-	navigation_agent.velocity = Vector2.ZERO
+	# Parking keeps the customer in the avoidance solver at maximum priority, so
+	# other actors flow around a seated customer instead of shoving it out of
+	# its chair. The old code removed the customer from avoidance entirely.
+	actor_navigation.park()
 
 	reserved_chair.set_occupied_zone_enabled(true)
 
@@ -643,7 +563,11 @@ func arrive_at_seat() -> void:
 		return
 
 	current_state = State.WAITING_TO_ORDER
-	order_timer.start()
+	_order_event = WorldTime.schedule_in(
+		_order_delay_minutes,
+		_on_order_ready,
+		&"customer_order"
+	)
 
 	if should_show_debug_messages():
 		print(
@@ -655,118 +579,8 @@ func arrive_at_seat() -> void:
 		)
 
 
-func update_stuck_detection(
-	delta: float
-) -> void:
-	stuck_elapsed += delta
-
-	if stuck_elapsed < stuck_check_interval:
-		return
-
-	stuck_elapsed = 0.0
-
-	var distance_moved: float = (
-		global_position.distance_to(
-			stuck_check_position
-		)
-	)
-
-	stuck_check_position = global_position
-
-	if distance_moved >= minimum_stuck_movement:
-		consecutive_stuck_checks = 0
-		return
-
-	consecutive_stuck_checks += 1
-
-	if consecutive_stuck_checks < maximum_stuck_checks:
-		return
-
-	consecutive_stuck_checks = 0
-
-	if current_state == State.MOVING_TO_SEAT:
-		push_warning(
-			name
-			+ " could not complete movement into its seat."
-		)
-
-		handle_invalid_destination()
-		return
-
-	if current_state == State.EXITING:
-		push_warning(
-			name
-			+ " became stuck while passing through the exit."
-		)
-
-		finish_customer()
-		return
-
-	if (
-		current_state == State.ENTERING
-		or current_state == State.WALKING_TO_STAGING
-		or current_state == State.LEAVING_TO_DOOR
-	):
-		refresh_current_path()
-
-
-func refresh_current_path() -> void:
-	path_refresh_count += 1
-
-	if path_refresh_count > maximum_path_refreshes:
-		push_warning(
-			name
-			+ " exceeded its maximum path refreshes."
-		)
-
-		handle_failed_path()
-		return
-
-	if should_show_debug_messages():
-		print(
-			name,
-			" refreshing navigation path. Attempt ",
-			path_refresh_count,
-			"/",
-			maximum_path_refreshes
-		)
-
-	prepare_navigation_target(
-		requested_target_position
-	)
-
-
-func reset_stuck_detection() -> void:
-	stuck_elapsed = 0.0
-	stuck_check_position = global_position
-	consecutive_stuck_checks = 0
-
-
-func stop_movement() -> void:
-	velocity = Vector2.ZERO
-
-	if is_instance_valid(navigation_agent):
-		navigation_agent.velocity = Vector2.ZERO
-
-
-func handle_failed_path() -> void:
-	has_navigation_target = false
-	stop_movement()
-
-	push_warning(
-		name
-		+ " failed to reach navigation target "
-		+ str(active_target_position)
-	)
-
-	handle_invalid_destination()
-
-
 func handle_invalid_destination() -> void:
-	reset_stuck_detection()
-
-	order_timer.stop()
-	patience_timer.stop()
+	_cancel_all_scheduled()
 
 	order_icon.visible = false
 	patience_bar.hide_bar()
@@ -795,28 +609,52 @@ func release_reserved_chair() -> void:
 	reserved_chair = null
 
 
+## Cancels every outstanding booking this customer holds.
+##
+## Called anywhere the old code stopped three timers, and on the way out, so a
+## customer that is freed never leaves work booked behind it.
+func _cancel_all_scheduled() -> void:
+	WorldTime.cancel_scheduled(_order_event)
+	WorldTime.cancel_scheduled(_drink_event)
+	WorldTime.cancel_scheduled(_patience_event)
+
+	_order_event = null
+	_drink_event = null
+	_patience_event = null
+	_patience_total_minutes = 0
+
+
+func _cancel_patience() -> void:
+	WorldTime.cancel_scheduled(_patience_event)
+
+	_patience_event = null
+	_patience_total_minutes = 0
+
+
 func update_patience_visual() -> void:
 	if current_state != State.ORDERING:
 		return
 
-	if patience_timer.is_stopped():
+	if _patience_event == null or _patience_total_minutes <= 0:
 		return
 
-	if patience_timer.wait_time <= 0.0:
-		patience_bar.set_patience_ratio(0.0)
-		return
-
-	var remaining_ratio: float = (
-		patience_timer.time_left
-		/ patience_timer.wait_time
+	# Read against the fractional world minute so the bar slides smoothly and
+	# drains faster under fast-forward, rather than stepping once a minute.
+	var remaining: float = (
+		_patience_end_minutes
+		- WorldTime.get_total_minutes_precise()
 	)
 
 	patience_bar.set_patience_ratio(
-		remaining_ratio
+		clampf(
+			remaining / float(_patience_total_minutes),
+			0.0,
+			1.0
+		)
 	)
 
 
-func _on_order_timer_timeout() -> void:
+func _on_order_ready() -> void:
 	if ordered_drink == null:
 		handle_invalid_destination()
 		return
@@ -828,7 +666,19 @@ func _on_order_timer_timeout() -> void:
 		game_config == null
 		or not game_config.disable_patience
 	):
-		patience_timer.start()
+		_patience_total_minutes = _patience_duration_minutes
+
+		_patience_end_minutes = (
+			WorldTime.get_total_minutes_precise()
+			+ float(_patience_total_minutes)
+		)
+
+		_patience_event = WorldTime.schedule_in(
+			_patience_duration_minutes,
+			_on_patience_expired,
+			&"customer_patience"
+		)
+
 		patience_bar.show_bar()
 	else:
 		patience_bar.hide_bar()
@@ -839,8 +689,8 @@ func _on_order_timer_timeout() -> void:
 			" ordered ",
 			ordered_drink.display_name,
 			". Patience: ",
-			patience_timer.wait_time,
-			" seconds."
+			_patience_duration_minutes,
+			" world minutes."
 		)
 
 
@@ -908,7 +758,7 @@ func interact(
 
 		return
 
-	patience_timer.stop()
+	_cancel_patience()
 	patience_bar.hide_bar()
 
 	# The drink leaves the item system here: the customer consumes it.
@@ -922,7 +772,11 @@ func interact(
 
 	order_icon.visible = false
 	current_state = State.DRINKING
-	drink_timer.start()
+	_drink_event = WorldTime.schedule_in(
+		_drink_duration_minutes,
+		_on_drink_finished,
+		&"customer_drinking"
+	)
 
 	if should_show_debug_messages():
 		print(
@@ -933,7 +787,7 @@ func interact(
 		)
 
 
-func _on_drink_timer_timeout() -> void:
+func _on_drink_finished() -> void:
 	if ordered_drink == null:
 		push_error(
 			name
@@ -974,7 +828,7 @@ func _on_drink_timer_timeout() -> void:
 	begin_leaving()
 
 
-func _on_patience_timer_timeout() -> void:
+func _on_patience_expired() -> void:
 	if current_state != State.ORDERING:
 		return
 
@@ -999,16 +853,11 @@ func should_show_debug_messages() -> bool:
 
 
 func finish_customer() -> void:
-	stop_movement()
-
-	order_timer.stop()
-	drink_timer.stop()
-	patience_timer.stop()
+	actor_navigation.stop()
+	_cancel_all_scheduled()
 
 	order_icon.visible = false
 	patience_bar.hide_bar()
-
-	navigation_agent.avoidance_enabled = false
 
 	if reserved_chair != null:
 		reserved_chair.set_occupied_zone_enabled(false)

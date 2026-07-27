@@ -113,7 +113,17 @@ func _write_header() -> void:
 		"seat_mesh_distance",
 		"map_iteration",
 		"map_active",
-		"has_navigation_target",
+		"has_destination",
+		"navigation_state",
+		"destination_label",
+		"desired_speed",
+		"safe_speed",
+		"applied_gap",
+		"final_approach_radius",
+		"in_final_approach",
+		"recovery_attempts",
+		"world_time_scale",
+		"actual_speed",
 		"path_reachable",
 		"navigation_finished",
 		"target_reached",
@@ -166,13 +176,64 @@ func _record_customer_snapshot(customer: Node) -> void:
 
 		if chair.has_method("get_approach_position"):
 			approach_position = chair.get_approach_position()
+		elif chair.has_method("get_staging_position"):
+			approach_position = chair.get_staging_position()
 
 		if chair.has_method("get_seat_position"):
 			seat_position = chair.get_seat_position()
 
-	var active_target: Vector2 = customer.get(
-		"active_target_position"
+	# The customer no longer tracks its own target. Navigation state lives on
+	# the ActorNavigation component, which is what this now observes.
+	var actor_navigation: ActorNavigation = _get_actor_navigation(
+		customer
 	)
+
+	var active_target: Vector2 = customer.global_position
+	var has_destination: bool = false
+	var destination_label: String = ""
+	var navigation_state: String = "no_component"
+
+	# These five are what separate "the actor is blocked" from "the actor is
+	# being told to move at zero". The first debug pass could not tell them
+	# apart, which cost a round trip.
+	var desired_speed: float = 0.0
+	var safe_speed: float = 0.0
+	var final_approach_radius: float = 0.0
+	var in_final_approach: bool = false
+	var recovery_attempts: int = 0
+
+	# The body's velocity is restored to unscaled units after move_and_slide,
+	# so the plain speed column under-reports during fast-forward. These two
+	# make the real motion legible.
+	var world_time_scale: float = 1.0
+	var actual_speed: float = 0.0
+
+	if actor_navigation != null:
+		navigation_state = _navigation_state_name(
+			actor_navigation.get_state()
+		)
+
+		var destination: NavigationDestination = (
+			actor_navigation.get_destination()
+		)
+
+		desired_speed = actor_navigation.get_desired_velocity().length()
+		safe_speed = actor_navigation.get_safe_velocity().length()
+
+		final_approach_radius = (
+			actor_navigation.get_final_approach_radius()
+		)
+
+		in_final_approach = actor_navigation.is_in_final_approach()
+		recovery_attempts = actor_navigation.get_recovery_attempts()
+
+		world_time_scale = actor_navigation.get_agent_velocity_scale()
+		actual_speed = customer.velocity.length() * world_time_scale
+
+		if destination != null:
+			has_destination = true
+			active_target = destination.position
+			destination_label = destination.get_label()
 
 	var closest_approach_point: Vector2 = Vector2.ZERO
 	var closest_seat_point: Vector2 = Vector2.ZERO
@@ -238,7 +299,17 @@ func _record_customer_snapshot(customer: Node) -> void:
 		_decimal(seat_mesh_distance),
 		str(map_iteration),
 		str(map_active),
-		str(bool(customer.get("has_navigation_target"))),
+		str(has_destination),
+		_csv_escape(navigation_state),
+		_csv_escape(destination_label),
+		_decimal(desired_speed),
+		_decimal(safe_speed),
+		_decimal(desired_speed - safe_speed),
+		_decimal(final_approach_radius),
+		str(in_final_approach),
+		str(recovery_attempts),
+		_decimal(world_time_scale),
+		_decimal(actual_speed),
 		str(navigation_agent.is_target_reachable()),
 		str(navigation_agent.is_navigation_finished()),
 		str(navigation_agent.is_target_reached()),
@@ -365,6 +436,41 @@ func _configure_visual_debug(customer: Node) -> void:
 
 	navigation_agent.debug_enabled = true
 	navigation_agent.debug_path_custom_point_size = 6.0
+
+
+## The navigation component on an actor, or null.
+##
+## Looked up by node name rather than by type search, to match how this file
+## already finds the NavigationAgent2D.
+func _get_actor_navigation(
+	customer: Node
+) -> ActorNavigation:
+	if customer == null or not is_instance_valid(customer):
+		return null
+
+	return customer.get_node_or_null(
+		"ActorNavigation"
+	) as ActorNavigation
+
+
+func _navigation_state_name(
+	state: ActorNavigation.NavigationState
+) -> String:
+	match state:
+		ActorNavigation.NavigationState.IDLE:
+			return "idle"
+
+		ActorNavigation.NavigationState.TRAVELLING:
+			return "travelling"
+
+		ActorNavigation.NavigationState.SIDESTEPPING:
+			return "sidestepping"
+
+		ActorNavigation.NavigationState.PARKED:
+			return "parked"
+
+		_:
+			return "unknown"
 
 
 func _get_navigation_agent(

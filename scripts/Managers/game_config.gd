@@ -4,8 +4,12 @@ extends Resource
 
 
 @export_category("Customer Spawning")
-@export var minimum_spawn_delay: float = 2.0
-@export var maximum_spawn_delay: float = 10.0
+## World minutes between customer spawn attempts.
+@export_range(0, 600, 1)
+var minimum_spawn_delay_minutes: int = 2
+
+@export_range(0, 600, 1)
+var maximum_spawn_delay_minutes: int = 10
 @export var maximum_active_customers: int = 12
 @export var maximum_door_queue_size: int = 5
 

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ActorMovementProfile" format=3]
+
+[ext_resource type="Script" path="res://systems/navigation/actor_movement_profile.gd" id="1_movement"]
+
+[resource]
+script = ExtResource("1_movement")
+maximum_speed = 120.0
+careful_speed = 45.0
+acceleration = 900.0
+deceleration = 1400.0
+slowing_radius = 44.0
+minimum_slowing_ratio = 0.18
+settle_speed = 3.0

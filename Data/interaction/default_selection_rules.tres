@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="InteractionSelectionRules" format=3 uid="uid://d1j0sl40151ov"]
+
+[ext_resource type="Script" uid="uid://7hhhs2ynxld7" path="res://systems/interaction/interaction_selection_rules.gd" id="1_selrules"]
+
+[resource]
+script = ExtResource("1_selrules")

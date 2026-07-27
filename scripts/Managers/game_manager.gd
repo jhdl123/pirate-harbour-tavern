@@ -20,19 +20,16 @@ var customer_number: int = 0
 var active_customers: Array[Node] = []
 
 
-@onready var spawn_timer: Timer = $CustomerSpawnTimer
+## The pending spawn booking with WorldTime, replacing a real-time Timer.
+##
+## Spawning is world progression: it should stop when the game is paused, run
+## faster when time is fast-forwarded, and land correctly after a skip. A Timer
+## does none of those. This is also the hook future opening hours will replace -
+## a closed tavern simply does not re-book.
+var _spawn_event: ScheduledTimeEvent = null
 
 
 func _ready() -> void:
-	spawn_timer.stop()
-
-	if !spawn_timer.timeout.is_connected(
-		_on_customer_spawn_timer_timeout
-	):
-		spawn_timer.timeout.connect(
-			_on_customer_spawn_timer_timeout
-		)
-
 	if !validate_game_references():
 		return
 	
@@ -235,18 +232,24 @@ func choose_customer_type() -> CustomerType:
 
 
 func schedule_next_customer() -> void:
-	var next_spawn_delay: float = randf_range(
-		game_config.minimum_spawn_delay,
-		game_config.maximum_spawn_delay
+	var next_spawn_delay: int = randi_range(
+		game_config.minimum_spawn_delay_minutes,
+		game_config.maximum_spawn_delay_minutes
 	)
 
-	spawn_timer.start(next_spawn_delay)
+	WorldTime.cancel_scheduled(_spawn_event)
+
+	_spawn_event = WorldTime.schedule_in(
+		next_spawn_delay,
+		_on_customer_spawn_due,
+		&"customer_spawn"
+	)
 
 	if game_config.show_debug_messages:
 		print(
 			"Next customer spawn attempt in ",
-			snappedf(next_spawn_delay, 0.1),
-			" seconds."
+			next_spawn_delay,
+			" world minutes."
 		)
 
 
@@ -439,7 +442,7 @@ func clear_customer_reservation(
 		customer_table.clear_customer(customer)
 
 
-func _on_customer_spawn_timer_timeout() -> void:
+func _on_customer_spawn_due() -> void:
 	spawn_customer()
 	schedule_next_customer()
 

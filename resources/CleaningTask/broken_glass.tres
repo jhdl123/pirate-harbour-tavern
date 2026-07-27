@@ -10,5 +10,4 @@ display_name = "Broken Glass"
 description = "Sharp broken glass that must be cleared."
 action_definition = ExtResource("1_3op7m")
 task_texture = ExtResource("3_wiw7c")
-cleaning_duration = 1.5
 metadata/_custom_type_script = "uid://5qmpipipxlp2"

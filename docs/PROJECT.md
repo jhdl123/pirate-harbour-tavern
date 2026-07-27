@@ -97,4 +97,7 @@ one `ItemTransferService`. See [Item System](ITEM_SYSTEM.md).
 - [Configuration and Balancing Guide](CONFIGURATION_GUIDE.md)
 - [Architecture](ARCHITECTURE.md)
 - [Item System](ITEM_SYSTEM.md)
+- [Interaction System](INTERACTION_SYSTEM.md)
+- [Navigation System](NAVIGATION_SYSTEM.md)
+- [Simulation System](SIMULATION_SYSTEM.md)
 - [Learning Log](LEARNING_LOG.md)

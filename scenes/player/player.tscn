@@ -5,6 +5,9 @@
 [ext_resource type="Script" uid="uid://c2m0xv7m5pi6e" path="res://systems/actions/action_runner.gd" id="3_gmlin"]
 [ext_resource type="Script" uid="uid://bdhwfvb2xudqy" path="res://scripts/Components/item_carrier.gd" id="4_carrier"]
 [ext_resource type="Script" uid="uid://bom7xreqie3f5" path="res://scripts/Components/inventory_component.gd" id="5_invent"]
+[ext_resource type="Script" path="res://systems/interaction/interaction_detector.gd" id="6_detect"]
+[ext_resource type="Script" path="res://systems/interaction/interaction_selector.gd" id="7_select"]
+[ext_resource type="Resource" path="res://Data/interaction/default_selection_rules.tres" id="8_rules"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_p47bc"]
 radius = 12.0
@@ -25,9 +28,18 @@ position = Vector2(0, 4)
 shape = SubResource("CircleShape2D_p47bc")
 
 [node name="InteractionDetector" type="Area2D" parent="." unique_id=1479220755]
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("6_detect")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionDetector" unique_id=840471071]
 shape = SubResource("CircleShape2D_dovo2")
+
+[node name="InteractionSelector" type="Node" parent="." unique_id=1324444995 node_paths=PackedStringArray("detector", "actor")]
+script = ExtResource("7_select")
+detector = NodePath("../InteractionDetector")
+actor = NodePath("..")
+selection_rules = ExtResource("8_rules")
 
 [node name="CarriedItemSprite" type="Sprite2D" parent="." unique_id=1016870856]
 visible = false

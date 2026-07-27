@@ -4,6 +4,12 @@
 [ext_resource type="Script" uid="uid://cjx3p8pojfaym" path="res://scripts/Entities/customer.gd" id="1_yp1b7"]
 [ext_resource type="Texture2D" uid="uid://cp6r43esf7s1e" path="res://assets/art/items/drinks/16x16_grog.png" id="3_7napt"]
 [ext_resource type="Script" uid="uid://bldm5f7y8ktnb" path="res://scripts/Components/patience_bar.gd" id="5_tbamw"]
+[ext_resource type="Script" uid="uid://cmq6hx5itg654" path="res://systems/interaction/interactable.gd" id="6_interact"]
+[ext_resource type="Script" uid="uid://uldvm7rb67jq" path="res://systems/interaction/interaction_highlight.gd" id="7_highlight"]
+[ext_resource type="Script" uid="uid://cs7fowre7nbqo" path="res://systems/navigation/actor_movement.gd" id="8_movement"]
+[ext_resource type="Script" uid="uid://38ub3orhpmtw" path="res://systems/navigation/actor_navigation.gd" id="9_navigation"]
+[ext_resource type="Resource" path="res://Data/navigation/customer_movement.tres" id="10_moveprofile"]
+[ext_resource type="Resource" path="res://Data/navigation/customer_navigation.tres" id="11_navprofile"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_hujxm"]
 radius = 12.0
@@ -39,21 +45,14 @@ position = Vector2(0, -26)
 scale = Vector2(0.8, 0.8)
 texture = ExtResource("3_7napt")
 
-[node name="OrderTimer" type="Timer" parent="." unique_id=1594801418]
-wait_time = 2.0
-one_shot = true
-
-[node name="DrinkTimer" type="Timer" parent="." unique_id=247956769]
-wait_time = 3.0
-one_shot = true
-
 [node name="InteractionArea" type="Area2D" parent="." unique_id=1799397582 groups=["interactable"]]
+script = ExtResource("6_interact")
+display_name = "Customer"
+interaction_priority = 2
+fallback_verb = "Serve"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=68656273]
 shape = SubResource("RectangleShape2D_lxoxb")
-
-[node name="PatienceTimer" type="Timer" parent="." unique_id=1412780340]
-one_shot = true
 
 [node name="PatienceBar" type="Control" parent="." unique_id=305465529]
 z_index = 10
@@ -79,3 +78,19 @@ offset_top = 1.0
 offset_right = 31.0
 offset_bottom = 4.0
 mouse_filter = 2
+
+[node name="InteractionHighlight" type="Node" parent="." unique_id=1904772312]
+script = ExtResource("7_highlight")
+target_paths = Array[NodePath]([NodePath("../Sprite2D")])
+
+[node name="ActorMovement" type="Node" parent="." unique_id=1904773001 node_paths=PackedStringArray("body")]
+script = ExtResource("8_movement")
+body = NodePath("..")
+profile = ExtResource("10_moveprofile")
+
+[node name="ActorNavigation" type="Node" parent="." unique_id=1904773002 node_paths=PackedStringArray("body", "agent", "movement")]
+script = ExtResource("9_navigation")
+body = NodePath("..")
+agent = NodePath("../NavigationAgent2D")
+movement = NodePath("../ActorMovement")
+profile = ExtResource("11_navprofile")

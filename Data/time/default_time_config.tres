@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="GameTimeConfig" format=3]
+
+[ext_resource type="Script" path="res://systems/time/game_time_config.gd" id="1_timecfg"]
+
+[resource]
+script = ExtResource("1_timecfg")
+minutes_per_hour = 60
+hours_per_day = 24
+starting_day = 1
+starting_hour = 8
+starting_minute = 0
+game_minutes_per_real_second = 1.0
+available_speed_multipliers = Array[float]([1.0, 2.0, 4.0])
+default_speed_index = 0
+fast_forward_speed_multiplier = 6.0
+maximum_stepped_minutes = 120
+use_24_hour_clock = true
+day_label_format = "Day %d"

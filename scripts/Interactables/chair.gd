@@ -8,6 +8,10 @@ signal cleaning_cost_requested(
 )
 
 
+## Retained so existing saves, debug output and tools keep working.
+##
+## The authoritative state now lives in this chair's [Reservable] component;
+## these values are only a readable projection of it.
 enum SeatState {
 	AVAILABLE,
 	RESERVED,
@@ -29,14 +33,20 @@ enum SeatState {
 @export var empty_glass_task: CleaningTask
 
 
-var current_state: SeatState = SeatState.AVAILABLE
-var customer: Node = null
 
 var occupied_obstacle: NavigationObstacle2D
 var active_drink: DrinkDefinition = null
 
 
 @onready var seat_point: Marker2D = $SeatPoint
+
+## Who has claimed this seat, and how firmly.
+##
+## Seat state used to be a private enum plus a customer reference on this
+## script. It is now the shared [Reservable] component, so a queue slot, a
+## station approach point and a future workstation claim themselves with exactly
+## the same code and the same two-stage reserve/occupy rules.
+@onready var reservable: Reservable = $Reservable
 
 @onready var drink_sprite: Sprite2D = (
 	$DrinkPoint/DrinkSprite
@@ -123,9 +133,31 @@ func _create_occupied_obstacle() -> void:
 	_update_occupied_obstacle_position()
 
 
+## The reservation state, expressed in the old enum.
+func get_seat_state() -> SeatState:
+	if reservable == null:
+		return SeatState.AVAILABLE
+
+	if reservable.is_occupied():
+		return SeatState.IN_USE
+
+	if reservable.is_reserved():
+		return SeatState.RESERVED
+
+	return SeatState.AVAILABLE
+
+
+## The customer that claimed this seat, or null.
+func get_customer() -> Node:
+	if reservable == null:
+		return null
+
+	return reservable.get_holder()
+
+
 func is_available() -> bool:
 	return (
-		current_state == SeatState.AVAILABLE
+		get_seat_state() == SeatState.AVAILABLE
 		and not cleanable.has_cleaning_task()
 		and not cleanable.is_cleaning
 	)
@@ -140,8 +172,8 @@ func assign_customer(
 	if not is_available():
 		return false
 
-	customer = new_customer
-	current_state = SeatState.RESERVED
+	if not reservable.reserve(new_customer):
+		return false
 
 	_update_drink_visual()
 	_update_cleaning_interaction()
@@ -152,11 +184,11 @@ func assign_customer(
 func begin_use(
 	drink: DrinkDefinition
 ) -> void:
-	if current_state != SeatState.RESERVED:
+	if get_seat_state() != SeatState.RESERVED:
 		push_warning(
 			name
 			+ " cannot begin use from state "
-			+ str(current_state)
+			+ str(get_seat_state())
 		)
 		return
 
@@ -168,7 +200,10 @@ func begin_use(
 		return
 
 	active_drink = drink
-	current_state = SeatState.IN_USE
+
+	# The customer is here now, so the claim is promoted from "on its way" to
+	# "in use". A reservation that never reaches this point expires by itself.
+	reservable.occupy(reservable.get_holder())
 
 	_update_drink_visual()
 	_update_cleaning_interaction()
@@ -187,16 +222,15 @@ func begin_use(
 
 
 func require_cleaning() -> void:
-	if current_state != SeatState.IN_USE:
+	if get_seat_state() != SeatState.IN_USE:
 		push_warning(
 			name
 			+ " cannot require cleaning from state "
-			+ str(current_state)
+			+ str(get_seat_state())
 		)
 		return
 
-	customer = null
-	current_state = SeatState.AVAILABLE
+	reservable.release()
 
 	set_occupied_zone_enabled(false)
 
@@ -275,8 +309,7 @@ func interact(
 		_update_cleaning_interaction()
 
 func clear_customer() -> void:
-	customer = null
-	current_state = SeatState.AVAILABLE
+	reservable.release()
 
 	set_occupied_zone_enabled(false)
 
@@ -290,7 +323,7 @@ func clear_customer() -> void:
 func contains_customer(
 	target_customer: Node
 ) -> bool:
-	return customer == target_customer
+	return reservable.is_held_by(target_customer)
 
 
 func get_seat_position() -> Vector2:
@@ -405,7 +438,7 @@ func _update_drink_visual() -> void:
 		drink_sprite.visible = false
 		return
 
-	match current_state:
+	match get_seat_state():
 		SeatState.AVAILABLE:
 			drink_sprite.texture = null
 			drink_sprite.visible = false

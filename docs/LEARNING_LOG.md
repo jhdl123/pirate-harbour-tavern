@@ -89,10 +89,116 @@ Completed:
 - To change global spawning or navigation, edit the `GameConfig` resource.
 - Scripts should not directly modify the economy balance outside `EconomyManager`.
 
+### Interaction framework
+
+- Duplicated logic hides in "who decides". Before the framework, the player
+  decided what it was interacting with *and* the bar counter decided the same
+  thing independently, so the two could disagree.
+- Splitting detection from selection was worth it. Reach became a physics
+  question answered by a collision shape; "which one do we mean" became a pure
+  data question that is easy to reason about and change.
+- Duck-typed optional methods beat a base class here. An object implements only
+  what it needs, and the drinks station ignoring four of the six protocol
+  methods is a feature, not an oversight.
+- Actions as data rather than method calls is what makes future context menus,
+  verb wheels and mouse input cheap. The menu renders strings and passes opaque
+  ids back; it never learns an object type.
+- A legacy fallback let two objects join the system with zero script changes.
+  Migration does not have to be all at once to be real.
+- Anything called every tick must be idempotent. `set_interaction_highlighted`
+  is called repeatedly on purpose, so the bar counter can move its slot
+  highlight, which means it has to early-return when nothing changed.
+- Prompts should ask the system that owns the rules. The bar counter asks
+  `ItemTransferService.can_transfer()` instead of re-deriving whether a place
+  will succeed, so the prompt cannot lie.
+
+## Current understanding checks (interaction)
+
+- To make a new object interactive, add an `Interactable` area and implement
+  `get_interaction_actions()` and `perform_interaction()` on its root node.
+- To change selection feel, edit `default_selection_rules.tres`, not a script.
+- To make one object win ties, raise `Interaction Priority` on its
+  `Interactable` node.
+- To change what a prompt says, return a different `InteractionAction`. Never
+  add a label to a world object.
+- To find the actor inside an interactable, read the `InteractionRequest`.
+  Never search the scene tree for the player.
+
+### Actor navigation
+
+- Most of the "stuttering AI" was not a pathfinding problem. Setting a
+  destination awaited two physics frames with movement stopped, so every state
+  change cost a visible pause, and stuck recovery made it worse by pausing
+  again before retrying.
+- Turning a system off to make a special case work is a smell. Avoidance was
+  disabled for the walk into a seat and for the walk out of the door - the two
+  moments actors were most likely to be near each other.
+- Smoothing belongs in two places, not one. Smoothing the steering direction
+  fixes path-corner flips; ramping velocity fixes everything else, including
+  bugs in future controllers.
+- One writer for one piece of state. Velocity had four writers plus an engine
+  callback, which is why "why did it stop" had no single answer.
+- An arrival needs a slowing curve, not a smaller stop distance. Reducing the
+  threshold makes overshoot worse, not better.
+- Off-mesh destinations are normal, not errors. A seat is inside furniture, so
+  the path can only reach the edge; measuring how far the projection moved the
+  target turns a special case into a general final-approach radius.
+- Recovery should escalate. A sidestep costs no pathfinding and clears most
+  jams, which are two actors refusing to pass each other rather than a bad
+  route.
+- A reservation needs two stages and an expiry. One stage lets two actors reach
+  the same chair; no expiry means one lost actor costs a seat permanently.
+- Resources are shared. Writing per-actor tuning onto a profile edits the asset
+  every actor is using, so profiles are duplicated on ready.
+
+## Current understanding checks (navigation)
+
+- To make an actor walk somewhere, call `move_to` with a `NavigationDestination`
+  and listen for `destination_reached`.
+- To change how an actor accelerates or stops, edit its `ActorMovementProfile`.
+- To make customers step aside for staff, raise the staff
+  `avoidance_priority`; nothing else changes.
+- To stop an actor being shoved while it is seated, call `park()`.
+- To make anything claimable by one actor, add a `Reservable` child.
+- To let actors walk up to a new object, add `ApproachPoint` markers to it.
+
+### World time and simulation
+
+- A clock is the easy half. The hard half is "call me at this world time",
+  because without it every future system quietly reinvents a timer, which is
+  exactly what a shared framework exists to prevent.
+- Signals and scheduling solve different problems. Signals are for reacting to
+  now and may be collapsed for performance; a booking must never be missed.
+  Being explicit about which is which stopped both from being compromised.
+- Skipping time correctly means stepping, not jumping. Firing a day's events
+  after the clock has already reached the end would have them all see the wrong
+  world.
+- The autoload should be the driver, not the model. Keeping `WorldClock` a plain
+  object made it testable, serialisable and duplicable, at no cost.
+- Store one number, derive the rest. Day, hour and minute held separately can
+  disagree; derived from a single minute count they cannot.
+- Two levels of pause is a feature, not a mess — as long as the debug view shows
+  both, because a hidden second flag is how "why is it frozen" bugs start.
+- Save enums by stable string id, not by integer. Inserting a state later must
+  not silently change what an old save means.
+- A `Callable` cannot be serialised, and pretending otherwise would be worse
+  than the honest pattern: restore the time, let each system re-book itself.
+
+## Current understanding checks (time and simulation)
+
+- To make something happen at a fixed time daily, call
+  `WorldTime.schedule_daily(hour, minute, callback, tag)`.
+- To make something take world time, call `WorldTime.schedule_in(minutes, ...)`
+  instead of creating a `Timer`.
+- To decide whether a system should update, call `Simulation.is_running()`,
+  `accepts_input()` or `updates_actors()`.
+- To change how long a day feels, edit `game_minutes_per_real_second`.
+- To change what a state permits, edit `default_state_rules.tres`, not a script.
+- To show a time anywhere, use `TimeFormatter`.
+
 ## Next learning focus
 
-Connect the item system to real scene objects by building bar service slots, so
-a visible sprite is driven purely by an `ItemSlot` change signal. Then create a
-generic interaction layer so chairs, drink stations, counters, storage and future
-workstations share one predictable contract without adding object-specific logic
-to the player.
+Build the first real consumer of the time framework — tavern opening hours —
+which is two `schedule_daily` calls and a flag the customer spawner reads. It is
+the cheapest honest test of whether the scheduler is genuinely reusable or only
+looks it, and it exercises pausing, speed changes and skipped time in one go.

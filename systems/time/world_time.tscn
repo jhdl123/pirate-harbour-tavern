@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://systems/time/world_time.gd" id="1_worldtime"]
+[ext_resource type="Resource" path="res://Data/time/default_time_config.tres" id="2_timecfg"]
+
+[node name="WorldTime" type="Node"]
+script = ExtResource("1_worldtime")
+config = ExtResource("2_timecfg")

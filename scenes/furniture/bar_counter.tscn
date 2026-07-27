@@ -1,7 +1,8 @@
 [gd_scene format=3 uid="uid://b3ds1eskeev02"]
 
-[ext_resource type="Script" uid="uid://bxbxi1rau5g7r" path="res://scenes/furniture/bar_counter.gd" id="1_ovp2e"]
+[ext_resource type="Script" path="res://scripts/Interactables/bar_counter.gd" id="1_ovp2e"]
 [ext_resource type="Texture2D" uid="uid://d71vngekygoc" path="res://assets/art/furniture/128x64_bar.png" id="1_xxs0u"]
+[ext_resource type="Script" path="res://systems/interaction/interactable.gd" id="2_interact"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3cfvr"]
 size = Vector2(127.5, 26.5)
@@ -11,15 +12,6 @@ size = Vector2(84, 40)
 
 [node name="BarCounter" type="StaticBody2D" unique_id=2047538336]
 script = ExtResource("1_ovp2e")
-
-[node name="InteractionLabel" type="Label" parent="." unique_id=1559318796]
-z_index = 10
-offset_left = -31.0
-offset_top = -58.0
-offset_right = 54.0
-offset_bottom = -35.0
-text = "[E] Interact"
-horizontal_alignment = 1
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1022926950]
 position = Vector2(-2, -17)
@@ -32,6 +24,8 @@ scale = Vector2(1, 0.5)
 shape = SubResource("RectangleShape2D_3cfvr")
 
 [node name="InteractionArea" type="Area2D" parent="." unique_id=469917879 groups=["interactable"]]
+script = ExtResource("2_interact")
+display_name = "Bar Counter"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=95804760]
 position = Vector2(11, -21)
@@ -43,6 +37,7 @@ shape = SubResource("RectangleShape2D_mel2l")
 position = Vector2(-14, -21)
 
 [node name="Highlight" type="Polygon2D" parent="ServiceSlots/Slot0" unique_id=1726885553]
+visible = false
 color = Color(1, 1, 1, 0.35000002)
 polygon = PackedVector2Array(-7, -10, 5, -10, 5, -1, -7, -1)
 
@@ -55,6 +50,7 @@ position = Vector2(0, -10)
 position = Vector2(15, -21)
 
 [node name="Highlight" type="Polygon2D" parent="ServiceSlots/Slot1" unique_id=906746972]
+visible = false
 position = Vector2(1, 0)
 color = Color(1, 1, 1, 0.35000002)
 polygon = PackedVector2Array(-7, -10, 5, -10, 5, -1, -7, -1)
@@ -68,6 +64,7 @@ position = Vector2(0, -10)
 position = Vector2(42, -21)
 
 [node name="Highlight" type="Polygon2D" parent="ServiceSlots/Slot2" unique_id=598588157]
+visible = false
 position = Vector2(1, -1)
 color = Color(1, 1, 1, 0.35000002)
 polygon = PackedVector2Array(-7, -10, 5, -10, 5, -1, -7, -1)

@@ -23,7 +23,9 @@ func _process(delta: float) -> void:
 		_clear_action()
 		return
 
-	elapsed_seconds += delta
+	# Timed actions are world progression, so they run on world time: they stop
+	# when the simulation is paused and finish faster when it is fast-forwarded.
+	elapsed_seconds += WorldTime.get_world_delta(delta)
 
 	var duration: float = current_action.duration_seconds
 	var progress: float = 1.0

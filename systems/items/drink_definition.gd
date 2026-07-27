@@ -16,9 +16,10 @@ extends ItemDefinition
 
 ## Real-world seconds a customer spends drinking this drink.
 ##
-## This is customer activity time, not simulated GameTime.
-@export_range(0.0, 600.0, 0.1)
-var drink_duration_seconds: float = 8.0
+## Measured in world minutes and driven by WorldTime, so drinking pauses
+## with the simulation and finishes sooner when time is fast-forwarded.
+@export_range(0, 600, 1)
+var drink_duration_minutes: int = 8
 
 
 @export_category("Drink Visuals")
@@ -53,5 +54,5 @@ func is_valid_drink() -> bool:
 	return (
 		is_valid()
 		and has_tag(ItemTags.PREPARED_DRINK)
-		and drink_duration_seconds >= 0.0
+		and drink_duration_minutes >= 0
 	)

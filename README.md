@@ -21,8 +21,13 @@ The project currently focuses on a small but expandable service loop: customers 
 | Input | Action |
 |---|---|
 | WASD / arrow keys | Move |
-| E | Interact |
+| E | Interact with the selected object |
+| Tab | Cycle to the next nearby object |
 | Escape | Cancel a cancellable action |
+| F1 | Toggle the simulation debug panel |
+| F2 | Pause / resume the simulation |
+| F3 | Cycle time speed |
+| F4 | Skip to the next hour |
 | Mouse wheel / configured zoom inputs | Camera zoom |
 | Mouse | Menus and UI |
 
@@ -45,6 +50,13 @@ ItemDefinition  → item identity, tags, stack size, textures and prices
 DrinkDefinition → an ItemDefinition plus drink timing and break multiplier
 ItemContainer   → reusable slots for hands, backpacks, storage and stations
 ItemTransferService → the one place items move between slots
+WorldTime       → the one authoritative clock, with scheduling
+Simulation      → the authoritative game state; nothing self-decides to update
+ActorNavigation → paths, steers, arrives and recovers for any AI actor
+ActorMovement   → the one place an actor's velocity is written
+Reservable      → seats, approach points and queue slots, claimed generically
+Interactable     → marks an object as interactive and lists its actions
+InteractionSelector → picks the target, drives highlight and prompt
 CustomerType    → spawning, speed, patience and drink preferences
 CleaningTask    → cleaning state, complication chance, cost and next task
 ActionDefinition→ duration, movement blocking and cancellation
@@ -53,8 +65,14 @@ EconomyManager  → owns all money changes
 GameConfig      → global spawning, navigation, door and test settings
 ```
 
-See [Architecture](docs/ARCHITECTURE.md) for the current system flow and
-[Item System](docs/ITEM_SYSTEM.md) for items, inventory and transfers.
+See [Architecture](docs/ARCHITECTURE.md) for the current system flow,
+[Item System](docs/ITEM_SYSTEM.md) for items, inventory and transfers, and
+[Interaction System](docs/INTERACTION_SYSTEM.md) for target selection,
+prompts and how to make a new object interactive, and
+[Navigation System](docs/NAVIGATION_SYSTEM.md) for actor movement, avoidance,
+arrival and reservations, and
+[Simulation System](docs/SIMULATION_SYSTEM.md) for world time, scheduling and
+simulation state.
 
 ## Changing game balance
 
@@ -104,9 +122,18 @@ Completed foundations include:
 - configurable navigation and debugging values;
 - a generic item, slot, container and transfer foundation;
 - a reusable carrier component replacing drink-specific carrying;
-- a 12-slot personal inventory component, ready but not yet used.
+- a 12-slot personal inventory component, ready but not yet used;
+- a bar counter with three working service slots;
+- a reusable interaction framework covering detection, selection,
+  highlighting, prompts and execution;
+- a reusable actor navigation framework covering movement, steering,
+  avoidance, arrival and recovery;
+- a generic reservation system shared by seats and future workstations;
+- a world time framework with a single authoritative clock and a scheduler
+  that survives pausing, speed changes and skipped time;
+- a simulation state framework that decides centrally what may update.
 
-The next planned foundation is a usable bar counter with service slots for
-placing and swapping carried items, followed by chair service slots, storage
-containers and drink stock. See [Item System](docs/ITEM_SYSTEM.md) for how those
-should connect.
+The next planned foundations are chair service slots, storage containers and
+drink stock. See [Item System](docs/ITEM_SYSTEM.md) for how those should
+connect, and [Interaction System](docs/INTERACTION_SYSTEM.md) for migrating
+the chair and customer off the legacy interaction fallback.

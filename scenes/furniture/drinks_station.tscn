@@ -3,6 +3,8 @@
 [ext_resource type="Texture2D" uid="uid://v53xyiijymwl" path="res://assets/art/furniture/32x32_drinks_station.png" id="1_h03td"]
 [ext_resource type="Script" uid="uid://cwxwst5xv1vu4" path="res://scripts/Interactables/drinks_station.gd" id="1_lpag8"]
 [ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="2_2bxlr"]
+[ext_resource type="Script" path="res://systems/interaction/interactable.gd" id="3_interact"]
+[ext_resource type="Script" path="res://systems/interaction/interaction_highlight.gd" id="4_highlight"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_mel2l"]
 radius = 16.0
@@ -21,6 +23,12 @@ texture = ExtResource("1_h03td")
 shape = SubResource("CircleShape2D_mel2l")
 
 [node name="InteractionArea" type="Area2D" parent="." unique_id=258262445 groups=["interactable"]]
+script = ExtResource("3_interact")
+display_name = "Drinks Station"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=422318540]
 shape = SubResource("RectangleShape2D_mel2l")
+
+[node name="InteractionHighlight" type="Node" parent="." unique_id=1904772311]
+script = ExtResource("4_highlight")
+target_paths = Array[NodePath]([NodePath("../Sprite2D")])
