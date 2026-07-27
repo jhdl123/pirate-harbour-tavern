@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="SupplierDefinition" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://systems/orders/supplier_definition.gd" id="1_supplier"]
+[ext_resource type="Script" path="res://systems/orders/order_catalogue_entry.gd" id="2_entry"]
+[ext_resource type="Resource" path="res://Data/items/stock/grog_barrel.tres" id="3_grog"]
+[ext_resource type="Resource" path="res://Data/items/stock/ale_keg.tres" id="4_ale"]
+
+[sub_resource type="Resource" id="OrderEntry_grog"]
+script = ExtResource("2_entry")
+item = ExtResource("3_grog")
+maximum_order_quantity = 10
+
+[sub_resource type="Resource" id="OrderEntry_ale"]
+script = ExtResource("2_entry")
+item = ExtResource("4_ale")
+maximum_order_quantity = 10
+
+[resource]
+script = ExtResource("1_supplier")
+supplier_id = &"harbour_supplies"
+display_name = "Harbour Provisioners"
+description = "Reliable everyday supplies delivered from the harbour. Orders are recorded now and prepared for a future delivery system."
+entries = Array[ExtResource("2_entry")]([SubResource("OrderEntry_grog"), SubResource("OrderEntry_ale")])
+delivery_delay_days = 1

@@ -28,6 +28,8 @@
 [ext_resource type="Script" uid="uid://bqspb0rlv46mq" path="res://systems/statistics/statistics_tracker.gd" id="26_0bhws"]
 [ext_resource type="Script" uid="uid://d20pj165yrwlu" path="res://systems/simulation/simulation_debug_panel.gd" id="26_simpanel"]
 [ext_resource type="PackedScene" uid="uid://syl0miuargy" path="res://scenes/ui/BarManagementMenu.tscn" id="27_62atk"]
+[ext_resource type="PackedScene" path="res://scenes/furniture/order_ledger.tscn" id="28_order_ledger"]
+[ext_resource type="Script" path="res://systems/orders/order_manager.gd" id="29_order_manager"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_mel2l"]
 vertices = PackedVector2Array(649, 344, 649, 253, 1219, 63.023438, 1219, 661.96875, 65.02344, 64.96875, 226, 120, 65.96875, 660.02344, 550, 344, 449, 344, 350, 344, 65.28906, 232, 226, 232, 350, 253, 226, 207.88281, 236, 210.5625, 252.28125, 206.21094, 264.21094, 194.28125, 236, 145.4375, 226, 148.10938, 550, 253, 449, 253, 65.109375, 120, 264.21094, 161.71875, 268.5625, 178, 252.28125, 149.78906)
@@ -164,6 +166,9 @@ served_drink = ExtResource("12_37hlw")
 [node name="Sprite2D" parent="Environment/Ale_station" index="0" unique_id=1803792753]
 texture = ExtResource("12_p8abn")
 
+[node name="OrderLedger" parent="Environment" instance=ExtResource("28_order_ledger")]
+position = Vector2(278, 178)
+
 [node name="Entities" type="Node2D" parent="." unique_id=1694710147]
 
 [node name="Player" parent="Entities" unique_id=1068675683 instance=ExtResource("1_hyk8p")]
@@ -267,6 +272,10 @@ text = "[F1] panel"
 [node name="EconomyManager" type="Node" parent="Managers" unique_id=272770657]
 script = ExtResource("17_s17dp")
 
+[node name="OrderManager" type="Node" parent="Managers" groups=["order_manager"] node_paths=PackedStringArray("economy_manager")]
+script = ExtResource("29_order_manager")
+economy_manager = NodePath("../EconomyManager")
+
 [node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_door", "tables", "navigation_region", "economy_manager", "statistics_tracker")]
 script = ExtResource("7_hujxm")
 customer_scene = ExtResource("2_ow5a4")
@@ -282,10 +291,9 @@ customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtRes
 [node name="StatisticsTracker" type="Node" parent="Managers" unique_id=2070280082]
 script = ExtResource("26_0bhws")
 
-[node name="BarManagementMenu" parent="." unique_id=1560950072 node_paths=PackedStringArray("game_manager", "economy_manager", "statistics_tracker") instance=ExtResource("27_62atk")]
+[node name="BarManagementMenu" parent="." unique_id=1560950072 node_paths=PackedStringArray("game_manager", "economy_manager") instance=ExtResource("27_62atk")]
 game_manager = NodePath("../Managers/GameManager")
 economy_manager = NodePath("../Managers/EconomyManager")
-statistics_tracker = NodePath("../Managers/StatisticsTracker")
 
 [node name="Node" type="Node" parent="." unique_id=1058371443]
 script = ExtResource("9_b1x3f")

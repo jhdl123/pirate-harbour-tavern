@@ -1,0 +1,17 @@
+INTERACTION MENU + SUPPLY LEDGER UPDATE
+
+Recommended installation:
+1. Back up or commit the current Godot project.
+2. Copy this bundle's folders and project.godot into the project root.
+3. Allow files to merge and replace project.godot and scenes/main/main.tscn.
+4. Open the project in Godot and allow imports/scripts to refresh.
+5. Run the main scene and interact with the ledger beside the bar.
+
+Existing files replaced:
+- project.godot
+- scenes/main/main.tscn
+
+All other files in this bundle are new.
+
+The visual ledger is currently a deliberately simple placeholder made from
+Godot polygons and a label, so no new art asset is required.

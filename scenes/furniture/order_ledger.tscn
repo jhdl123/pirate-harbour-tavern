@@ -1,0 +1,43 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/Interactables/order_ledger.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/interaction/interactable.gd" id="2_interactable"]
+[ext_resource type="Resource" path="res://Data/suppliers/harbour_supplies.tres" id="3_supplier"]
+[ext_resource type="PackedScene" path="res://scenes/ui/stock_order_menu.tscn" id="4_menu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape_interaction"]
+size = Vector2(72, 54)
+
+[node name="OrderLedger" type="Node2D"]
+script = ExtResource("1_script")
+supplier = ExtResource("3_supplier")
+order_menu_scene = ExtResource("4_menu")
+
+[node name="LedgerShape" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-20, -14, 20, -14, 20, 14, -20, 14)
+color = Color(0.33, 0.18, 0.075, 1)
+
+[node name="PageShape" type="Polygon2D" parent="."]
+position = Vector2(0, -2)
+polygon = PackedVector2Array(-14, -9, 14, -9, 14, 9, -14, 9)
+color = Color(0.78, 0.66, 0.45, 1)
+
+[node name="LedgerLabel" type="Label" parent="."]
+offset_left = -26.0
+offset_top = 17.0
+offset_right = 26.0
+offset_bottom = 35.0
+theme_override_colors/font_outline_color = Color(0.05, 0.03, 0.01, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 11
+text = "Ledger"
+horizontal_alignment = 1
+
+[node name="InteractionArea" type="Area2D" parent="."]
+script = ExtResource("2_interactable")
+display_name = "Supply Ledger"
+interaction_priority = 2
+fallback_verb = "Read"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+shape = SubResource("RectangleShape_interaction")

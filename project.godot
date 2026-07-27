@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 Simulation="*res://systems/simulation/simulation_controller.tscn"
 WorldTime="*res://systems/time/world_time.tscn"
+InteractionMenu="*res://systems/ui/interaction_menu_controller.gd"
 
 [display]
 
