@@ -25,7 +25,9 @@
 [ext_resource type="Script" uid="uid://c6l48rvdmuu4i" path="res://systems/economy/economy_manager.gd" id="17_s17dp"]
 [ext_resource type="Resource" uid="uid://vy3njv4nqfn" path="res://resources/CustomerTypes/sailor.tres" id="18_r4lks"]
 [ext_resource type="Script" uid="uid://diwvfmlu4wwu7" path="res://systems/interaction/interaction_prompt_ui.gd" id="25_prompt"]
-[ext_resource type="Script" path="res://systems/simulation/simulation_debug_panel.gd" id="26_simpanel"]
+[ext_resource type="Script" uid="uid://bqspb0rlv46mq" path="res://systems/statistics/statistics_tracker.gd" id="26_0bhws"]
+[ext_resource type="Script" uid="uid://d20pj165yrwlu" path="res://systems/simulation/simulation_debug_panel.gd" id="26_simpanel"]
+[ext_resource type="PackedScene" uid="uid://syl0miuargy" path="res://scenes/ui/BarManagementMenu.tscn" id="27_62atk"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_mel2l"]
 vertices = PackedVector2Array(649, 344, 649, 253, 1219, 63.023438, 1219, 661.96875, 65.02344, 64.96875, 226, 120, 65.96875, 660.02344, 550, 344, 449, 344, 350, 344, 65.28906, 232, 226, 232, 350, 253, 226, 207.88281, 236, 210.5625, 252.28125, 206.21094, 264.21094, 194.28125, 236, 145.4375, 226, 148.10938, 550, 253, 449, 253, 65.109375, 120, 264.21094, 161.71875, 268.5625, 178, 252.28125, 149.78906)
@@ -211,28 +213,6 @@ text = "[E] Interact"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Managers" type="Node2D" parent="." unique_id=1546168761]
-
-[node name="EconomyManager" type="Node" parent="Managers" unique_id=272770657]
-script = ExtResource("17_s17dp")
-
-[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_door", "tables", "navigation_region", "economy_manager")]
-script = ExtResource("7_hujxm")
-customer_scene = ExtResource("2_ow5a4")
-entities = NodePath("../../Entities")
-customer_door = NodePath("../../Markers/CustomerDoor")
-tables = [NodePath("../../Environment/table1")]
-navigation_region = NodePath("../../NavigationRegion2D")
-economy_manager = NodePath("../EconomyManager")
-game_config = ExtResource("15_hxu8e")
-customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtResource("18_r4lks")])
-
-[node name="Node" type="Node" parent="." unique_id=1058371443]
-script = ExtResource("9_b1x3f")
-
-[editable path="Environment/Grog_station"]
-[editable path="Environment/Ale_station"]
-
 [node name="SimulationDebugPanel" type="PanelContainer" parent="UI" unique_id=1904774001]
 offset_left = 16.0
 offset_top = 120.0
@@ -255,36 +235,60 @@ mouse_filter = 2
 
 [node name="DayLabel" type="Label" parent="UI/SimulationDebugPanel/Margin/Rows" unique_id=1904774004]
 layout_mode = 2
-mouse_filter = 2
 text = "Day 1"
 
 [node name="ClockLabel" type="Label" parent="UI/SimulationDebugPanel/Margin/Rows" unique_id=1904774005]
 layout_mode = 2
-mouse_filter = 2
 text = "08:00"
 
 [node name="SpeedLabel" type="Label" parent="UI/SimulationDebugPanel/Margin/Rows" unique_id=1904774006]
 layout_mode = 2
-mouse_filter = 2
 text = "Speed x1"
 
 [node name="StateLabel" type="Label" parent="UI/SimulationDebugPanel/Margin/Rows" unique_id=1904774007]
 layout_mode = 2
-mouse_filter = 2
 text = "State: Playing"
 
 [node name="PausedLabel" type="Label" parent="UI/SimulationDebugPanel/Margin/Rows" unique_id=1904774008]
 layout_mode = 2
-mouse_filter = 2
 text = "Paused: No   Time frozen: No"
 
 [node name="ScheduledLabel" type="Label" parent="UI/SimulationDebugPanel/Margin/Rows" unique_id=1904774009]
 layout_mode = 2
-mouse_filter = 2
 text = "Scheduled: 0"
 
 [node name="HintLabel" type="Label" parent="UI/SimulationDebugPanel/Margin/Rows" unique_id=1904774010]
 layout_mode = 2
-mouse_filter = 2
 theme_override_font_sizes/font_size = 11
 text = "[F1] panel"
+
+[node name="Managers" type="Node2D" parent="." unique_id=1546168761]
+
+[node name="EconomyManager" type="Node" parent="Managers" unique_id=272770657]
+script = ExtResource("17_s17dp")
+
+[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_door", "tables", "navigation_region", "economy_manager", "statistics_tracker")]
+script = ExtResource("7_hujxm")
+customer_scene = ExtResource("2_ow5a4")
+entities = NodePath("../../Entities")
+customer_door = NodePath("../../Markers/CustomerDoor")
+tables = [NodePath("../../Environment/table1")]
+navigation_region = NodePath("../../NavigationRegion2D")
+economy_manager = NodePath("../EconomyManager")
+statistics_tracker = NodePath("../StatisticsTracker")
+game_config = ExtResource("15_hxu8e")
+customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtResource("18_r4lks")])
+
+[node name="StatisticsTracker" type="Node" parent="Managers" unique_id=2070280082]
+script = ExtResource("26_0bhws")
+
+[node name="BarManagementMenu" parent="." unique_id=1560950072 node_paths=PackedStringArray("game_manager", "economy_manager", "statistics_tracker") instance=ExtResource("27_62atk")]
+game_manager = NodePath("../Managers/GameManager")
+economy_manager = NodePath("../Managers/EconomyManager")
+statistics_tracker = NodePath("../Managers/StatisticsTracker")
+
+[node name="Node" type="Node" parent="." unique_id=1058371443]
+script = ExtResource("9_b1x3f")
+
+[editable path="Environment/Grog_station"]
+[editable path="Environment/Ale_station"]

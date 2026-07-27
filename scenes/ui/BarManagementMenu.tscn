@@ -1,0 +1,308 @@
+[gd_scene format=3 uid="uid://syl0miuargy"]
+
+[ext_resource type="Script" uid="uid://b5g6iu1s71ki6" path="res://scripts/UI/bar_management_menu.gd" id="1_x3gbs"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu_panel"]
+bg_color = Color(0.105, 0.075, 0.047, 0.98)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.53, 0.36, 0.18, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.55)
+shadow_size = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page_panel"]
+bg_color = Color(0.145, 0.105, 0.065, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.36, 0.25, 0.13, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[node name="BarManagementMenu" type="CanvasLayer" unique_id=1560950072]
+layer = 50
+script = ExtResource("1_x3gbs")
+
+[node name="Screen" type="Control" parent="." unique_id=280470643]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DimBackground" type="ColorRect" parent="Screen" unique_id=387209989]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.025, 0.018, 0.012, 0.78)
+
+[node name="CentreContainer" type="CenterContainer" parent="Screen" unique_id=438618587]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuPanel" type="PanelContainer" parent="Screen/CentreContainer" unique_id=1723720645]
+custom_minimum_size = Vector2(800, 520)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_menu_panel")
+
+[node name="OuterMargin" type="MarginContainer" parent="Screen/CentreContainer/MenuPanel" unique_id=922448418]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="MainRows" type="VBoxContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin" unique_id=452067673]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Header" type="HBoxContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows" unique_id=8624751]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Header" unique_id=159558873]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.76, 0.42, 1)
+theme_override_font_sizes/font_size = 26
+text = "Bar Management"
+
+[node name="HeaderSpacer" type="Control" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Header" unique_id=1971460267]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TimeLabel" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Header" unique_id=335383662]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.81, 0.71, 1)
+theme_override_font_sizes/font_size = 17
+text = "Day 1 — 08:00"
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Header" unique_id=210085995]
+custom_minimum_size = Vector2(90, 34)
+layout_mode = 2
+text = "Close"
+
+[node name="Divider" type="HSeparator" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows" unique_id=1345329255]
+layout_mode = 2
+
+[node name="PageButtons" type="HBoxContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows" unique_id=1730784178]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="OverviewButton" type="Button" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/PageButtons" unique_id=1813675638]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "Overview"
+
+[node name="ProgressionButton" type="Button" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/PageButtons" unique_id=753240413]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+text = "Progression"
+
+[node name="PageButtonSpacer" type="Control" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/PageButtons" unique_id=969171784]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Pages" type="Control" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows" unique_id=1683416727]
+custom_minimum_size = Vector2(0, 365)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="OverviewPage" type="PanelContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages" unique_id=882984138]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_page_panel")
+
+[node name="OverviewMargin" type="MarginContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage" unique_id=407291554]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 20
+
+[node name="OverviewRows" type="VBoxContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin" unique_id=1466964027]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="OverviewTitle" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows" unique_id=853286490]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.76, 0.42, 1)
+theme_override_font_sizes/font_size = 21
+text = "Tavern Overview"
+
+[node name="OverviewDivider" type="HSeparator" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows" unique_id=872472748]
+layout_mode = 2
+
+[node name="SummaryGrid" type="GridContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows" unique_id=1450412142]
+layout_mode = 2
+theme_override_constants/h_separation = 40
+theme_override_constants/v_separation = 15
+columns = 2
+
+[node name="MoneyTitle" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/SummaryGrid" unique_id=1405289293]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.72, 0.62, 1)
+theme_override_font_sizes/font_size = 17
+text = "Current money"
+
+[node name="MoneyValue" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/SummaryGrid" unique_id=951060882]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.94, 0.88, 0.71, 1)
+theme_override_font_sizes/font_size = 17
+text = "£0"
+horizontal_alignment = 2
+
+[node name="CustomersTitle" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/SummaryGrid" unique_id=831911627]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.72, 0.62, 1)
+theme_override_font_sizes/font_size = 17
+text = "Customers inside"
+
+[node name="CustomersValue" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/SummaryGrid" unique_id=1242467718]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.94, 0.88, 0.71, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 2
+
+[node name="ServedTodayTitle" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/SummaryGrid" unique_id=1313364609]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.72, 0.62, 1)
+theme_override_font_sizes/font_size = 17
+text = "Customers served today"
+
+[node name="ServedTodayValue" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/SummaryGrid" unique_id=134812682]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.94, 0.88, 0.71, 1)
+theme_override_font_sizes/font_size = 17
+text = "0"
+horizontal_alignment = 2
+
+[node name="SeatsTitle" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/SummaryGrid" unique_id=708133622]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.72, 0.62, 1)
+theme_override_font_sizes/font_size = 17
+text = "Seating"
+
+[node name="SeatsValue" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/SummaryGrid" unique_id=1495713637]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.94, 0.88, 0.71, 1)
+theme_override_font_sizes/font_size = 17
+text = "0 occupied / 0 available / 0 total"
+horizontal_alignment = 2
+
+[node name="OverviewSpacer" type="Control" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows" unique_id=1366304249]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatusPanel" type="PanelContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows" unique_id=2054835190]
+layout_mode = 2
+
+[node name="StatusMargin" type="MarginContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/StatusPanel" unique_id=65468005]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="StatusLabel" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/OverviewPage/OverviewMargin/OverviewRows/StatusPanel/StatusMargin" unique_id=823087657]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.73, 0.78, 0.65, 1)
+text = "The tavern is paused while this menu is open."
+horizontal_alignment = 1
+
+[node name="ProgressionPage" type="PanelContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages" unique_id=1465398585]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_page_panel")
+
+[node name="ProgressionMargin" type="MarginContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage" unique_id=636484713]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 20
+
+[node name="ProgressionRows" type="VBoxContainer" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin" unique_id=1459757394]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="ProgressionTitle" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=794916014]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.76, 0.42, 1)
+theme_override_font_sizes/font_size = 21
+text = "Tavern Progress"
+
+[node name="ProgressionDivider" type="HSeparator" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=65790292]
+layout_mode = 2
+
+[node name="StatisticsTitle" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=1185138721]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.8, 0.69, 1)
+theme_override_font_sizes/font_size = 18
+text = "Statistics"
+
+[node name="TotalServedLabel" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=1050713366]
+layout_mode = 2
+text = "Customers served: 0"
+
+[node name="DaysOperatedLabel" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=1920815896]
+layout_mode = 2
+text = "Days operated: 1"
+
+[node name="TotalEarnedLabel" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=270577458]
+layout_mode = 2
+text = "Total money earned: £0"
+
+[node name="PeakCustomersLabel" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=1781333398]
+layout_mode = 2
+text = "Highest customers at once: 0"
+
+[node name="ProgressionSpacer" type="Control" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=2071160856]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="MilestoneDivider" type="HSeparator" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=1710956573]
+layout_mode = 2
+
+[node name="MilestoneTitle" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=1791583267]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.8, 0.69, 1)
+theme_override_font_sizes/font_size = 18
+text = "Current Milestone"
+
+[node name="CustomerMilestoneLabel" type="Label" parent="Screen/CentreContainer/MenuPanel/OuterMargin/MainRows/Pages/ProgressionPage/ProgressionMargin/ProgressionRows" unique_id=559207349]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.88, 0.71, 1)
+theme_override_font_sizes/font_size = 17
+text = "Serve 25 customers — 0 / 25"

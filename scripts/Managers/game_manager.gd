@@ -8,6 +8,7 @@ extends Node
 @export var tables: Array[Table]
 @export var navigation_region: NavigationRegionManager
 @export var economy_manager: EconomyManager
+@export var statistics_tracker: StatisticsTracker
 
 @export_category("Configuration")
 @export var game_config: GameConfig
@@ -176,6 +177,11 @@ func spawn_customer() -> void:
 
 	active_customers.append(customer)
 
+	if statistics_tracker != null:
+		statistics_tracker.update_active_customer_peak(
+			active_customers.size()
+		)
+	
 	if game_config.show_debug_messages:
 		print(
 			customer.name,
@@ -454,6 +460,14 @@ func _on_customer_paid(
 		amount,
 		&"customer_payment"
 	)
+
+	if (
+		amount_added > 0
+		and statistics_tracker != null
+	):
+		statistics_tracker.record_customer_served(
+			amount_added
+		)
 
 	if (
 		amount_added > 0
