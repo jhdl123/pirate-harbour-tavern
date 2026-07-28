@@ -1,88 +1,47 @@
 class_name DrinksStation
 extends StaticBody2D
 
-## A station that prepares and hands out one kind of drink.
-##
-## The station owns a real one-slot output [ItemContainer]. Everything the
-## player does with it goes through [ItemTransferService], so picking up,
-## returning and swapping a drink follow exactly the same rules that bar slots,
-## storage and a future inventory UI will use.
-##
-## This is the second object migrated to the interaction framework, and it is
-## deliberately the simplest possible migration: one interaction point, one
-## action, no custom highlight. Compare it with [BarCounter], which needs all
-## three, to see how much of the protocol an object is allowed to ignore.
-##
-## Current limitation
-## ------------------
-## There is no drink stock yet, so the output slot is an infinite supply: it
-## refills itself after a drink is taken, and a drink handed back is discarded.
-## [method _refill_output] and [method _on_drink_returned] are the two places to
-## change once kegs and stock exist.
-
+signal stock_changed(current: int, maximum: int)
 
 @export_category("Drink")
-
-## The prepared drink this station supplies.
-##
-## A [DrinkDefinition] IS an [ItemDefinition], so this resource doubles as the
-## item handed to the player. There is no second drink-item resource.
 @export var served_drink: DrinkDefinition
-
+@export var refill_item: ItemDefinition
+@export_range(1, 999, 1) var maximum_servings: int = 20
+@export_range(0, 999, 1) var starting_servings: int = 20
+@export_range(1, 999, 1) var servings_per_refill_item: int = 20
 
 @export_category("Interaction")
-
-## Verb used when the player takes a drink from the station.
-##
-## Data rather than a hard-coded string, so a coffee urn, a soup pot or a
-## smuggler's crate can reuse this script with the right word.
 @export var serve_verb: String = "Pour"
-
-## Verb used when the player hands this station's own drink back.
 @export var return_verb: String = "Put back"
+@export var refill_verb: String = "Refill"
 
+@export_category("Visuals")
+@export var normal_texture: Texture2D
+@export var empty_texture: Texture2D
+@export_range(2, 20, 1) var indicator_segments: int = 10
 
 @export_category("Debug")
-
-## Prints why an interaction was refused. Off by default to keep logs quiet.
 @export var show_transfer_messages: bool = false
 
-
 @onready var interactable: Interactable = $InteractionArea
-
+@onready var sprite: Sprite2D = $Sprite2D
 
 var output_container: ItemContainer
-
+var current_servings: int = 0
+var _indicator: VBoxContainer
 
 func _ready() -> void:
+	add_to_group(&"drink_stations")
 	_build_output_container()
-
-	if served_drink == null:
-		push_warning(
-			name
-			+ " has no DrinkDefinition assigned."
-		)
-		return
-
-	if not served_drink.validate_or_warn():
-		return
-
-	if not served_drink.has_tag(ItemTags.PREPARED_DRINK):
-		push_warning(
-			name
-			+ " serves '"
-			+ String(served_drink.item_id)
-			+ "', which is not tagged '"
-			+ String(ItemTags.PREPARED_DRINK)
-			+ "'. Bar slots and trays will refuse it."
-		)
-
-	_refill_output()
-
+	current_servings = clampi(starting_servings, 0, maximum_servings)
+	_build_indicator()
+	if normal_texture == null and sprite != null:
+		normal_texture = sprite.texture
+	_refresh_output()
+	_refresh_visuals()
 
 func _build_output_container() -> void:
-	var rules: ItemSlotRules = ItemSlotRules.new()
-
+	var rules := ItemSlotRules.new()
 	rules.capacity = 1
 	rules.accepted_tags = [ItemTags.PREPARED_DRINK]
 	rules.allow_insert = true
@@ -90,236 +49,147 @@ func _build_output_container() -> void:
 	rules.allow_merge = false
 	rules.allow_swap = true
 	rules.allow_partial = false
-
-	output_container = ItemContainer.new(
-		StringName("%s_output" % name.to_snake_case()),
-		1,
-		rules
-	)
-
+	output_container = ItemContainer.new(StringName("%s_output" % name.to_snake_case()), 1, rules)
 	output_container.container_tags = [&"station", &"service"]
 
-
-## The slot the player takes a drink from.
-##
-## A future bar-slot or staff system can transfer against this directly.
 func get_output_slot() -> ItemSlot:
-	if output_container == null:
-		return null
-
-	return output_container.get_slot(0)
-
-
-# -----------------------------------------------------------------------------
-# Interaction protocol
-# -----------------------------------------------------------------------------
+	return output_container.get_slot(0) if output_container != null else null
 
 func get_interaction_display_name() -> String:
-	if served_drink == null:
-		return String(name).capitalize()
+	return "%s Station" % served_drink.display_name if served_drink != null else String(name).capitalize()
 
-	return "%s Station" % served_drink.display_name
+func can_interact(request: InteractionRequest) -> bool:
+	return served_drink != null and request.get_actor_carrier() != null
 
-
-func can_interact(
-	request: InteractionRequest
-) -> bool:
-	if served_drink == null:
-		return false
-
-	return request.get_actor_carrier() != null
-
-
-func get_interaction_actions(
-	request: InteractionRequest
-) -> Array[InteractionAction]:
+func get_interaction_actions(request: InteractionRequest) -> Array[InteractionAction]:
 	var actions: Array[InteractionAction] = []
-
-	var carrier: ItemCarrier = request.get_actor_carrier()
-
+	var carrier := request.get_actor_carrier()
 	if carrier == null or served_drink == null:
 		return actions
-
-	# Holding this station's own drink means the player is putting it back.
-	if carrier.is_carrying_item(served_drink.item_id):
-		actions.append(
-			InteractionAction.create(
-				&"return",
-				return_verb,
-				served_drink.display_name
-			)
-		)
-
+	if refill_item != null and carrier.is_carrying_item(refill_item.item_id):
+		var refill_action := InteractionAction.create(&"refill", refill_verb, get_interaction_display_name())
+		if current_servings >= maximum_servings:
+			refill_action.as_unavailable("Already full")
+		actions.append(refill_action)
 		return actions
-
-	var verb: String = serve_verb
-
-	if carrier.is_carrying():
-		verb = "Swap for"
-
-	var action: InteractionAction = InteractionAction.create(
-		&"serve",
-		verb,
-		served_drink.display_name
-	)
-
-	# The station always has stock today, so the only thing that can refuse a
-	# take is the actor's own hands. Ask the transfer service rather than
-	# guessing, so the prompt stays honest once hands gain their own rules.
-	var predicted: ItemTransferResult = (
-		ItemTransferService.can_transfer(
-			get_output_slot(),
-			carrier.get_slot()
-		)
-	)
-
-	if not predicted.is_success():
-		action.as_unavailable(
-			predicted.get_message().trim_suffix(".")
-		)
-
+	if carrier.is_carrying_item(served_drink.item_id):
+		actions.append(InteractionAction.create(&"return", return_verb, served_drink.display_name))
+		return actions
+	var verb := serve_verb if not carrier.is_carrying() else "Swap for"
+	var action := InteractionAction.create(&"serve", verb, "%s (%d/%d)" % [served_drink.display_name, current_servings, maximum_servings])
+	if current_servings <= 0:
+		action.as_unavailable("Empty - needs %s" % (refill_item.display_name if refill_item != null else "stock"))
+	else:
+		var predicted := ItemTransferService.can_transfer(get_output_slot(), carrier.get_slot())
+		if not predicted.is_success():
+			action.as_unavailable(predicted.get_message().trim_suffix("."))
 	actions.append(action)
-
 	return actions
 
-
-func perform_interaction(
-	request: InteractionRequest
-) -> bool:
-	if served_drink == null:
-		push_warning(
-			name
-			+ " cannot serve a drink because no "
-			+ "DrinkDefinition is assigned."
-		)
-		return false
-
-	var carrier: ItemCarrier = request.get_actor_carrier()
-
+func perform_interaction(request: InteractionRequest) -> bool:
+	var carrier := request.get_actor_carrier()
 	if carrier == null:
-		push_warning(
-			name
-			+ " could not access the actor's ItemCarrier."
-		)
 		return false
+	match request.action_id:
+		&"refill": return _refill_from_carrier(carrier)
+		&"return": return _return_carried_drink(carrier)
+		_: return _serve_drink(carrier)
 
-	if request.action_id == &"return":
-		return _return_carried_drink(carrier)
+func _serve_drink(carrier: ItemCarrier) -> bool:
+	if current_servings <= 0:
+		return false
+	_refresh_output()
+	var output_slot := get_output_slot()
+	var result := carrier.take_from(output_slot)
+	if not result.is_success():
+		return false
+	if result.status == ItemTransferResult.Status.SWAPPED:
+		_on_drink_returned(output_slot.clear())
+	current_servings = maxi(current_servings - 1, 0)
+	_refresh_output()
+	_refresh_visuals()
+	return true
 
-	return _serve_drink(carrier)
-
-
-func _return_carried_drink(
-	carrier: ItemCarrier
-) -> bool:
+func _return_carried_drink(carrier: ItemCarrier) -> bool:
 	if not carrier.is_carrying_item(served_drink.item_id):
 		return false
-
-	var returned_stack: ItemStack = carrier.clear_carried_item()
-
-	_on_drink_returned(returned_stack)
-	_notify_state_changed()
-
+	_on_drink_returned(carrier.clear_carried_item())
+	_refresh_visuals()
 	return true
 
-
-func _serve_drink(
-	carrier: ItemCarrier
-) -> bool:
-	var output_slot: ItemSlot = get_output_slot()
-
-	if output_slot == null:
-		push_error(
-			name
-			+ " has no output slot."
-		)
+func _refill_from_carrier(carrier: ItemCarrier) -> bool:
+	if refill_item == null or not carrier.is_carrying_item(refill_item.item_id):
 		return false
-
-	if output_slot.is_empty():
-		_refill_output()
-
-	# One transfer handles all three cases:
-	# empty hands  -> move
-	# other drink  -> swap
-	# anything else-> rejected, with both sides left untouched
-	var result: ItemTransferResult = carrier.take_from(output_slot)
-
-	if not result.is_success():
-		if show_transfer_messages:
-			print(
-				name,
-				" refused the interaction: ",
-				result.get_message()
-			)
-
+	if current_servings >= maximum_servings:
 		return false
-
-	if result.status == ItemTransferResult.Status.SWAPPED:
-		# The player's previous drink is now sitting in the output slot.
-		_on_drink_returned(output_slot.clear())
-
-	_refill_output()
-	_notify_state_changed()
-
+	carrier.clear_carried_item()
+	current_servings = mini(current_servings + servings_per_refill_item, maximum_servings)
+	_refresh_output()
+	_refresh_visuals()
 	return true
 
+func _refresh_output() -> void:
+	var slot := get_output_slot()
+	if slot == null:
+		return
+	if current_servings <= 0:
+		slot.clear()
+		return
+	if slot.is_empty() and served_drink != null:
+		ItemTransferService.give_to_slot(slot, ItemStack.create(served_drink, 1))
 
-## Kept so any existing or external caller still works.
-##
-## New code goes through the interaction framework, which calls
-## [method perform_interaction] with a full [InteractionRequest].
-func interact(
-	player: Node
-) -> void:
-	perform_interaction(
-		InteractionRequest.create(player, interactable)
-	)
+func _build_indicator() -> void:
+	_indicator = VBoxContainer.new()
+	_indicator.position = Vector2(23, -34)
+	_indicator.add_theme_constant_override("separation", 1)
+	_indicator.visible = false
+	add_child(_indicator)
+	for _i in range(indicator_segments):
+		var segment := ColorRect.new()
+		segment.custom_minimum_size = Vector2(7, 4)
+		_indicator.add_child(segment)
 
 
-func _notify_state_changed() -> void:
+func set_interaction_highlighted(enabled: bool, _request: InteractionRequest) -> void:
+	if _indicator != null:
+		_indicator.visible = enabled or current_servings <= 0
+	var highlight := get_node_or_null("InteractionHighlight")
+	if highlight != null and highlight.has_method(&"set_highlighted"):
+		highlight.call(&"set_highlighted", enabled)
+
+func _refresh_visuals() -> void:
+	if sprite != null:
+		if current_servings <= 0 and empty_texture != null:
+			sprite.texture = empty_texture
+		elif normal_texture != null:
+			sprite.texture = normal_texture
+	if _indicator != null:
+		var filled := ceili(float(current_servings) / float(maximum_servings) * indicator_segments)
+		var children := _indicator.get_children()
+		for i in range(children.size()):
+			children[i].color = Color(0.25, 0.8, 0.35, 1) if i >= indicator_segments - filled else Color(0.16, 0.12, 0.09, 0.8)
+		_indicator.visible = _indicator.visible or current_servings <= 0
+	stock_changed.emit(current_servings, maximum_servings)
 	if interactable != null:
 		interactable.notify_state_changed()
 
+func set_servings(amount: int) -> void:
+	current_servings = clampi(amount, 0, maximum_servings)
+	_refresh_output()
+	_refresh_visuals()
 
-## Places a fresh drink in the output slot.
-##
-## Replace this with a draw from real drink stock once kegs exist.
-func _refill_output() -> void:
-	var output_slot: ItemSlot = get_output_slot()
+func fill_stock() -> void:
+	set_servings(maximum_servings)
 
-	if output_slot == null or served_drink == null:
-		return
+func empty_stock() -> void:
+	set_servings(0)
 
-	if output_slot.has_item():
-		return
+func get_stock_summary() -> Dictionary:
+	return {"name": get_interaction_display_name(), "current": current_servings, "maximum": maximum_servings, "refill_item": refill_item}
 
-	var result: ItemTransferResult = ItemTransferService.give_to_slot(
-		output_slot,
-		ItemStack.create(served_drink, 1)
-	)
+func interact(player: Node) -> void:
+	perform_interaction(InteractionRequest.create(player, interactable))
 
-	if not result.is_success():
-		push_error(
-			name
-			+ " could not refill its output slot: "
-			+ result.get_message()
-		)
-
-
-## Handles a prepared drink given back to the station.
-##
-## With no stock system the drink is poured away. This is the extension point
-## for returning liquid to a keg or producing a dirty tankard.
 func _on_drink_returned(returned_stack: ItemStack) -> void:
-	if returned_stack == null or returned_stack.is_empty():
-		return
-
-	if show_transfer_messages:
-		print(
-			name,
-			" took back ",
-			returned_stack.quantity,
-			" x ",
-			returned_stack.get_display_name(),
-			"."
-		)
+	if show_transfer_messages and returned_stack != null and not returned_stack.is_empty():
+		print(name, " took back ", returned_stack.get_display_name())

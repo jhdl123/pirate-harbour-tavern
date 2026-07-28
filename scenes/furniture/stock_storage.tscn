@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3]
+[ext_resource type="Script" path="res://systems/stock/stock_storage.gd" id="1"]
+[ext_resource type="Script" path="res://systems/interaction/interactable.gd" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/ui/storage_inventory_menu.tscn" id="3"]
+[sub_resource type="RectangleShape2D" id="body"]
+size = Vector2(56, 40)
+[sub_resource type="RectangleShape2D" id="interaction"]
+size = Vector2(82, 66)
+[node name="StockStorage" type="StaticBody2D"]
+script = ExtResource("1")
+storage_menu_scene = ExtResource("3")
+[node name="Crate" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-28,-20,28,-20,28,20,-28,20)
+color = Color(0.31,0.18,0.08,1)
+[node name="Lid" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(-25,-17,25,-17,20,-7,-20,-7)
+color = Color(0.55,0.34,0.14,1)
+[node name="Label" type="Label" parent="."]
+offset_left = -35.0
+offset_top = 22.0
+offset_right = 35.0
+offset_bottom = 42.0
+text = "Storage"
+horizontal_alignment = 1
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("body")
+[node name="InteractionArea" type="Area2D" parent="." groups=["interactable"]]
+script = ExtResource("2")
+display_name = "Stock Storage"
+interaction_priority = 2
+fallback_verb = "Open"
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+shape = SubResource("interaction")

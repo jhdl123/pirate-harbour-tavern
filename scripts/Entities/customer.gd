@@ -1,3 +1,4 @@
+class_name Customer
 extends CharacterBody2D
 
 

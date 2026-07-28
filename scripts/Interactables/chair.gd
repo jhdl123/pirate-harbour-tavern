@@ -36,6 +36,7 @@ enum SeatState {
 
 var occupied_obstacle: NavigationObstacle2D
 var active_drink: DrinkDefinition = null
+var _game_config: GameConfig = null
 
 
 @onready var seat_point: Marker2D = $SeatPoint
@@ -82,7 +83,12 @@ func _ready() -> void:
 func configure(
 	config: GameConfig
 ) -> void:
+	_game_config = config
 	cleanable.configure(config)
+
+
+func _should_print_debug() -> bool:
+	return _game_config == null or _game_config.show_debug_messages
 
 
 func connect_cleanable_signals() -> void:
@@ -210,7 +216,7 @@ func begin_use(
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -262,7 +268,7 @@ func require_cleaning() -> void:
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -480,7 +486,7 @@ func _on_cleaning_started(
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -511,7 +517,7 @@ func _on_cleaning_task_changed(
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -544,7 +550,7 @@ func _on_cleaning_complication_triggered(
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -566,7 +572,7 @@ func _on_cleaning_completed() -> void:
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",

@@ -1,10 +1,6 @@
-[gd_resource type="Resource" script_class="SimulationStateRules" format=3]
+[gd_resource type="Resource" script_class="SimulationStateRules" format=3 uid="uid://cdxrk87a338gj"]
 
-[ext_resource type="Script" path="res://systems/simulation/simulation_state_rules.gd" id="1_simrules"]
+[ext_resource type="Script" uid="uid://cpsxaaner6c7c" path="res://systems/simulation/simulation_state_rules.gd" id="1_simrules"]
 
 [resource]
 script = ExtResource("1_simrules")
-states_that_advance_time = Array[StringName]([&"playing", &"fast_forward"])
-states_that_accept_input = Array[StringName]([&"playing", &"fast_forward"])
-states_that_update_actors = Array[StringName]([&"playing", &"fast_forward", &"cutscene"])
-states_that_show_world = Array[StringName]([&"playing", &"fast_forward", &"paused", &"dialogue", &"cutscene"])

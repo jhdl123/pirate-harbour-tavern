@@ -1,11 +1,15 @@
 class_name SupplierDefinition
 extends Resource
 
-## Configurable catalogue and delivery rules for one supplier.
+## Configurable catalogue for one supplier.
 ##
 ## The order ledger uses a dependable harbour supplier today. A visiting trader
 ## can later use the same catalogue-entry model while supplying a temporary,
 ## limited or changing list of products.
+##
+## Delivery timing is intentionally not configured here: every order uses the
+## single [member OrderManager.default_delivery_minutes] duration. Per-supplier
+## delivery schedules are out of scope for now (see CLEANUP_REPORT.md).
 
 @export_category("Identity")
 @export var supplier_id: StringName = &""
@@ -14,10 +18,6 @@ extends Resource
 
 @export_category("Catalogue")
 @export var entries: Array[OrderCatalogueEntry] = []
-
-@export_category("Delivery")
-@export_range(0, 30, 1)
-var delivery_delay_days: int = 1
 
 
 func get_entry(item_id: StringName) -> OrderCatalogueEntry:
