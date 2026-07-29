@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cph3atest0001"]
+
+[ext_resource type="Script" path="res://tests/phase_3a_headless_test.gd" id="1_harness"]
+
+[node name="Phase3AHeadlessTest" type="Node"]
+script = ExtResource("1_harness")

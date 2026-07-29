@@ -1,0 +1,84 @@
+[gd_scene format=3 uid="uid://25arcwpp5pxh"]
+
+[ext_resource type="Script" uid="uid://dugu3dtkmn4eb" path="res://systems/staff/staff_member.gd" id="1_staff"]
+[ext_resource type="Resource" path="res://Data/staff/tavern_hand.tres" id="2_definition"]
+[ext_resource type="Texture2D" uid="uid://bqcjojq144i74" path="res://assets/art/characters/32x32_staff_01.png" id="3_sprite"]
+[ext_resource type="Script" uid="uid://cs7fowre7nbqo" path="res://systems/navigation/actor_movement.gd" id="4_movement"]
+[ext_resource type="Script" uid="uid://38ub3orhpmtw" path="res://systems/navigation/actor_navigation.gd" id="5_navigation"]
+[ext_resource type="Resource" path="res://Data/navigation/staff_movement.tres" id="6_moveprofile"]
+[ext_resource type="Resource" path="res://Data/navigation/staff_navigation.tres" id="7_navprofile"]
+[ext_resource type="Script" uid="uid://c2m0xv7m5pi6e" path="res://systems/actions/action_runner.gd" id="8_runner"]
+[ext_resource type="Script" uid="uid://bdhwfvb2xudqy" path="res://scripts/Components/item_carrier.gd" id="9_carrier"]
+[ext_resource type="Script" uid="uid://cmq6hx5itg654" path="res://systems/interaction/interactable.gd" id="10_interact"]
+[ext_resource type="Script" uid="uid://uldvm7rb67jq" path="res://systems/interaction/interaction_highlight.gd" id="11_highlight"]
+[ext_resource type="Script" uid="uid://diaqev4lkbkau" path="res://systems/staff/staff_speech_bubble.gd" id="12_bubble"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 12.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_interact"]
+size = Vector2(40, 40)
+
+[node name="TavernHand" type="CharacterBody2D" unique_id=1778474711]
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_staff")
+definition = ExtResource("2_definition")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=615545357]
+path_desired_distance = 6.0
+target_desired_distance = 5.0
+path_max_distance = 24.0
+avoidance_enabled = true
+radius = 12.0
+neighbor_distance = 80.0
+time_horizon_agents = 0.7
+time_horizon_obstacles = 0.25
+max_speed = 135.0
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=104915803]
+texture = ExtResource("3_sprite")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1258788757]
+position = Vector2(0, 4)
+shape = SubResource("CircleShape2D_body")
+
+[node name="CarriedItemSprite" type="Sprite2D" parent="." unique_id=1198674800]
+visible = false
+z_index = 5
+position = Vector2(20, -2)
+
+[node name="InteractionArea" type="Area2D" parent="." unique_id=1848753903 groups=["interactable"]]
+script = ExtResource("10_interact")
+display_name = "Tavern Hand"
+interaction_priority = 1
+fallback_verb = "Check on"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=1773270365]
+shape = SubResource("RectangleShape2D_interact")
+
+[node name="InteractionHighlight" type="Node" parent="." unique_id=1484072785]
+script = ExtResource("11_highlight")
+target_paths = Array[NodePath]([NodePath("../Sprite2D")])
+
+[node name="ActorMovement" type="Node" parent="." unique_id=2048593296 node_paths=PackedStringArray("body")]
+script = ExtResource("4_movement")
+body = NodePath("..")
+profile = ExtResource("6_moveprofile")
+
+[node name="ActorNavigation" type="Node" parent="." unique_id=816057321 node_paths=PackedStringArray("body", "agent", "movement")]
+script = ExtResource("5_navigation")
+body = NodePath("..")
+agent = NodePath("../NavigationAgent2D")
+movement = NodePath("../ActorMovement")
+profile = ExtResource("7_navprofile")
+
+[node name="ActionRunner" type="Node" parent="." unique_id=626839589]
+script = ExtResource("8_runner")
+
+[node name="ItemCarrier" type="Node" parent="." unique_id=2125519534 node_paths=PackedStringArray("carried_sprite")]
+script = ExtResource("9_carrier")
+carried_sprite = NodePath("../CarriedItemSprite")
+
+[node name="SpeechBubble" type="Node2D" parent="." unique_id=4707824]
+script = ExtResource("12_bubble")

@@ -74,6 +74,18 @@ var _reserved_elapsed: float = 0.0
 func _ready() -> void:
 	set_process(reservation_timeout_seconds > 0.0)
 
+	# Lets a tree-wide search (DestinationBroker) find every Reservable
+	# carrying a given tag with get_nodes_in_group(), with no separate
+	# registry to keep in step - tag the Reservable, and it is discoverable.
+	for tag: StringName in reservation_tags:
+		add_to_group(group_for_tag(tag))
+
+
+## The group name a [param tag] resolves to. Public and static, shared with
+## [DestinationBroker] so the two never drift apart on naming.
+static func group_for_tag(tag: StringName) -> StringName:
+	return StringName("reservable_tag_" + String(tag))
+
 
 func _process(
 	delta: float

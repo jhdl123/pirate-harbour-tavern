@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TavernTaskDefinition" format=3 uid="uid://jf4b50r6j881"]
+
+[ext_resource type="Script" uid="uid://dtl144ru6vsmc" path="res://systems/staff/tasks/tavern_task_definition.gd" id="1_taskdef"]
+
+[resource]
+script = ExtResource("1_taskdef")
+task_type = &"clean_seat"
+display_name = "Clean Seat"
+description = "Clear a seat a customer left dirty so it can be used again."
+diagnostic_category = &"cleaning"
+base_priority = 55.0
+urgency_weight = 20.0
+age_weight = 2.0
+distance_weight = 14.0
+carried_item_bonus = 0.0
+carried_item_rule = 1
+required_capabilities = Array[StringName]([&"clean_seats"])
+timeout_world_minutes = 45

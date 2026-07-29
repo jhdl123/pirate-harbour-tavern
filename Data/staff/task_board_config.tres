@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TavernTaskBoardConfig" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://systems/staff/tasks/tavern_task_board_config.gd" id="1_boardcfg"]
+[ext_resource type="Resource" path="res://Data/staff/tasks/serve_drink.tres" id="2_serve"]
+[ext_resource type="Resource" path="res://Data/staff/tasks/clean_seat.tres" id="3_clean"]
+[ext_resource type="Resource" path="res://Data/staff/task_viability_config.tres" id="4_viability"]
+
+[resource]
+script = ExtResource("1_boardcfg")
+task_definitions = Array[Resource]([ExtResource("2_serve"), ExtResource("3_clean")])
+sweep_interval_seconds = 0.5
+cancel_tasks_with_missing_targets = true
+maximum_retained_finished_tasks = 400
+maximum_retained_issues = 300
+viability_config = ExtResource("4_viability")
+same_worker_reclaim_cooldown_seconds = 6.0
+task_switch_score_margin = 120.0
+minimum_commitment_minutes = 0.75
+record_decisions = true
+maximum_retained_decisions = 600
+record_rejections = true
+deduplicate_rejections = true
+console_debug_enabled = false

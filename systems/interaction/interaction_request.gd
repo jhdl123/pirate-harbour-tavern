@@ -46,14 +46,14 @@ var data: Dictionary = {}
 static func create(
 	request_actor: Node,
 	request_interactable: Node,
-	action_id: StringName = &"",
+	request_action_id: StringName = &"",
 	action_data: Dictionary = {}
 ) -> InteractionRequest:
 	var request: InteractionRequest = InteractionRequest.new()
 
 	request.actor = request_actor
 	request.interactable = request_interactable
-	request.action_id = action_id
+	request.action_id = request_action_id
 	request.data = action_data
 
 	var actor_node_2d: Node2D = request_actor as Node2D

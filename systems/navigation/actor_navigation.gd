@@ -511,7 +511,7 @@ func _evaluate_final_approach(
 
 
 func _get_desired_direction(
-	distance_to_destination: float
+	_distance_to_destination: float
 ) -> Vector2:
 	if _state == NavigationState.SIDESTEPPING:
 		return _sidestep_direction

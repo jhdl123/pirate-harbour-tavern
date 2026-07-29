@@ -216,6 +216,59 @@ simulation state is saved by stable string id rather than enum integer.
 Full detail, including how future systems subscribe and how save/load
 integrates, is in [Simulation System](SIMULATION_SYSTEM.md).
 
+## Staff, tasks and communication
+
+```text
+TaskBoard (autoload)           the one list of outstanding work
+    ├── TavernTask             one real requirement, with its full history
+    ├── TavernTaskDefinition   Resource: priority, capability, retry policy
+    └── TavernTaskBoardConfig  Resource: sweep rate, history caps, definitions
+
+Comms (autoload)               notifications, alerts and speaker messages
+    ├── CommMessage            one message, with its deduplication key
+    └── CommunicationConfig    Resource: severity styling, limits, lifetimes
+```
+
+Work reaches a worker along one path, and only one:
+
+```text
+world requirement       a chair is dirty, a customer is waiting
+  → task producer       TavernTaskCoordinator, listening to world signals
+  → central task board  dedup, atomic claim, scoring, sweep
+  → staff evaluates     StaffMember asks the board for the best task
+  → claimed & reserved  the claim is the reservation
+  → staff executes      StaffTaskExecutor drives the real world API
+  → world confirms      the customer really was served
+  → task completes
+```
+
+The board holds no gameplay knowledge. It cannot serve a customer and has no
+opinion on whether a chair is dirty; producers tell it what exists, registered
+validators tell it whether that is still true, and executors do the work. That
+is what makes a player override free: nothing has to announce that the player
+cleaned a chair, because the next validation finds the chair clean and cancels
+the task.
+
+Staff use the same authoritative APIs the player does — `Customer.try_serve()`,
+`Chair.try_clean()`, `ItemCarrier.take_from()` — so no behaviour exists twice
+and nothing is teleported, spawned or force-set.
+
+Stock warnings follow the same shape, with the station owning the fact and the
+communication service owning the message:
+
+```text
+station stock changes
+  → station evaluates its own state, with hysteresis
+  → stock_state_changed
+  → StockAlertCoordinator
+  → deduplicated alert lifecycle
+  → toast / alert panel / speaker UI
+  → acknowledgement or automatic resolution
+```
+
+Full detail is in [Staff and Task System](STAFF_TASK_SYSTEM.md) and
+[Communication System](COMMUNICATION_SYSTEM.md).
+
 ## Economy
 
 ```text
@@ -260,8 +313,20 @@ The main scene contains managers rather than relying on global autoloads:
 ```text
 Managers
 ├── EconomyManager
-└── GameManager
+├── GameManager
+├── OrderManager
+├── CustomerAIReportManager
+├── StatisticsTracker
+├── TavernTaskCoordinator      turns world signals into tasks
+├── StockAlertCoordinator      turns stock states into alerts
+└── StaffReportManager         exports the staff/task/comms diagnostics
 ```
+
+`TaskBoard` and `Comms` are autoloads rather than scene managers because staff,
+stations and UI all need them and none of them owns the others. The two
+coordinators stay in the scene, because they are the only pieces that know both
+the world and those services, and keeping them visible in the Inspector is what
+makes that wiring auditable.
 
 This supports future save/load sessions and makes dependencies visible in the scene Inspector.
 

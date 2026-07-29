@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CommunicationConfig" format=3]
+
+[ext_resource type="Script" path="res://systems/communication/communication_config.gd" id="1_commcfg"]
+
+[resource]
+script = ExtResource("1_commcfg")
+maximum_visible_toasts = 3
+default_toast_seconds = 4.0
+maximum_queued_toasts = 12
+maximum_visible_alerts = 6
+alert_recreate_cooldown_seconds = 10.0
+animate_alert_resolution = true
+speaker_message_seconds = 8.0
+speaker_choices_pause_game = false
+maximum_history_entries = 200
+colour_info = Color(0.72, 0.78, 0.86, 1)
+colour_low = Color(0.62, 0.8, 0.62, 1)
+colour_warning = Color(0.94, 0.76, 0.36, 1)
+colour_critical = Color(0.92, 0.42, 0.36, 1)
+console_debug_enabled = false

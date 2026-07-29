@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ActivityDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/is_seated.tres" id="3_seated"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/not_currently_ordering.tres" id="4_not_ordering"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/visit_activity_availability.tres" id="5_availability"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/visit_activity_min_time_remaining.tres" id="6_min_time"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/visit_activity_distance_scoring.tres" id="7_distance"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/darts_repeat_decay.tres" id="8_decay"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/visit_activity_satisfaction_scoring.tres" id="9_satisfaction"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/visit_activity_thirst_scoring.tres" id="10_thirst"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/decision_variance.tres" id="11_variance"]
+[ext_resource type="Resource" path="res://Data/customer_ai/behaviours/visit_tavern_activity.tres" id="12_behaviour"]
+
+[resource]
+script = ExtResource("1_script")
+activity_id = &"visit_tavern_activity"
+display_name = "Visit Tavern Activity"
+base_utility = 5.5
+conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_seated"), ExtResource("4_not_ordering"), ExtResource("5_availability"), ExtResource("6_min_time"), ExtResource("7_distance"), ExtResource("8_decay"), ExtResource("9_satisfaction"), ExtResource("10_thirst"), ExtResource("11_variance")])
+destination_tag = &"darts"
+is_terminal = false
+behaviour = ExtResource("12_behaviour")

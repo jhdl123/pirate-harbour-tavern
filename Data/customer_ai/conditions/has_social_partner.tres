@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="DomainFlagCondition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/conditions/domain_flag_condition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+contribution_label = &"availability_contribution"
+flag_name = &"has_social_partner"
+expected_value = true
+gates = true
+score_bonus = 0.0

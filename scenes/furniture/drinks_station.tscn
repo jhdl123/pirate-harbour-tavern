@@ -1,8 +1,9 @@
-[gd_scene format=3 uid="uid://dnd6om8dg26fm"]
+[gd_scene load_steps=7 format=3 uid="uid://dnd6om8dg26fm"]
 
 [ext_resource type="Texture2D" uid="uid://v53xyiijymwl" path="res://assets/art/furniture/32x32_drinks_station.png" id="1_h03td"]
 [ext_resource type="Script" uid="uid://cwxwst5xv1vu4" path="res://scripts/Interactables/drinks_station.gd" id="1_lpag8"]
 [ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="2_2bxlr"]
+[ext_resource type="Resource" path="res://Data/items/stock/grog_barrel.tres" id="5_stock"]
 [ext_resource type="Script" path="res://systems/interaction/interactable.gd" id="3_interact"]
 [ext_resource type="Script" path="res://systems/interaction/interaction_highlight.gd" id="4_highlight"]
 
@@ -15,6 +16,10 @@ size = Vector2(48, 48)
 [node name="drinks_station" type="StaticBody2D" unique_id=1053921962]
 script = ExtResource("1_lpag8")
 served_drink = ExtResource("2_2bxlr")
+refill_item = ExtResource("5_stock")
+maximum_servings = 20
+starting_servings = 20
+servings_per_refill_item = 20
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1803792753]
 texture = ExtResource("1_h03td")

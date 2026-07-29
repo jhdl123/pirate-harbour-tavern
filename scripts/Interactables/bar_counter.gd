@@ -63,6 +63,13 @@ var highlighted_slot_index: int = -1
 
 
 func _ready() -> void:
+	# Phase 3A: staff find drinks to deliver by looking at this group rather
+	# than searching the tree for anything with slots. Membership is what makes
+	# a counter a place staff may take a prepared drink from - which is exactly
+	# why the drinks stations are deliberately not in it. Pouring costs stock
+	# and remains the player's job.
+	add_to_group(&"bar_counters")
+
 	_build_service_container()
 	_connect_slot_signals()
 	_refresh_all_slot_visuals()

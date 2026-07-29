@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="VisitTavernActivityBehaviour" format=3 uid="uid://d10w2rsld3ro2"]
+
+[ext_resource type="Script" uid="uid://nskqi67140q" path="res://systems/customer_ai/activities/behaviours/visit_tavern_activity_behaviour.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")

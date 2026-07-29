@@ -12,6 +12,16 @@ extends ItemDefinition
 ## data that is meaningless for non-drink items.
 
 
+@export_category("Alcohol")
+
+## How strongly this drink contributes to CustomerNeeds.intoxication per
+## serving - see Customer._on_drink_finished() and
+## docs/CUSTOMER_AI_SYSTEM.md's Phase 2B section. A future non-alcoholic
+## drink (water, tea) simply leaves this at 0.0 - no separate flag needed.
+@export_range(0.0, 5.0, 0.05)
+var alcohol_strength: float = 1.0
+
+
 @export_category("Drink Timing")
 
 ## Real-world seconds a customer spends drinking this drink.

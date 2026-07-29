@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://dxannpmgcty1l"]
+
+[ext_resource type="Script" uid="uid://blxh5unjin7kl" path="res://systems/tavern_activities/tavern_activity_point.gd" id="1_point_script"]
+[ext_resource type="Texture2D" uid="uid://cvku25b8wdeps" path="res://assets/art/environment/32x32_dartboard.png" id="2_0mthd"]
+[ext_resource type="Script" uid="uid://cakp4dldxby6s" path="res://systems/reservation/reservable.gd" id="2_reservable_script"]
+
+[node name="DartsPoint" type="Node2D" unique_id=2034469874]
+script = ExtResource("1_point_script")
+activity_id = &"darts"
+display_name = "Darts"
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1415719512]
+position = Vector2(-1, -53)
+texture = ExtResource("2_0mthd")
+
+[node name="Reservable" type="Node" parent="." unique_id=896076098]
+script = ExtResource("2_reservable_script")
+reservation_tags = Array[StringName]([&"darts"])
+
+[node name="UsePosition" type="Marker2D" parent="." unique_id=1913066976]
+position = Vector2(0, -18)

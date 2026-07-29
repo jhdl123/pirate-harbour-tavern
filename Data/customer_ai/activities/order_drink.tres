@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ActivityDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/is_seated.tres" id="3_seated"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/not_currently_ordering.tres" id="4_not_ordering"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/under_drink_limit.tres" id="5_under_limit"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/can_afford_drink.tres" id="6_can_afford"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/intoxication_order_gate.tres" id="7_intoxication_gate"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/order_thirst_scoring.tres" id="8_thirst"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/order_visit_time_scoring.tres" id="9_visit_time"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/order_money_scoring.tres" id="10_money"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/order_satisfaction_scoring.tres" id="11_satisfaction"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/decision_variance.tres" id="12_variance"]
+[ext_resource type="Resource" path="res://Data/customer_ai/behaviours/order_drink.tres" id="13_behaviour"]
+
+[resource]
+script = ExtResource("1_script")
+activity_id = &"order_drink"
+display_name = "Order Drink"
+base_utility = 7.0
+conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_seated"), ExtResource("4_not_ordering"), ExtResource("5_under_limit"), ExtResource("6_can_afford"), ExtResource("7_intoxication_gate"), ExtResource("8_thirst"), ExtResource("9_visit_time"), ExtResource("10_money"), ExtResource("11_satisfaction"), ExtResource("12_variance")])
+destination_tag = &""
+is_terminal = false
+behaviour = ExtResource("13_behaviour")

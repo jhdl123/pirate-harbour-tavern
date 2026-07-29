@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ActivityDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
+[ext_resource type="Resource" path="res://Data/customer_ai/behaviours/return_to_seat.tres" id="3_behaviour"]
+
+[resource]
+script = ExtResource("1_script")
+activity_id = &"return_to_seat"
+display_name = "Return to Seat"
+base_utility = 0.0
+conditions = Array[ExtResource("2_condition_type")]([])
+destination_tag = &""
+is_terminal = false
+behaviour = ExtResource("3_behaviour")

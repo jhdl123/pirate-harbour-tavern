@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cdxw3840bn2ub"]
+
+[ext_resource type="Script" uid="uid://cvirt3vnm6ifc" path="res://scripts/UI/stock_dev_panel.gd" id="1"]
+
+[node name="StockDevPanel" type="CanvasLayer" unique_id=1752553694]
+script = ExtResource("1")

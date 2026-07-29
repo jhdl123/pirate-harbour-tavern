@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="NeedThresholdCondition" format=3 uid="uid://cgj2bk7igrvj0"]
+
+[ext_resource type="Script" uid="uid://pdgi8t5cnrrl" path="res://systems/customer_ai/activities/conditions/need_threshold_condition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+need_id = &"intoxication"
+comparison = 1
+threshold = 0.75
+score_weight = -8.0
+contribution_label = &"intoxication_contribution"

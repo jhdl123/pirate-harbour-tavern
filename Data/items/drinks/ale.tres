@@ -17,6 +17,7 @@ carried_texture = ExtResource("2_kiewq")
 maximum_stack_size = 1
 preferred_destination = 1
 base_sell_price = 7
+alcohol_strength = 0.8
 order_icon_texture = ExtResource("2_kiewq")
 empty_container_texture = ExtResource("3_85aeh")
 broken_container_texture = ExtResource("1_vfukt")

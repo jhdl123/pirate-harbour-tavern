@@ -36,6 +36,7 @@ enum SeatState {
 
 var occupied_obstacle: NavigationObstacle2D
 var active_drink: DrinkDefinition = null
+var _game_config: GameConfig = null
 
 
 @onready var seat_point: Marker2D = $SeatPoint
@@ -82,7 +83,12 @@ func _ready() -> void:
 func configure(
 	config: GameConfig
 ) -> void:
+	_game_config = config
 	cleanable.configure(config)
+
+
+func _should_print_debug() -> bool:
+	return _game_config == null or _game_config.show_debug_messages
 
 
 func connect_cleanable_signals() -> void:
@@ -184,11 +190,20 @@ func assign_customer(
 func begin_use(
 	drink: DrinkDefinition
 ) -> void:
-	if get_seat_state() != SeatState.RESERVED:
+	var current_seat_state: SeatState = get_seat_state()
+
+	# RESERVED -> the customer's first drink this visit, promote the claim.
+	# IN_USE -> a later drink at the same visit (Relax/Order Again) - the
+	# chair is already occupied by this same customer, so just serve the
+	# new drink without re-promoting a reservation that is already active.
+	if (
+		current_seat_state != SeatState.RESERVED
+		and current_seat_state != SeatState.IN_USE
+	):
 		push_warning(
 			name
 			+ " cannot begin use from state "
-			+ str(get_seat_state())
+			+ str(current_seat_state)
 		)
 		return
 
@@ -201,16 +216,18 @@ func begin_use(
 
 	active_drink = drink
 
-	# The customer is here now, so the claim is promoted from "on its way" to
-	# "in use". A reservation that never reaches this point expires by itself.
-	reservable.occupy(reservable.get_holder())
+	if current_seat_state == SeatState.RESERVED:
+		# The customer is here now, so the claim is promoted from "on its way"
+		# to "in use". A reservation that never reaches this point expires by
+		# itself.
+		reservable.occupy(reservable.get_holder())
 
 	_update_drink_visual()
 	_update_cleaning_interaction()
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -219,6 +236,20 @@ func begin_use(
 			active_drink.display_name,
 			"."
 		)
+
+
+## Releases this seat back to the pool with no cleaning implications - for a
+## customer who leaves before ever being served (never reached
+## [method begin_use]). Safe to call from [SeatState.RESERVED] or
+## [SeatState.IN_USE]; a no-op if already [SeatState.AVAILABLE]. Once a chair
+## has actually been used, prefer [method require_cleaning] instead - see its
+## own doc comment for why a used chair still needs cleaning even when the
+## customer eventually leaves without ordering again.
+func release_reservation(
+	holder: Node = null
+) -> void:
+	reservable.release(holder)
+	set_occupied_zone_enabled(false)
 
 
 func require_cleaning() -> void:
@@ -262,7 +293,7 @@ func require_cleaning() -> void:
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -273,16 +304,42 @@ func require_cleaning() -> void:
 		)
 
 
+## The interaction-framework entry point, unchanged in behaviour.
+##
+## Phase 3A moved the body into [method try_clean] so staff can use the same
+## path and check whether it worked. The player's experience is identical.
 func interact(
 	player: Node
 ) -> void:
+	try_clean(player)
+
+
+## Starts cleaning this seat using [param actor]'s own [ActionRunner].
+##
+## The one true cleaning entry point, shared by the player's interaction and by
+## [CleanSeatExecutor]. Because both hand their own runner to the same
+## [CleanableComponent], the duration, the cancel behaviour and the
+## broken-glass complication are identical whoever is holding the rag - and
+## there is no second code path that could be tuned separately by accident.
+##
+## [param actor] is duck-typed on [code]get_action_runner[/code], so anything
+## with that component can clean: the player, a tavern hand, a future hired
+## cleaner.
+##
+## Returns false when the seat is already clean, when somebody else is already
+## cleaning it, or when the actor is busy with another action. All three are
+## normal answers, not errors - they are exactly how a second cleaner is
+## prevented from starting a duplicate action on the same seat.
+func try_clean(
+	actor: Node
+) -> bool:
 	if not cleanable.can_start_cleaning():
-		return
+		return false
 
-	if player == null:
-		return
+	if actor == null:
+		return false
 
-	if not player.has_method(
+	if not actor.has_method(
 		"get_action_runner"
 	):
 		push_warning(
@@ -290,23 +347,36 @@ func interact(
 			+ " was interacted with by an object "
 			+ "without an ActionRunner."
 		)
-		return
+		return false
 
-	var player_action_runner: ActionRunner = (
-		player.get_action_runner()
+	var actor_action_runner: ActionRunner = (
+		actor.get_action_runner()
 	)
 
-	if player_action_runner == null:
+	if actor_action_runner == null:
 		push_warning(
 			name
-			+ " could not access the player's ActionRunner."
+			+ " could not access the actor's ActionRunner."
 		)
-		return
+		return false
 
-	if cleanable.start_cleaning(
-		player_action_runner
+	if not cleanable.start_cleaning(
+		actor_action_runner
 	):
-		_update_cleaning_interaction()
+		return false
+
+	_update_cleaning_interaction()
+
+	return true
+
+
+## True when this seat is waiting for somebody to clean it.
+##
+## Read by the task coordinator when it decides whether a cleaning requirement
+## exists. Kept here rather than having callers reach into the component, so
+## the answer has one owner.
+func needs_cleaning() -> bool:
+	return cleanable != null and cleanable.has_cleaning_task()
 
 func clear_customer() -> void:
 	reservable.release()
@@ -480,7 +550,7 @@ func _on_cleaning_started(
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -511,7 +581,7 @@ func _on_cleaning_task_changed(
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -544,7 +614,7 @@ func _on_cleaning_complication_triggered(
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",
@@ -566,7 +636,7 @@ func _on_cleaning_completed() -> void:
 
 	var table: Table = get_table()
 
-	if table != null:
+	if table != null and _should_print_debug():
 		print(
 			table.name,
 			"/",

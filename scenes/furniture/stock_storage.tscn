@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://kvs41tp65xab"]
+
+[ext_resource type="Script" uid="uid://dq1h4h2iu2a2t" path="res://systems/stock/stock_storage.gd" id="1"]
+[ext_resource type="Script" uid="uid://cmq6hx5itg654" path="res://systems/interaction/interactable.gd" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/ui/storage_inventory_menu.tscn" id="3"]
+[ext_resource type="Texture2D" uid="uid://c3e7my76v02p1" path="res://assets/art/furniture/64x32_chest_front.png" id="3_vyes7"]
+
+[sub_resource type="RectangleShape2D" id="body"]
+size = Vector2(56, 40)
+
+[sub_resource type="RectangleShape2D" id="interaction"]
+size = Vector2(82, 66)
+
+[node name="StockStorage" type="StaticBody2D" unique_id=942957935]
+script = ExtResource("1")
+storage_menu_scene = ExtResource("3")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=382330521]
+scale = Vector2(1.5, 1)
+texture = ExtResource("3_vyes7")
+
+[node name="Crate" type="Polygon2D" parent="." unique_id=1286904150]
+visible = false
+color = Color(0.31, 0.18, 0.08, 1)
+polygon = PackedVector2Array(-28, -20, 28, -20, 28, 20, -28, 20)
+
+[node name="Lid" type="Polygon2D" parent="." unique_id=2087339702]
+visible = false
+color = Color(0.55, 0.34, 0.14, 1)
+polygon = PackedVector2Array(-25, -17, 25, -17, 20, -7, -20, -7)
+
+[node name="Label" type="Label" parent="." unique_id=242088924]
+offset_left = -35.0
+offset_top = 22.0
+offset_right = 35.0
+offset_bottom = 42.0
+text = "Storage"
+horizontal_alignment = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=86997790]
+shape = SubResource("body")
+
+[node name="InteractionArea" type="Area2D" parent="." unique_id=454723114 groups=["interactable"]]
+script = ExtResource("2")
+display_name = "Stock Storage"
+interaction_priority = 2
+fallback_verb = "Open"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=1377393890]
+shape = SubResource("interaction")

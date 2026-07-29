@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="TavernTaskDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/staff/tasks/tavern_task_definition.gd" id="1_taskdef"]
+
+[resource]
+script = ExtResource("1_taskdef")
+task_type = &"serve_drink"
+display_name = "Serve Drink"
+description = "Carry a prepared drink from a bar service slot to the customer who ordered it."
+diagnostic_category = &"service"
+base_priority = 100.0
+urgency_weight = 80.0
+age_weight = 1.5
+maximum_age_bonus = 25.0
+distance_weight = 12.0
+carried_item_bonus = 60.0
+failure_penalty = 25.0
+required_capabilities = Array[StringName]([&"serve_drinks"])
+maximum_retries = 2
+maximum_failures = 4
+timeout_world_minutes = 45
+retry_cooldown_seconds = 3.0
+can_be_interrupted = false
+player_may_override = true
+notify_on_completion = false
+carried_item_rule = 0
+viability_weight = 1.0

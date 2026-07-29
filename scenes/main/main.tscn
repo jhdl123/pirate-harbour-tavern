@@ -28,8 +28,22 @@
 [ext_resource type="Script" uid="uid://bqspb0rlv46mq" path="res://systems/statistics/statistics_tracker.gd" id="26_0bhws"]
 [ext_resource type="Script" uid="uid://d20pj165yrwlu" path="res://systems/simulation/simulation_debug_panel.gd" id="26_simpanel"]
 [ext_resource type="PackedScene" uid="uid://syl0miuargy" path="res://scenes/ui/BarManagementMenu.tscn" id="27_62atk"]
-[ext_resource type="PackedScene" path="res://scenes/furniture/order_ledger.tscn" id="28_order_ledger"]
-[ext_resource type="Script" path="res://systems/orders/order_manager.gd" id="29_order_manager"]
+[ext_resource type="PackedScene" uid="uid://cc73tycqpmxgd" path="res://scenes/furniture/order_ledger.tscn" id="28_order_ledger"]
+[ext_resource type="Script" uid="uid://2oup3ckpmmla" path="res://systems/orders/order_manager.gd" id="29_order_manager"]
+[ext_resource type="PackedScene" uid="uid://kvs41tp65xab" path="res://scenes/furniture/stock_storage.tscn" id="30_stock_storage"]
+[ext_resource type="PackedScene" uid="uid://cdxw3840bn2ub" path="res://scenes/ui/stock_dev_panel.tscn" id="31_stock_dev"]
+[ext_resource type="Resource" uid="uid://c5snnjp6ketnx" path="res://Data/items/stock/ale_keg.tres" id="32_ale_keg"]
+[ext_resource type="Resource" path="res://Data/items/item_registry.tres" id="33_item_registry"]
+[ext_resource type="Resource" path="res://Data/customer_ai/activity_registry.tres" id="34_activity_registry"]
+[ext_resource type="Resource" path="res://Data/customer_ai/balance_config.tres" id="35_balance_config"]
+[ext_resource type="Resource" uid="uid://canll7cjxtbif" path="res://Data/customer_ai/diagnostics_config.tres" id="36_diagnostics_config"]
+[ext_resource type="Script" uid="uid://cjqi0jgkf3erb" path="res://systems/customer_ai/diagnostics/customer_ai_report_manager.gd" id="37_report_manager_script"]
+[ext_resource type="PackedScene" uid="uid://dxannpmgcty1l" path="res://scenes/furniture/darts_point.tscn" id="38_darts_point"]
+[ext_resource type="PackedScene" uid="uid://25arcwpp5pxh" path="res://scenes/staff/tavern_hand.tscn" id="39_tavern_hand"]
+[ext_resource type="PackedScene" uid="uid://b4commsuiphrb" path="res://scenes/ui/communication_ui.tscn" id="40_communication_ui"]
+[ext_resource type="Script" uid="uid://r6alj8fajejv" path="res://systems/staff/tavern_task_coordinator.gd" id="41_task_coordinator"]
+[ext_resource type="Script" uid="uid://cyaud0jeg8ygl" path="res://systems/communication/stock_alert_coordinator.gd" id="42_stock_alerts"]
+[ext_resource type="Script" uid="uid://dvdslntfmm3xa" path="res://systems/staff/diagnostics/staff_report_manager.gd" id="43_staff_report"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_mel2l"]
 vertices = PackedVector2Array(649, 344, 649, 253, 1219, 63.023438, 1219, 661.96875, 65.02344, 64.96875, 226, 120, 65.96875, 660.02344, 550, 344, 449, 344, 350, 344, 65.28906, 232, 226, 232, 350, 253, 226, 207.88281, 236, 210.5625, 252.28125, 206.21094, 264.21094, 194.28125, 236, 145.4375, 226, 148.10938, 550, 253, 449, 253, 65.109375, 120, 264.21094, 161.71875, 268.5625, 178, 252.28125, 149.78906)
@@ -114,7 +128,7 @@ tile_map_data = PackedByteArray("AAAAAAAAAgAAAAAAAAAAAAEAAgAAAAAAAAAAAAIAAgAAAAA
 tile_set = SubResource("TileSet_lxoxb")
 
 [node name="BackWall" type="TileMapLayer" parent="Environment/Room" unique_id=729841187]
-tile_map_data = PackedByteArray("AAAAAAAAAQAAAAAAAAABAAAAAwAAAAAAAAACAAAAAwAAAAAAAAADAAAAAgAAAAAAAAAEAAAAAQAAAAAAAAAFAAAABQAAAAAAAAAGAAAAAQAAAAAAAAAHAAAABAAAAAAAAAAIAAAAAQAAAAAAAAAJAAAAAQAAAAAAAAAKAAAABQAAAAAAAAALAAAAAQAAAAAAAAAMAAAAAgAAAAAAAAANAAAAAgAAAAAAAAAOAAAAAQAAAAAAAAAPAAAABQAAAAAAAAAQAAAAAQAAAAAAAAARAAAAAQAAAAAAAAASAAAAAQAAAAAAAAATAAAAAQAAAAAAAAA=")
+tile_map_data = PackedByteArray("AAAAAAAAAQAAAAAAAAABAAAAAwAAAAAAAAACAAAAAwAAAAAAAAADAAAAAgAAAAAAAAAEAAAAAQAAAAAAAAAFAAAABQAAAAAAAAAGAAAAAQAAAAAAAAAHAAAABAAAAAAAAAAIAAAAAQAAAAAAAAAJAAAABQAAAAAAAAAKAAAAAQAAAAAAAAALAAAAAQAAAAAAAAAMAAAAAQAAAAAAAAANAAAAAgAAAAAAAAAOAAAAAQAAAAAAAAAPAAAABQAAAAAAAAAQAAAAAQAAAAAAAAARAAAAAQAAAAAAAAASAAAAAQAAAAAAAAATAAAAAQAAAAAAAAA=")
 tile_set = SubResource("TileSet_udj8g")
 
 [node name="WallTop" type="StaticBody2D" parent="Environment/Room" unique_id=123444724]
@@ -151,6 +165,18 @@ position = Vector2(123, 191)
 [node name="table1" parent="Environment" unique_id=1719880889 instance=ExtResource("3_k2fmo")]
 position = Vector2(400, 300)
 
+[node name="table2" parent="Environment" unique_id=84417641 instance=ExtResource("3_k2fmo")]
+position = Vector2(662, 212)
+
+[node name="table3" parent="Environment" unique_id=66330104 instance=ExtResource("3_k2fmo")]
+position = Vector2(919, 218)
+
+[node name="table4" parent="Environment" unique_id=2121445835 instance=ExtResource("3_k2fmo")]
+position = Vector2(178, 424)
+
+[node name="DartsPoint" parent="Environment" unique_id=1461719098 instance=ExtResource("38_darts_point")]
+position = Vector2(737, 84)
+
 [node name="Grog_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
 position = Vector2(71, 153)
 
@@ -162,17 +188,24 @@ scale = Vector2(0.75, 1)
 position = Vector2(203, 167)
 rotation = -6.2831855
 served_drink = ExtResource("12_37hlw")
+refill_item = ExtResource("32_ale_keg")
 
 [node name="Sprite2D" parent="Environment/Ale_station" index="0" unique_id=1803792753]
 texture = ExtResource("12_p8abn")
 
-[node name="OrderLedger" parent="Environment" instance=ExtResource("28_order_ledger")]
-position = Vector2(278, 178)
+[node name="OrderLedger" parent="Environment" unique_id=1856338895 instance=ExtResource("28_order_ledger")]
+position = Vector2(281, 79)
+
+[node name="StockStorage" parent="Environment" unique_id=567700205 instance=ExtResource("30_stock_storage")]
+position = Vector2(358, 82)
 
 [node name="Entities" type="Node2D" parent="." unique_id=1694710147]
 
 [node name="Player" parent="Entities" unique_id=1068675683 instance=ExtResource("1_hyk8p")]
 position = Vector2(227, 294)
+
+[node name="TavernHand" parent="Entities" unique_id=396725491 instance=ExtResource("39_tavern_hand")]
+position = Vector2(300, 320)
 
 [node name="Markers" type="Node2D" parent="." unique_id=1069500628]
 
@@ -272,28 +305,69 @@ text = "[F1] panel"
 [node name="EconomyManager" type="Node" parent="Managers" unique_id=272770657]
 script = ExtResource("17_s17dp")
 
-[node name="OrderManager" type="Node" parent="Managers" groups=["order_manager"] node_paths=PackedStringArray("economy_manager")]
+[node name="OrderManager" type="Node" parent="Managers" unique_id=1999332155 node_paths=PackedStringArray("economy_manager") groups=["order_manager"]]
 script = ExtResource("29_order_manager")
 economy_manager = NodePath("../EconomyManager")
 
-[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_door", "tables", "navigation_region", "economy_manager", "statistics_tracker")]
+[node name="GameManager" type="Node" parent="Managers" unique_id=1765121857 node_paths=PackedStringArray("entities", "customer_door", "tables", "navigation_region", "economy_manager", "statistics_tracker", "customer_ai_report_manager")]
 script = ExtResource("7_hujxm")
 customer_scene = ExtResource("2_ow5a4")
 entities = NodePath("../../Entities")
 customer_door = NodePath("../../Markers/CustomerDoor")
-tables = [NodePath("../../Environment/table1")]
+tables = [NodePath("../../Environment/table1"), NodePath("../../Environment/table2"), NodePath("../../Environment/table3"), NodePath("../../Environment/table4")]
 navigation_region = NodePath("../../NavigationRegion2D")
 economy_manager = NodePath("../EconomyManager")
 statistics_tracker = NodePath("../StatisticsTracker")
 game_config = ExtResource("15_hxu8e")
+item_registry = ExtResource("33_item_registry")
+activity_registry = ExtResource("34_activity_registry")
+customer_ai_balance = ExtResource("35_balance_config")
+customer_ai_diagnostics = ExtResource("36_diagnostics_config")
+customer_ai_report_manager = NodePath("../CustomerAIReportManager")
 customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtResource("18_r4lks")])
+
+[node name="CustomerAIReportManager" type="Node" parent="Managers" unique_id=1105593164]
+script = ExtResource("37_report_manager_script")
+diagnostics_config = ExtResource("36_diagnostics_config")
 
 [node name="StatisticsTracker" type="Node" parent="Managers" unique_id=2070280082]
 script = ExtResource("26_0bhws")
 
-[node name="BarManagementMenu" parent="." unique_id=1560950072 node_paths=PackedStringArray("game_manager", "economy_manager") instance=ExtResource("27_62atk")]
+[node name="TavernTaskCoordinator" type="Node" parent="Managers" unique_id=1529328007 node_paths=PackedStringArray("game_manager")]
+script = ExtResource("41_task_coordinator")
+urgency_refresh_seconds = 0.5
+show_debug_messages = false
+game_manager = NodePath("../GameManager")
+
+[node name="StockAlertCoordinator" type="Node" parent="Managers" unique_id=998047451 node_paths=PackedStringArray("stock_storage")]
+script = ExtResource("42_stock_alerts")
+attribute_alerts_to_staff = true
+show_speech_bubbles = true
+show_debug_messages = false
+stock_storage = NodePath("../../Environment/StockStorage")
+
+[node name="StaffReportManager" type="Node" parent="Managers" unique_id=2023673368]
+script = ExtResource("43_staff_report")
+include_full_history = true
+pretty_print_json = true
+console_debug_enabled = false
+
+[node name="BarManagementMenu" parent="." unique_id=1560950072 node_paths=PackedStringArray("game_manager", "economy_manager", "statistics_tracker") instance=ExtResource("27_62atk")]
 game_manager = NodePath("../Managers/GameManager")
 economy_manager = NodePath("../Managers/EconomyManager")
+statistics_tracker = NodePath("../Managers/StatisticsTracker")
+
+[node name="CommunicationUI" parent="." unique_id=1424027554 instance=ExtResource("40_communication_ui")]
+
+[node name="StockDevPanel" parent="." unique_id=1149986686 node_paths=PackedStringArray("economy_manager", "order_manager", "customer_ai_report_manager", "game_manager", "staff_report_manager", "task_coordinator", "communication_ui") instance=ExtResource("31_stock_dev")]
+item_registry = ExtResource("33_item_registry")
+economy_manager = NodePath("../Managers/EconomyManager")
+order_manager = NodePath("../Managers/OrderManager")
+customer_ai_report_manager = NodePath("../Managers/CustomerAIReportManager")
+game_manager = NodePath("../Managers/GameManager")
+staff_report_manager = NodePath("../Managers/StaffReportManager")
+task_coordinator = NodePath("../Managers/TavernTaskCoordinator")
+communication_ui = NodePath("../CommunicationUI")
 
 [node name="Node" type="Node" parent="." unique_id=1058371443]
 script = ExtResource("9_b1x3f")

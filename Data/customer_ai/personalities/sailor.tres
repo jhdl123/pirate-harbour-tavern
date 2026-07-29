@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="Personality" format=3 uid="uid://cb1psxfhbtumn"]
+
+[ext_resource type="Script" uid="uid://dt6hbob0c6bbd" path="res://systems/customer_ai/personality.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+social_tendency = 0.6

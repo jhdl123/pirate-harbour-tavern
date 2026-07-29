@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="StaffDefinition" format=3 uid="uid://dep75mhpb1n4j"]
+
+[ext_resource type="Script" uid="uid://clmo8sxltpbxl" path="res://systems/staff/staff_definition.gd" id="1_staffdef"]
+[ext_resource type="Texture2D" uid="uid://bqcjojq144i74" path="res://assets/art/characters/32x32_staff_01.png" id="2_sprite"]
+[ext_resource type="Resource" path="res://Data/navigation/staff_movement.tres" id="3_move"]
+[ext_resource type="Resource" path="res://Data/navigation/staff_navigation.tres" id="4_nav"]
+[ext_resource type="Resource" path="res://Data/staff/carried_item_policy.tres" id="5_carried"]
+
+[resource]
+script = ExtResource("1_staffdef")
+description = "Serves prepared drinks and clears dirty seats. The first, deliberately unspecialised staff archetype."
+capabilities = Array[StringName]([&"serve_drinks", &"clean_seats"])
+movement_profile = ExtResource("3_move")
+navigation_profile = ExtResource("4_nav")
+carried_item_policy = ExtResource("5_carried")
+sprite_texture = ExtResource("2_sprite")
+interaction_verb = "Check on"
+speech_bubble_seconds = 4.5

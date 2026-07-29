@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ActivityRegistry" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activity_registry.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_definition.gd" id="2_definition_type"]
+[ext_resource type="Resource" path="res://Data/customer_ai/activities/order_drink.tres" id="3_order_drink"]
+[ext_resource type="Resource" path="res://Data/customer_ai/activities/drink.tres" id="4_drink"]
+[ext_resource type="Resource" path="res://Data/customer_ai/activities/leave.tres" id="5_leave"]
+[ext_resource type="Resource" path="res://Data/customer_ai/activities/relax_at_seat.tres" id="7_relax"]
+[ext_resource type="Resource" path="res://Data/customer_ai/activities/socialise_at_seat.tres" id="8_socialise"]
+[ext_resource type="Resource" path="res://Data/customer_ai/activities/visit_tavern_activity.tres" id="9_visit_activity"]
+[ext_resource type="Resource" path="res://Data/customer_ai/activities/return_to_seat.tres" id="10_return_to_seat"]
+
+[resource]
+script = ExtResource("1_script")
+definitions = Array[ExtResource("2_definition_type")]([ExtResource("3_order_drink"), ExtResource("4_drink"), ExtResource("5_leave"), ExtResource("7_relax"), ExtResource("8_socialise"), ExtResource("9_visit_activity"), ExtResource("10_return_to_seat")])

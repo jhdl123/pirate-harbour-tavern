@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EndOfVisitPressureCondition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/conditions/end_of_visit_pressure_condition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+contribution_label = &"visit_time_contribution"
+need_id = &"remaining_visit_minutes"
+pressure_window_minutes = 12.0
+maximum_bonus = 8.0

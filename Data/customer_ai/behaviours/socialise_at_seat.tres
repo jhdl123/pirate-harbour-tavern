@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="SocialiseAtSeatBehaviour" format=3 uid="uid://bf2jhac0k14gt"]
+
+[ext_resource type="Script" uid="uid://cb1c17jebw7xf" path="res://systems/customer_ai/activities/behaviours/socialise_at_seat_behaviour.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")

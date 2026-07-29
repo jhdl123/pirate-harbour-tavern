@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ActivityDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/wander_chance.tres" id="3_chance"]
+[ext_resource type="Resource" path="res://Data/customer_ai/behaviours/wander.tres" id="4_behaviour"]
+
+[resource]
+script = ExtResource("1_script")
+activity_id = &"wander"
+display_name = "Wander"
+base_utility = 0.1
+conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_chance")])
+destination_tag = &""
+behaviour = ExtResource("4_behaviour")

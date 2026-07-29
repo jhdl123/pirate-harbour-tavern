@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CustomerAIDiagnosticsConfig" format=3 uid="uid://canll7cjxtbif"]
+
+[ext_resource type="Script" uid="uid://dj4rwt1lqu0tp" path="res://systems/customer_ai/diagnostics/customer_ai_diagnostics_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+console_debug_enabled = true
+export_enabled = true
+maximum_decisions_per_customer = 200

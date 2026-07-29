@@ -5,4 +5,5 @@
 [resource]
 script = ExtResource("1_atm1d")
 maximum_spawn_delay_minutes = 2
+maximum_active_customers = 16
 metadata/_custom_type_script = "uid://e4bv17wlfrcs"

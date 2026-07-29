@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="TaskViabilityConfig" format=3]
+
+[ext_resource type="Script" path="res://systems/staff/tasks/task_viability_config.gd" id="1_viability"]
+
+[resource]
+script = ExtResource("1_viability")
+enabled = true
+comfortable_margin_minutes = 3.0
+safety_buffer_minutes = 1.5
+rejection_margin_minutes = -3.0
+may_accept_non_viable_tasks = false
+accept_best_non_viable_when_idle = true
+accept_unknown_viability = true
+viable_bonus = 40.0
+non_viable_penalty = 400.0
+margin_weight = 8.0
+fallback_speed = 90.0
+straight_line_detour_factor = 1.35
+use_navigation_path_length = true
+maximum_path_estimate_age_seconds = 1.0
+interaction_overhead_minutes = 0.35
+reevaluation_margin_delta = 1.0
+reevaluation_interval_seconds = 4.0

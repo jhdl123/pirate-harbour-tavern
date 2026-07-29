@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="CanAffordDrinkCondition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/conditions/can_afford_drink_condition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+contribution_label = &"money_contribution"

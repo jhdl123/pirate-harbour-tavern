@@ -60,7 +60,11 @@ InteractionSelector → picks the target, drives highlight and prompt
 CustomerType    → spawning, speed, patience and drink preferences
 CleaningTask    → cleaning state, complication chance, cost and next task
 ActionDefinition→ duration, movement blocking and cancellation
-ActionRunner    → runs timed player actions
+ActionRunner    → runs timed actions, for the player and for staff alike
+TaskBoard       → the one list of work the tavern needs doing
+StaffMember     → a worker that claims tasks and performs them
+StaffTaskExecutor → how one kind of task is actually carried out
+Comms           → notifications, alerts and speaker messages
 EconomyManager  → owns all money changes
 GameConfig      → global spawning, navigation, door and test settings
 ```
@@ -72,7 +76,13 @@ prompts and how to make a new object interactive, and
 [Navigation System](docs/NAVIGATION_SYSTEM.md) for actor movement, avoidance,
 arrival and reservations, and
 [Simulation System](docs/SIMULATION_SYSTEM.md) for world time, scheduling and
-simulation state.
+simulation state, and
+[Customer AI System](docs/CUSTOMER_AI_SYSTEM.md) for how customers decide
+what to do, and how to add new activities, behaviours and customer types, and
+[Staff and Task System](docs/STAFF_TASK_SYSTEM.md) for how work reaches a
+worker and how to add a new task type or staff role, and
+[Communication System](docs/COMMUNICATION_SYSTEM.md) for notifications,
+management alerts and stock warnings.
 
 ## Changing game balance
 
@@ -96,6 +106,8 @@ scenes/                       Godot scenes
 scripts/                      Gameplay scripts, components and domain resources
 systems/                      Reusable action, economy, item, inventory and time systems
 tests/                        Technical validation scenes, not part of gameplay
+                              (see phase_3a_smoke_test.tscn for the automated
+                              staff-loop check)
 docs/                         Project documentation
 assets/                       Art and other game assets
 ```
@@ -106,6 +118,15 @@ assets/                       Art and other game assets
 2. Open `project.godot` from the repository root.
 3. Allow Godot to import assets.
 4. Run the main scene with F6/F5 as appropriate.
+
+To run the automated Phase 3A check without opening the editor:
+
+```text
+godot --headless --fixed-fps 60 res://tests/phase_3a_smoke_test.tscn
+```
+
+It loads the real main scene, plays the part of the player, and exits non-zero
+if the staff loop, the alert lifecycle or the Phase 2C regressions fail.
 
 ## Current development status
 
@@ -131,7 +152,10 @@ Completed foundations include:
 - a generic reservation system shared by seats and future workstations;
 - a world time framework with a single authoritative clock and a scheduler
   that survives pausing, speed changes and skipped time;
-- a simulation state framework that decides centrally what may update.
+- a simulation state framework that decides centrally what may update;
+- a customer AI foundation (needs, personality, data-driven activities and
+  a think/choose/reserve/perform brain) that today's order-drink-and-leave
+  loop now runs on top of, ready for future activities to plug into.
 
 The next planned foundations are chair service slots, storage containers and
 drink stock. See [Item System](docs/ITEM_SYSTEM.md) for how those should

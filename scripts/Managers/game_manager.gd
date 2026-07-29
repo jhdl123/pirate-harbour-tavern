@@ -1,4 +1,19 @@
+class_name GameManager
 extends Node
+
+## Phase 3A: a customer entered the tavern and is now configured.
+##
+## Emitted after the customer is fully wired up, so a listener can safely
+## inspect it. [TavernTaskCoordinator] uses this to hear about each customer
+## once, instead of scanning the roster looking for new arrivals.
+signal customer_spawned(customer: Node)
+
+## Owns customer spawning, seat assignment and the active-customer roster.
+##
+## Given a [code]class_name[/code] so other systems (the Bar Management menu,
+## developer tools) can hold a typed reference instead of an untyped [Node]
+## and reaching into private state. Read-only summary queries live here
+## rather than being re-derived ad hoc in UI scripts.
 
 
 @export_category("Scene References")
@@ -12,6 +27,34 @@ extends Node
 
 @export_category("Configuration")
 @export var game_config: GameConfig
+
+## The master item database. Validated once at startup so a duplicate or
+## malformed item id is caught immediately rather than surfacing later as a
+## mysterious null ItemDefinition somewhere in the order/stock chain.
+@export var item_registry: ItemRegistry
+
+## Every activity a customer's CustomerBrain can choose between. Optional:
+## a null registry here means every spawned customer configures without the
+## AI foundation at all, and behaves exactly as it did before that system
+## existed - see Customer._configure_ai().
+@export var activity_registry: ActivityRegistry
+
+## Phase 2B: starting-money/thirst/satisfaction/visit-duration ranges and
+## satisfaction/thirst/intoxication change amounts. Optional, like
+## activity_registry above - a null value here leaves CustomerNeeds.seed_from()
+## on its Phase 1 fallback defaults.
+@export var customer_ai_balance: CustomerAIBalanceConfig
+
+## Phase 2B: console logging and JSON report export switches. Optional -
+## a null value disables both, the same as leaving diagnostics_config's own
+## export_enabled/console_debug_enabled false.
+@export var customer_ai_diagnostics: CustomerAIDiagnosticsConfig
+
+## Phase 2B: the dedicated diagnostics collector - see its own doc comment
+## for why every method on it is safe to call even when disabled. A node
+## under Managers/ in main.tscn, the same pattern as economy_manager and
+## statistics_tracker above, not an autoload.
+@export var customer_ai_report_manager: CustomerAIReportManager
 
 @export_category("Customer Types")
 @export var customer_types: Array[CustomerType]
@@ -33,6 +76,12 @@ var _spawn_event: ScheduledTimeEvent = null
 func _ready() -> void:
 	if !validate_game_references():
 		return
+	
+	if item_registry != null:
+		item_registry.validate_or_warn()
+	
+	if activity_registry != null:
+		activity_registry.validate_or_warn()
 	
 	economy_manager.initialise(
 	game_config.starting_money
@@ -102,7 +151,11 @@ func spawn_customer() -> void:
 	if customer.has_method("configure"):
 		customer.configure(
 			game_config,
-			selected_customer_type
+			selected_customer_type,
+			activity_registry,
+			customer_ai_balance,
+			customer_ai_diagnostics,
+			customer_ai_report_manager
 		)
 	else:
 		push_error(
@@ -176,6 +229,11 @@ func spawn_customer() -> void:
 	)
 
 	active_customers.append(customer)
+
+	# Phase 3A: announce the new arrival once it is completely set up - door
+	# targets, chair, signals and all - so listeners never see a half-built
+	# customer.
+	customer_spawned.emit(customer)
 
 	if statistics_tracker != null:
 		statistics_tracker.update_active_customer_peak(
@@ -539,6 +597,39 @@ func _on_customer_abandoned_seat(
 	customer: Node
 ) -> void:
 	clear_customer_reservation(customer)
+
+
+## Read-only summary queries
+## -----------------------------------------------------------------------
+## These exist so UI (Bar Management overview, developer tools) can display
+## accurate live numbers instead of hard-coded placeholder text.
+
+func get_active_customer_count() -> int:
+	return active_customers.size()
+
+
+func get_total_seat_count() -> int:
+	var total: int = 0
+
+	for current_table: Table in tables:
+		if current_table != null:
+			total += current_table.get_chairs().size()
+
+	return total
+
+
+func get_occupied_seat_count() -> int:
+	var occupied: int = 0
+
+	for current_table: Table in tables:
+		if current_table != null:
+			occupied += current_table.get_occupied_seat_count()
+
+	return occupied
+
+
+func get_available_seat_count() -> int:
+	return get_total_seat_count() - get_occupied_seat_count()
 
 
 func _on_customer_finished(

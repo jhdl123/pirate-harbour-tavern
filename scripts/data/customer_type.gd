@@ -48,3 +48,27 @@ var preferred_drink_chance: float = 0.75
 
 @export_range(0.0, 5.0, 0.05)
 var payment_multiplier: float = 1.0
+
+
+@export_category("AI")
+
+## Shared, authored traits for every customer of this type - seeds that
+## customer's own CustomerNeeds at spawn. Optional: a type with no
+## personality assigned still spawns fine, just with CustomerNeeds' plain
+## defaults (see CustomerNeeds.seed_from's null check).
+@export var personality: Personality
+
+## Free-form grouping for future VIP handling (see docs/CUSTOMER_AI_SYSTEM.md's
+## "Future VIPs" section) - e.g. &"regular", &"merchant", &"naval_officer".
+## Not read anywhere yet.
+@export var customer_category: StringName = &"regular"
+
+## How much attention this customer type deserves when it eventually matters
+## (queueing ahead of regulars, a future notification when one arrives).
+## Not read anywhere yet.
+@export_range(0, 10, 1)
+var priority_level: int = 0
+
+## Free-form "how special is this" score for a future VIP-detection or
+## special-dialogue system to sort by. Not read anywhere yet.
+@export var importance_score: float = 0.0

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ActivityDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/is_seated.tres" id="3_seated"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/not_currently_ordering.tres" id="4_not_ordering"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/has_social_partner.tres" id="5_partner"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/socialise_repeat_decay.tres" id="6_decay"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/socialise_satisfaction_scoring.tres" id="7_satisfaction"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/socialise_visit_time_scoring.tres" id="8_visit_time"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/socialise_intoxication_scoring.tres" id="9_intoxication"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/socialise_thirst_scoring.tres" id="10_thirst"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/decision_variance.tres" id="11_variance"]
+[ext_resource type="Resource" path="res://Data/customer_ai/behaviours/socialise_at_seat.tres" id="12_behaviour"]
+
+[resource]
+script = ExtResource("1_script")
+activity_id = &"socialise_at_seat"
+display_name = "Socialise at Seat"
+base_utility = 6.5
+conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_seated"), ExtResource("4_not_ordering"), ExtResource("5_partner"), ExtResource("6_decay"), ExtResource("7_satisfaction"), ExtResource("8_visit_time"), ExtResource("9_intoxication"), ExtResource("10_thirst"), ExtResource("11_variance")])
+destination_tag = &""
+is_terminal = false
+behaviour = ExtResource("12_behaviour")

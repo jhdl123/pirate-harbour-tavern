@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CarriedItemPolicy" format=3]
+
+[ext_resource type="Script" path="res://systems/staff/carried_item_policy.gd" id="1_policy"]
+
+[resource]
+script = ExtResource("1_policy")
+policy_id = &"tavern_hand_default"
+outcome_order = Array[int]([0, 1, 2, 3, 4])
+maximum_reassignment_distance = 0.0
+may_steal_claimed_tasks = false
+allow_retaining_as_last_resort = true
+allow_disposal = false
+may_work_while_holding_unrelated_item = false
+recovery_retry_seconds = 5.0

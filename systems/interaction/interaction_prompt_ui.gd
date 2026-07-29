@@ -126,13 +126,25 @@ func _follow_selected_target() -> void:
 	if selector == null or selector.get_selected() == null:
 		return
 
+	# A candidate being removed (a customer served and freed in the same
+	# instant, for example - see InteractionDetector.get_candidates()'s own
+	# doc comment on this) can trigger a reselection whose prompt update
+	# reaches this node before it is fully tree-resident, or after it has
+	# started leaving the tree. get_viewport() is null in either case;
+	# skipping this frame's reposition is harmless - _process() calls this
+	# again every frame this prompt is visible.
+	var viewport: Viewport = get_viewport()
+
+	if viewport == null:
+		return
+
 	var world_position: Vector2 = (
 		selector.get_prompt_world_position() + world_offset
 	)
 
 	# The prompt lives on a CanvasLayer, so world space has to be converted
 	# through the viewport's canvas transform rather than used directly.
-	position = get_viewport().get_canvas_transform() * world_position
+	position = viewport.get_canvas_transform() * world_position
 
 	_centre_label()
 

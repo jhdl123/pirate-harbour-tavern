@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="RepeatDecayCondition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/conditions/repeat_decay_condition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+contribution_label = &"repetition_contribution"
+need_id = &"socialise_count"
+decay_per_repeat = 0.2
+reference_utility = 5.0
