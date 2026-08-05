@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dxannpmgcty1l"]
 
 [ext_resource type="Script" uid="uid://blxh5unjin7kl" path="res://systems/tavern_activities/tavern_activity_point.gd" id="1_point_script"]
-[ext_resource type="Texture2D" uid="uid://cvku25b8wdeps" path="res://assets/art/environment/32x32_dartboard.png" id="2_0mthd"]
+[ext_resource type="Texture2D" uid="uid://cvku25b8wdeps" path="res://assets/art/furniture/32x32_dartboard.png" id="2_0mthd"]
 [ext_resource type="Script" uid="uid://cakp4dldxby6s" path="res://systems/reservation/reservable.gd" id="2_reservable_script"]
 
 [node name="DartsPoint" type="Node2D" unique_id=2034469874]
