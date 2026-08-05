@@ -8,6 +8,24 @@ extends Node
 ## once, instead of scanning the roster looking for new arrivals.
 signal customer_spawned(customer: Node)
 
+## Relayed from each customer so listeners subscribe once here rather than to
+## every customer as it spawns.
+signal customer_paid_for_drink(
+	amount: int,
+	item_id: StringName,
+	base_price: int,
+	customer_id: StringName
+)
+
+signal customer_departed(
+	customer: Node,
+	reason: StringName,
+	was_served: bool
+)
+
+## An arrival attempt produced no customer, with the reason.
+signal arrival_rejected(reason: StringName)
+
 ## Owns customer spawning, seat assignment and the active-customer roster.
 ##
 ## Given a [code]class_name[/code] so other systems (the Bar Management menu,
@@ -72,6 +90,34 @@ var active_customers: Array[Node] = []
 ## a closed tavern simply does not re-book.
 var _spawn_event: ScheduledTimeEvent = null
 
+## Arrival attempts that produced no customer, counted by reason.
+var _arrival_rejections: Dictionary = {}
+
+## The demand multiplier used for the most recent scheduling decision.
+var _last_demand_multiplier: float = 1.0
+
+## Last world minute at which the arrival watchdog checked the booking.
+##
+## Scheduled events are still the normal arrival mechanism. This only repairs
+## a missing/dead booking, so one lost callback cannot permanently empty the
+## tavern for the rest of the trading day.
+var _last_arrival_watchdog_minute: int = -1
+
+
+func _process(_delta: float) -> void:
+	if not Tavern.is_accepting_arrivals():
+		return
+
+	var current_minute: int = WorldTime.get_total_minutes()
+
+	if current_minute == _last_arrival_watchdog_minute:
+		return
+
+	_last_arrival_watchdog_minute = current_minute
+
+	if _spawn_event == null or not _spawn_event.is_live():
+		schedule_next_customer()
+
 
 func _ready() -> void:
 	if !validate_game_references():
@@ -97,11 +143,36 @@ func _ready() -> void:
 	schedule_next_customer()
 
 
+## The spawner that creates group visits, when one is present.
+##
+## Optional: with no GroupSpawner in the scene the tavern behaves exactly as it
+## did before groups existed.
+@export var group_spawner: Node = null
+
+## Enables mixed solo and group arrivals. A group is attempted only after the
+## normal tavern, navigation and population gates pass; if it cannot start
+## safely, that scheduled arrival falls back to the proven solo path.
+@export var enable_automatic_group_arrivals: bool = true
+
+
 func spawn_customer() -> void:
+	_reconcile_active_customers()
+
 	if !validate_spawn_references():
 		return
 
+	# The tavern lifecycle is the only authority on whether customers should
+	# be arriving. Deliberately not a clock check here: if this script decided
+	# for itself what "open" meant, it would eventually disagree with the
+	# lifecycle, the UI and the staff.
+	if not Tavern.is_accepting_arrivals():
+		record_arrival_rejection(&"tavern_not_open")
+
+		return
+
 	if has_reached_customer_limit():
+		record_arrival_rejection(&"population_limit")
+
 		if game_config.show_debug_messages:
 			print(
 				"Customer not spawned. Active customers: ",
@@ -120,11 +191,19 @@ func spawn_customer() -> void:
 
 		return
 
+	# Groups are an alternative arrival only after the same lifecycle,
+	# population and navigation gates as a solo customer. If a group cannot be
+	# safely started, the attempt falls through to the proven solo path.
+	if enable_automatic_group_arrivals and _try_spawn_group():
+		return
+
 	var assigned_chair: Chair = (
 		find_best_available_chair()
 	)
 
 	if assigned_chair == null:
+		record_arrival_rejection(&"no_seating")
+
 		if game_config.show_debug_messages:
 			print("No seats currently available.")
 
@@ -208,8 +287,8 @@ func spawn_customer() -> void:
 	]
 
 	customer.set_door_targets(
-		customer_door.get_inside_position(),
-		customer_door.get_exit_position()
+		customer_door.get_inside_position(customer),
+		customer_door.get_exit_position(customer)
 	)
 
 	customer.set_chair_target(
@@ -226,6 +305,23 @@ func spawn_customer() -> void:
 
 	customer.customer_abandoned_seat.connect(
 		_on_customer_abandoned_seat
+	)
+
+	customer.customer_paid_for_drink.connect(
+		func(
+			amount: int,
+			item_id: StringName,
+			base_price: int,
+			customer_id: StringName
+		) -> void:
+			customer_paid_for_drink.emit(
+				amount, item_id, base_price, customer_id
+			)
+	)
+
+	customer.customer_departed.connect(
+		func(who: Node, reason: StringName, served: bool) -> void:
+			customer_departed.emit(who, reason, served)
 	)
 
 	active_customers.append(customer)
@@ -295,11 +391,38 @@ func choose_customer_type() -> CustomerType:
 	return valid_types.back()
 
 
+## Books the next arrival attempt.
+##
+## The interval is the base spawn delay divided by current demand, so a peak
+## multiplier of 1.8 produces arrivals roughly 1.8 times as often. Demand comes
+## from the modifier framework rather than from a clock check here, which means
+## the time-of-day profile, a harbour festival and a storm all reach this
+## through one number and none of them needs to know the spawner exists.
+##
+## Capacity pressure is folded in as a modifier by the demand controller, so a
+## full tavern slows arrivals rather than queueing customers with nowhere to
+## go.
 func schedule_next_customer() -> void:
-	var next_spawn_delay: int = randi_range(
-		game_config.minimum_spawn_delay_minutes,
-		game_config.maximum_spawn_delay_minutes
+	var base_delay: float = float(
+		randi_range(
+			game_config.minimum_spawn_delay_minutes,
+			game_config.maximum_spawn_delay_minutes
+		)
 	)
+
+	var demand: float = get_current_arrival_demand()
+
+	# A demand of zero would mean "never", which would silently stop the
+	# tavern rather than making it quiet. Floor it and let the lifecycle gate
+	# handle genuinely closed periods.
+	var next_spawn_delay: int = maxi(
+		int(round(base_delay / maxf(demand, 0.05))),
+		1
+	)
+
+	_last_demand_multiplier = demand
+
+	Tavern.record_day_peak(&"peak_demand_multiplier", demand)
 
 	WorldTime.cancel_scheduled(_spawn_event)
 
@@ -317,7 +440,101 @@ func schedule_next_customer() -> void:
 		)
 
 
+## The current arrival-rate multiplier, fully modified.
+##
+## One call, and every contribution - time of day, events, weather, capacity
+## pressure - is already in it. Modifiers.explain() gives the breakdown.
+func get_current_arrival_demand() -> float:
+	return Modifiers.evaluate(
+		ModifierTargets.CUSTOMER_ARRIVAL_RATE,
+		1.0,
+		{ "tags": [] }
+	)
+
+
+## Seats the tavern currently has, occupied or not.
+func get_seating_capacity() -> int:
+	var capacity: int = 0
+
+	for table: Table in tables:
+		if table == null or not is_instance_valid(table):
+			continue
+
+		capacity += table.get_chairs().size()
+
+	return capacity
+
+
+## How full the tavern is, 0..1. Used for capacity-pressure demand.
+func get_occupancy_ratio() -> float:
+	var capacity: int = get_seating_capacity()
+
+	if capacity <= 0:
+		return 1.0
+
+	return clampf(
+		float(active_customers.size()) / float(capacity),
+		0.0,
+		1.0
+	)
+
+
+## Records why an arrival attempt produced no customer.
+##
+## Counted by reason rather than logged per attempt: "why was last night
+## quiet?" is answered by the distribution, not by a thousand lines.
+func record_arrival_rejection(
+	reason: StringName
+) -> void:
+	var key: String = String(reason)
+
+	_arrival_rejections[key] = int(_arrival_rejections.get(key, 0)) + 1
+
+	arrival_rejected.emit(reason)
+
+
+## Customers currently waiting to be served.
+func get_waiting_customer_count() -> int:
+	var waiting: int = 0
+
+	for customer: Node in active_customers:
+		if customer == null or not is_instance_valid(customer):
+			continue
+
+		if not customer.has_method(&"is_awaiting_service"):
+			continue
+
+		if bool(customer.call(&"is_awaiting_service")):
+			waiting += 1
+
+	return waiting
+
+
+func get_arrival_rejections() -> Dictionary:
+	return _arrival_rejections.duplicate(true)
+
+
+func get_last_demand_multiplier() -> float:
+	return _last_demand_multiplier
+
+
+
+
+## Removes stale roster entries before they can block later arrivals.
+##
+## Group members are parented and managed outside the original solo path. A
+## failed or externally-freed member can therefore remain in this array unless
+## every signal fires perfectly. Population limits must reflect live nodes, not
+## historical references.
+func _reconcile_active_customers() -> void:
+	for customer: Node in active_customers.duplicate():
+		if customer == null or not is_instance_valid(customer) or customer.is_queued_for_deletion():
+			active_customers.erase(customer)
+
+
 func has_reached_customer_limit() -> bool:
+	_reconcile_active_customers()
+
 	if game_config.ignore_customer_limit:
 		return false
 
@@ -507,6 +724,10 @@ func clear_customer_reservation(
 
 
 func _on_customer_spawn_due() -> void:
+	# The event being executed is no longer a pending booking. Clear the stale
+	# handle before spawning so the watchdog and any cleanup callback can see
+	# the true state of the arrival loop.
+	_spawn_event = null
 	spawn_customer()
 	schedule_next_customer()
 
@@ -646,3 +867,103 @@ func _on_customer_finished(
 			"/",
 			game_config.maximum_active_customers
 		)
+
+	# Capacity becoming available is a second recovery point for the arrival
+	# loop. It does not reset a healthy timer; it only replaces a missing one.
+	if (
+		Tavern.is_accepting_arrivals()
+		and (_spawn_event == null or not _spawn_event.is_live())
+	):
+		schedule_next_customer()
+
+
+## Attempts a group arrival. Returns true when one was created.
+##
+## Deliberately kept out of spawn_customer()'s own logic: the solo path keeps
+## its early returns exactly as they were, and groups either happen before it
+## or not at all.
+func _try_spawn_group() -> bool:
+	var spawner: GroupSpawner = group_spawner as GroupSpawner
+
+	if spawner == null:
+		var found: Array[Node] = get_tree().get_nodes_in_group(&"group_spawner")
+
+		if found.is_empty():
+			return false
+
+		spawner = found[0] as GroupSpawner
+
+	if spawner == null or not spawner.should_spawn_group():
+		return false
+
+	var manager: GroupManager = spawner.group_manager
+
+	# Never release two groups into the same doorway at once. A later arrival
+	# remains a normal solo visit rather than forming a second outside queue.
+	if manager != null and manager.has_group_using_entrance():
+		record_arrival_rejection(&"group_entrance_busy")
+		return false
+
+	var free_slots: int = maxi(
+		game_config.maximum_active_customers - active_customers.size(),
+		0
+	)
+
+	# Every supported group definition has at least two members. Do not create
+	# any nodes when the complete visit cannot fit in the tavern population.
+	if free_slots < 2:
+		record_arrival_rejection(&"group_population_limit")
+		return false
+
+	var group: CustomerGroup = spawner.spawn_group(
+		customer_door.get_spawn_position(),
+		null,
+		0,
+		free_slots
+	)
+
+	if group == null:
+		# No suitable definition, place or group capacity. Preserve the scheduled
+		# arrival by falling back to one normal customer.
+		return false
+
+	for member: Node in group.get_valid_members():
+		_register_group_member(member)
+
+	return true
+
+
+## Adds a group member to the normal active-customer roster.
+##
+## Group members are ordinary customers as far as population limits,
+## statistics and cleanup are concerned - only their decisions differ.
+## Public entry point used by the group spawner and the developer actions.
+##
+## Every group member reaches the roster through here, whichever path created
+## it, so a developer-spawned group occupies and releases population slots
+## exactly like an automatic arrival.
+func register_group_member(member: Node) -> void:
+	_register_group_member(member)
+
+
+func _register_group_member(member: Node) -> void:
+	if member == null or active_customers.has(member):
+		return
+
+	active_customers.append(member)
+
+	# Group members are spawned by the GroupSpawner, so they never went
+	# through the solo setup path. Without their own door targets they would
+	# all leave toward the exact same point and gridlock the doorway.
+	if member.has_method(&"set_door_targets"):
+		member.call(
+			&"set_door_targets",
+			customer_door.get_inside_position(member),
+			customer_door.get_exit_position(member)
+		)
+
+	if member.has_signal(&"customer_finished"):
+		if not member.customer_finished.is_connected(_on_customer_finished):
+			member.customer_finished.connect(_on_customer_finished)
+
+	customer_spawned.emit(member)

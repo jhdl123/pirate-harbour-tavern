@@ -56,11 +56,15 @@ func _ready() -> void:
 	_build_ui()
 	panel.visible = false
 
+	# A named group and a public toggle, so the daily control bar's F10 button
+	# opens the same panel the key does rather than reaching into `visible`.
+	add_to_group(&"dev_panel")
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not _enabled:
 		return
 	if event.is_action_pressed(&"stock_dev_panel"):
-		panel.visible = not panel.visible
+		toggle_panel()
 		get_viewport().set_input_as_handled()
 
 func _build_ui() -> void:
@@ -107,6 +111,8 @@ func _build_ui() -> void:
 	_add_section(rows, "Stock & Economy")
 	_add_button(rows, "Add £100", func(): economy_manager.add_money(100, &"developer"))
 	_add_button(rows, "Add 2 of each stock", _add_test_stock)
+	_add_button(rows, "Add 5 small ale kegs", _add_group_kegs)
+	_add_button(rows, "Show group keg stock", _show_group_keg_stock)
 	_add_button(rows, "Empty all drink stations", func(): _each_station(func(s): s.empty_stock()))
 	_add_button(rows, "Fill all drink stations", func(): _each_station(func(s): s.fill_stock()))
 	_add_button(rows, "Complete next delivery", _complete_next)
@@ -139,6 +145,41 @@ func _build_ui() -> void:
 	_add_button(rows, "Toggle message log", _toggle_message_log)
 	_add_button(rows, "Clear notification history", _clear_history)
 
+	_add_section(rows, "Daily Cycle")
+	_add_button(rows, "Show cycle status", _show_cycle_status)
+	_add_button(rows, "Jump to preparation", func(): _jump_to(Tavern.get_active_schedule().get_preparation_minutes()))
+	_add_button(rows, "Jump to opening", func(): _jump_to(Tavern.get_active_schedule().get_opening_minutes()))
+	_add_button(rows, "Jump to peak (21:00)", func(): _jump_to(21 * 60))
+	_add_button(rows, "Jump to last orders", func(): _jump_to(Tavern.get_active_schedule().get_last_orders_minutes()))
+	_add_button(rows, "Jump to closing", func(): _jump_to(Tavern.get_active_schedule().get_closing_minutes()))
+	_add_button(rows, "Open tavern now", _open_early)
+	_add_button(rows, "Trigger last orders now", _last_orders_early)
+	_add_button(rows, "Close tavern now", _close_early)
+	_add_button(rows, "Advance to next transition", _advance_to_transition)
+	_add_button(rows, "End day (freeze summary)", _end_day)
+	_add_button(rows, "Show end-of-day summary", _show_summary)
+	_add_button(rows, "Start next day", _start_next_day)
+
+	_add_section(rows, "Demand & Modifiers")
+	_add_button(rows, "Show demand breakdown", _show_demand_breakdown)
+	_add_button(rows, "Force low demand", func(): _force_demand(0.25, "low"))
+	_add_button(rows, "Force high demand", func(): _force_demand(2.0, "high"))
+	_add_button(rows, "Force peak demand", func(): _force_demand(3.0, "peak"))
+	_add_button(rows, "Clear demand override", _clear_demand_override)
+	_add_button(rows, "Trigger Busy Harbour event", func(): _apply_preset("res://Data/modifiers/busy_harbour.tres"))
+	_add_button(rows, "Trigger Heavy Storm event", func(): _apply_preset("res://Data/modifiers/heavy_storm.tres"))
+	_add_button(rows, "List active modifiers", _list_modifiers)
+	_add_button(rows, "Clear all modifiers (DANGEROUS)", _clear_modifiers)
+
+	_add_section(rows, "Daily Statistics")
+	_add_button(rows, "Show today's totals", _show_daily_stats)
+	_add_button(rows, "Show recent authoritative events", _show_stat_events)
+	_add_button(rows, "Add TEST sale (injects fake data)", _add_test_sale)
+	_add_button(rows, "Add TEST breakage (injects fake data)", func(): Tavern.stats.record(&"breakages"))
+	_add_button(rows, "Add TEST customer served (fake)", func(): Tavern.stats.record(&"customers_served"))
+	_add_button(rows, "Add TEST customer lost (fake)", func(): Tavern.stats.record_customer_lost(&"patience"))
+	_add_button(rows, "Acknowledge summary", func(): _report("Acknowledged: %s" % Tavern.acknowledge_summary()))
+
 	_add_section(rows, "Diagnostics")
 	_add_button(rows, "Show staff summary", _show_staff_summary)
 	_add_button(rows, "Export staff / task / comms report", _export_staff_report)
@@ -160,6 +201,37 @@ func _add_button(parent: VBoxContainer, text: String, callback: Callable) -> voi
 	button.text = text
 	button.pressed.connect(callback)
 	parent.add_child(button)
+
+func _get_group_keg_service() -> Node:
+	var nodes := get_tree().get_nodes_in_group(&"group_keg_stock_service")
+	return nodes[0] if not nodes.is_empty() else null
+
+
+func _add_group_kegs() -> void:
+	var service := _get_group_keg_service()
+
+	if service == null:
+		print("[StockDev] No GroupKegStockService in the scene.")
+		return
+
+	var added: int = int(service.call(&"grant_test_stock", 5))
+	print("[StockDev] added ", added, " small ale keg(s) to storage.")
+
+
+func _show_group_keg_stock() -> void:
+	var service := _get_group_keg_service()
+
+	if service == null:
+		print("[StockDev] No GroupKegStockService in the scene.")
+		return
+
+	print(
+		"[StockDev] group kegs available=",
+		service.call(&"count_available_everywhere"),
+		" outstanding reservations=",
+		service.call(&"get_outstanding_count")
+	)
+
 
 func _get_storage() -> StockStorage:
 	var nodes := get_tree().get_nodes_in_group(&"stock_storage")
@@ -837,3 +909,317 @@ func _export_staff_report() -> void:
 		"Report written to " + path if path != ""
 		else "Could not write the staff report - see the Output panel."
 	)
+
+
+# -----------------------------------------------------------------------------
+# Daily cycle controls
+# -----------------------------------------------------------------------------
+#
+# Every button below calls a public API on the lifecycle, demand controller or
+# modifier service. None of them writes to another system's internal state,
+# which is what keeps the developer panel a view of the game rather than a
+# second, divergent way of playing it.
+
+const DEV_DEMAND_SOURCE: StringName = &"developer_override"
+
+
+func _show_cycle_status() -> void:
+	var lines: Array[String] = []
+
+	lines.append("Day %d, %s" % [Tavern.trading_day, WorldTime.get_clock_text()])
+	lines.append("State: %s" % Tavern.get_state_name())
+	lines.append("Next: %s in %d min" % [
+		TavernLifecycle.State.keys()[Tavern.get_next_state()],
+		Tavern.get_minutes_until_next_transition(),
+	])
+	lines.append("Accepting arrivals: %s" % Tavern.is_accepting_arrivals())
+	lines.append("Can end day: %s" % Tavern.can_end_day())
+
+	var blockers: Array[String] = Tavern.get_next_day_blockers()
+
+	if not blockers.is_empty():
+		lines.append("Blocked by: %s" % ", ".join(blockers))
+
+	_report("\n".join(lines))
+
+
+## Moves the clock to a time of day, going forward only.
+##
+## Deliberately uses WorldTime.skip_to() rather than set_time(), so every
+## lifecycle transition and scheduled event between here and there still
+## happens. A developer jump must exercise the systems being tested, not step
+## around them.
+func _jump_to(minutes_past_midnight: int) -> void:
+	var now := WorldTime.get_hour() * 60 + WorldTime.get_minute()
+	var day := WorldTime.get_day() + (1 if minutes_past_midnight <= now else 0)
+
+	WorldTime.skip_to(day, minutes_past_midnight / 60, minutes_past_midnight % 60)
+
+	_report("Jumped to %s. State: %s" % [
+		WorldTime.get_clock_text(), Tavern.get_state_name()
+	])
+
+
+func _advance_to_transition() -> void:
+	var minutes := Tavern.get_minutes_until_next_transition()
+
+	WorldTime.advance_minutes(minutes)
+
+	_report("Advanced %d min. State: %s" % [minutes, Tavern.get_state_name()])
+
+
+func _open_early() -> void:
+	_report(
+		"Tavern opened early." if Tavern.open_early()
+		else "Cannot open early from %s." % Tavern.get_state_name()
+	)
+
+
+func _last_orders_early() -> void:
+	_report(
+		"Last orders started." if Tavern.begin_last_orders_early()
+		else "Cannot start last orders from %s." % Tavern.get_state_name()
+	)
+
+
+func _close_early() -> void:
+	_report(
+		"Closing early." if Tavern.close_early()
+		else "Cannot close from %s." % Tavern.get_state_name()
+	)
+
+
+func _end_day() -> void:
+	var summary := Tavern.end_day()
+
+	if summary.is_empty():
+		_report("Cannot end day: %s" % ", ".join(Tavern.get_next_day_blockers()))
+		return
+
+	var stats: Dictionary = summary.get("statistics", {})
+
+	_report("Day %d finalised. Income %.0f, served %d." % [
+		Tavern.trading_day,
+		stats.get("total_income", 0.0),
+		int(stats.get("counters", {}).get("customers_served", 0)),
+	])
+
+
+func _show_summary() -> void:
+	var summary := Tavern.get_frozen_summary()
+
+	if summary.is_empty():
+		_report("No frozen summary yet - end the day first.")
+		return
+
+	var stats: Dictionary = summary.get("statistics", {})
+	var counters: Dictionary = stats.get("counters", {})
+
+	_report("\n".join([
+		"DAY %d SUMMARY" % summary.get("trading_day", 0),
+		"Open %s - %s (%.0f min)" % [
+			stats.get("service_started_at", "?"),
+			stats.get("service_ended_at", "?"),
+			stats.get("open_duration_minutes", 0.0),
+		],
+		"Sales %.0f + tips %.0f = %.0f" % [
+			counters.get("sales_income", 0.0),
+			counters.get("tips", 0.0),
+			stats.get("total_income", 0.0),
+		],
+		"Served %d, lost %d (%.0f%% success)" % [
+			int(counters.get("customers_served", 0)),
+			int(counters.get("customers_lost", 0)),
+			stats.get("service_rate", 0.0) * 100.0,
+		],
+		"Drinks sold %d, breakages %d" % [
+			int(counters.get("drinks_sold", 0)),
+			int(counters.get("breakages", 0)),
+		],
+		"Peak occupancy %d" % int(stats.get("peaks", {}).get("peak_occupancy", 0)),
+	]))
+
+
+func _start_next_day() -> void:
+	var result := Tavern.advance_to_next_day()
+
+	if result.is_empty():
+		_report("Cannot start the next day - end the current day first.")
+		return
+
+	_report("Day %d begins at %s (skipped %d min, %d customers sent home)." % [
+		result.get("trading_day", 0),
+		result.get("resumed_at", "?"),
+		result.get("minutes_skipped", 0),
+		int(result.get("cleanup", {}).get("customers_asked_to_leave", 0)),
+	])
+
+
+func _show_demand_breakdown() -> void:
+	_report(Modifiers.explain_text(ModifierTargets.CUSTOMER_ARRIVAL_RATE, 1.0))
+
+
+func _force_demand(value: float, label: String) -> void:
+	var modifier := Modifier.create(
+		DEV_DEMAND_SOURCE,
+		ModifierTargets.CUSTOMER_ARRIVAL_RATE,
+		Modifier.Operation.OVERRIDE,
+		value,
+		"Developer override: %s demand" % label
+	)
+
+	modifier.stacking = Modifier.Stacking.REPLACE
+	modifier.priority = 1000
+
+	Modifiers.add(modifier)
+
+	_report("Demand overridden to %.2f (%s)." % [value, label])
+
+
+func _clear_demand_override() -> void:
+	var removed := Modifiers.remove_source(DEV_DEMAND_SOURCE)
+
+	_report("Cleared %d demand override(s). Demand is now %.2f." % [
+		removed,
+		Modifiers.evaluate(ModifierTargets.CUSTOMER_ARRIVAL_RATE, 1.0),
+	])
+
+
+func _apply_preset(path: String) -> void:
+	var preset := load(path) as ModifierPreset
+
+	if preset == null:
+		_report("Could not load %s" % path)
+		return
+
+	for modifier in preset.build_modifiers():
+		Modifiers.add(modifier)
+
+	if not preset.announcement.is_empty():
+		Comms.notify(preset.announcement, CommMessage.Category.EVENT)
+
+	_report("Applied '%s'. Demand is now %.2f." % [
+		preset.display_name,
+		Modifiers.evaluate(ModifierTargets.CUSTOMER_ARRIVAL_RATE, 1.0),
+	])
+
+
+func _list_modifiers() -> void:
+	var all := Modifiers.get_all_modifiers()
+
+	if all.is_empty():
+		_report("No active modifiers.")
+		return
+
+	var lines: Array[String] = []
+	var now := WorldTime.get_total_minutes_precise()
+
+	for modifier in all:
+		var remaining := (
+			"permanent" if modifier.end_minutes < 0.0
+			else "%.0f min left" % (modifier.end_minutes - now)
+		)
+
+		lines.append("%s -> %s %s%.2f (%s)" % [
+			modifier.source_id,
+			modifier.target,
+			Modifier.Operation.keys()[modifier.operation].substr(0, 3),
+			modifier.get_effective_value(),
+			remaining,
+		])
+
+	_report("\n".join(lines))
+
+
+func _clear_modifiers() -> void:
+	Modifiers.clear_all()
+
+	_report("All modifiers cleared. The demand controller will re-add its own.")
+
+
+func _show_daily_stats() -> void:
+	var record := Tavern.stats.get_record()
+	var counters: Dictionary = record.get("counters", {})
+
+	_report("\n".join([
+		"DAY %d (live)" % record.get("trading_day", 0),
+		"Income %.0f (sales %.0f + tips %.0f)" % [
+			record.get("total_income", 0.0),
+			counters.get("sales_income", 0.0),
+			counters.get("tips", 0.0),
+		],
+		"Served %d, lost %d" % [
+			int(counters.get("customers_served", 0)),
+			int(counters.get("customers_lost", 0)),
+		],
+		"Drinks %d, breakages %d" % [
+			int(counters.get("drinks_sold", 0)),
+			int(counters.get("breakages", 0)),
+		],
+		"Frozen: %s" % record.get("is_frozen", false),
+	]))
+
+
+func _add_test_sale() -> void:
+	Tavern.stats.record_sale(&"test_drink", 10.0, 2.0)
+	Tavern.stats.record(&"customers_served")
+
+	_report("Recorded a test sale of 10 with a 2 tip.")
+
+
+func _report(text: String) -> void:
+	status.text = text
+
+	print("[DevPanel] ", text)
+
+
+## Recent authoritative statistic events, newest last.
+##
+## The view that answers "is real gameplay actually recording?" - which the
+## totals alone cannot, because an F10 test injection looks identical to a real
+## sale once it is a number.
+func _show_stat_events() -> void:
+	var recorder := get_tree().get_first_node_in_group(&"daily_stats_recorder")
+
+	if recorder == null:
+		recorder = get_node_or_null("../Managers/DailyStatisticsRecorder")
+
+	if recorder == null:
+		_report("DailyStatisticsRecorder not found.")
+		return
+
+	var events: Array = recorder.call(&"get_event_log")
+
+	if events.is_empty():
+		_report("No authoritative statistic events recorded yet.")
+		return
+
+	var lines: Array[String] = []
+
+	lines.append("Listening to %d signals. Last %d events:" % [
+		int(recorder.call(&"get_subscription_count")),
+		mini(events.size(), 12),
+	])
+
+	for i in range(maxi(events.size() - 12, 0), events.size()):
+		var entry: Dictionary = events[i]
+
+		lines.append("%s  %s  %s" % [
+			entry["clock"],
+			entry["event_type"],
+			str(entry["values"]),
+		])
+
+	_report("\n".join(lines))
+
+
+## Shows or hides the developer panel.
+##
+## Public so the daily control bar's "F10 / Debug" button uses the same entry
+## point as the key binding, and there is one definition of "the panel is open".
+func toggle_panel() -> void:
+	panel.visible = not panel.visible
+
+
+func is_panel_open() -> bool:
+	return panel.visible

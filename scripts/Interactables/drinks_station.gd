@@ -3,6 +3,13 @@ extends StaticBody2D
 
 signal stock_changed(current: int, maximum: int)
 
+## Servings actually leaving the station.
+##
+## The authoritative stock-usage event. Deliberately separate from
+## [signal stock_changed], which also fires on refills: usage is what was
+## consumed, not what the level happens to be now.
+signal serving_consumed(item_id: StringName, quantity: int)
+
 ## Phase 3A: the station's own judgement of its stock level changed.
 ##
 ## Deliberately not the same as [signal stock_changed], which fires on every
@@ -37,6 +44,32 @@ enum StockState {
 @export_range(1, 999, 1) var maximum_servings: int = 20
 @export_range(0, 999, 1) var starting_servings: int = 20
 @export_range(1, 999, 1) var servings_per_refill_item: int = 20
+
+@export_category("Beverage Framework")
+
+## What this station is able to do - see [StationCapabilities].
+##
+## A drink or recipe declares the capabilities it needs; this is the other
+## half of that join. Empty means the station is un-migrated and falls back to
+## the legacy single-drink behaviour, which is why existing scenes keep
+## working untouched.
+@export var station_capabilities: Array[StringName] = []
+
+## The tapped cask, keg or bottle this station serves out of.
+##
+## When set, stock becomes real measures in a [FilledContainer] rather than an
+## integer counter, and the station can be filled from bulk storage. When left
+## empty, [member current_servings] stays authoritative exactly as before.
+@export var service_container: ContainerDefinition
+
+## Content the service container is tapped with.
+##
+## Normally left empty and taken from [member served_drink]'s content_id, so a
+## station only needs configuring when it serves something other than its
+## drink's default liquid.
+@export var service_content_id: StringName = &""
+
+@export var beverage_registry: BeverageRegistry
 
 @export_category("Stock Alerts")
 
@@ -75,13 +108,22 @@ var output_container: ItemContainer
 var current_servings: int = 0
 var _indicator: VBoxContainer
 
+## The real stock at this station, when it has been migrated.
+##
+## Null on a legacy station. Everything that reads stock goes through
+## [member current_servings], which is kept in step with this batch, so no
+## caller has to know which mode the station is in.
+var _service_batch: FilledContainer = null
+
 ## Current stock judgement. Only ever changed by _evaluate_stock_state().
 var _stock_state: StockState = StockState.OK
 
 func _ready() -> void:
 	add_to_group(&"drink_stations")
 	_build_output_container()
+	_build_service_batch()
 	current_servings = clampi(starting_servings, 0, maximum_servings)
+	_sync_batch_from_servings()
 	_validate_stock_thresholds()
 	_stock_state = _calculate_stock_state(StockState.OK)
 	_build_indicator()
@@ -145,6 +187,15 @@ func perform_interaction(request: InteractionRequest) -> bool:
 		&"return": return _return_carried_drink(carrier)
 		_: return _serve_drink(carrier)
 
+
+## Staff-facing equivalent of the normal pour interaction.
+func staff_dispense_to(carrier: ItemCarrier) -> bool:
+	return _serve_drink(carrier)
+
+## Staff-facing equivalent of the normal refill interaction.
+func staff_refill_from(carrier: ItemCarrier) -> bool:
+	return _refill_from_carrier(carrier)
+
 func _serve_drink(carrier: ItemCarrier) -> bool:
 	if current_servings <= 0:
 		return false
@@ -155,7 +206,26 @@ func _serve_drink(carrier: ItemCarrier) -> bool:
 		return false
 	if result.status == ItemTransferResult.Status.SWAPPED:
 		_on_drink_returned(output_slot.clear())
-	current_servings = maxi(current_servings - 1, 0)
+	var consumed: int = mini(current_servings, 1)
+
+	# Migrated stations draw real measures; legacy ones decrement the counter.
+	# Both end up with current_servings correct, so every existing reader -
+	# the task coordinator, the stock alerts, the UI - is unaffected.
+	if _service_batch != null:
+		var measures: int = get_measures_per_serving()
+		var drawn: BeverageTransferResult = BeverageTransferService.draw(
+			_service_batch, measures
+		)
+
+		if not drawn.is_success():
+			return false
+
+		_sync_servings_from_batch()
+	else:
+		current_servings = maxi(current_servings - 1, 0)
+
+	if consumed > 0 and served_drink != null:
+		serving_consumed.emit(served_drink.item_id, consumed)
 	_refresh_output()
 	_refresh_visuals()
 	return true
@@ -173,7 +243,10 @@ func _refill_from_carrier(carrier: ItemCarrier) -> bool:
 	if current_servings >= maximum_servings:
 		return false
 	carrier.clear_carried_item()
-	current_servings = mini(current_servings + servings_per_refill_item, maximum_servings)
+	current_servings = mini(
+		current_servings + servings_per_refill_item, maximum_servings
+	)
+	_sync_batch_from_servings()
 	_refresh_output()
 	_refresh_visuals()
 	return true
@@ -226,6 +299,7 @@ func _refresh_visuals() -> void:
 
 func set_servings(amount: int) -> void:
 	current_servings = clampi(amount, 0, maximum_servings)
+	_sync_batch_from_servings()
 	_refresh_output()
 	_refresh_visuals()
 
@@ -310,3 +384,412 @@ func interact(player: Node) -> void:
 func _on_drink_returned(returned_stack: ItemStack) -> void:
 	if show_transfer_messages and returned_stack != null and not returned_stack.is_empty():
 		print(name, " took back ", returned_stack.get_display_name())
+
+
+# --- Beverage Framework ------------------------------------------------------
+#
+# Everything below is additive. A station with no service_container configured
+# never enters any of it and behaves exactly as it did before the framework.
+
+
+## Builds the tapped container this station serves from, when configured.
+func _build_service_batch() -> void:
+	if service_container == null:
+		return
+
+	var content_id: StringName = get_service_content_id()
+
+	if content_id.is_empty():
+		push_warning(
+			"%s has a service container but no content to put in it. "
+			% name
+			+ "Set service_content_id, or give its drink a content_id."
+		)
+		return
+
+	var content: BeverageContentDefinition = null
+
+	if beverage_registry != null:
+		content = beverage_registry.get_content(content_id)
+
+	if content == null:
+		push_warning(
+			"%s cannot resolve content '%s'. Falling back to legacy servings."
+			% [name, String(content_id)]
+		)
+		return
+
+	_service_batch = FilledContainer.create(
+		service_container, content, 0, _get_world_minutes()
+	)
+	_service_batch.sealed = false
+	_service_batch.storage_location_id = StringName(name.to_snake_case())
+
+
+## The liquid this station is tapped with.
+func get_service_content_id() -> StringName:
+	if not service_content_id.is_empty():
+		return service_content_id
+
+	if served_drink != null:
+		return served_drink.content_id
+
+	return &""
+
+
+## Measures one serving costs, from the drink's default serving format.
+##
+## Falls back to one so a station is never able to pour for free.
+func get_measures_per_serving() -> int:
+	if beverage_registry == null or served_drink == null:
+		return 1
+
+	var format_id: StringName = served_drink.get_default_serving_format_id()
+
+	if format_id.is_empty():
+		return 1
+
+	var format: ServingFormatDefinition = beverage_registry.get_serving_format(
+		format_id
+	)
+
+	if format == null:
+		return 1
+
+	return maxi(format.measures_per_serving, 1)
+
+
+func has_service_batch() -> bool:
+	return _service_batch != null
+
+
+func get_service_batch() -> FilledContainer:
+	return _service_batch
+
+
+## True when this station can serve [param drink] in [param format].
+##
+## The whole point of the capability system: no drink name appears in this
+## script, and a new drink needing a capability this station has works
+## immediately.
+func can_serve_drink(
+	drink: DrinkDefinition,
+	format: ServingFormatDefinition = null
+) -> bool:
+	if drink == null:
+		return false
+
+	# An un-migrated station keeps its old single-drink rule.
+	if station_capabilities.is_empty():
+		return served_drink != null and served_drink.item_id == drink.item_id
+
+	if not StationCapabilities.satisfies(
+		station_capabilities, get_required_capabilities(drink)
+	):
+		return false
+
+	if not _holds_content_for(drink):
+		return false
+
+	if format != null and not drink.is_compatible_with_format(format):
+		return false
+
+	return true
+
+
+## Whether what is actually tapped here could pour [param drink].
+##
+## Capabilities alone say a station CAN draw from a cask; they say nothing
+## about what is in it. Without this check every cask station answered yes to
+## every cask drink, so an Ale order was happily sourced from the Grog cask and
+## drew kill-devil measures. Stations with nothing tapped are left alone, so an
+## unconfigured or legacy station behaves exactly as it did before.
+func _holds_content_for(drink: DrinkDefinition) -> bool:
+	# A prepared drink is built from ingredients rather than poured straight
+	# out of this station's cask, so its content is not the deciding factor.
+	if drink.requires_preparation():
+		return true
+
+	var tapped: StringName = get_service_content_id()
+
+	if tapped.is_empty() or drink.content_id.is_empty():
+		return true
+
+	return tapped == drink.content_id
+
+
+## Every capability [param drink] needs here, drink AND recipe.
+##
+## A prepared drink like Coffee declares nothing on the drink itself - its
+## requirements live on the recipe, because that is where the method is
+## described. Reading only the drink's own list let a plain cask station
+## "brew" coffee, so both are merged in one place that every caller uses.
+func get_required_capabilities(
+	drink: DrinkDefinition
+) -> Array[StringName]:
+	if drink == null:
+		return []
+
+	var required: Array[StringName] = drink.required_station_capabilities.duplicate()
+
+	if not drink.requires_preparation() or beverage_registry == null:
+		return required
+
+	var recipe: DrinkRecipeDefinition = beverage_registry.get_recipe(
+		drink.recipe_id
+	)
+
+	if recipe == null:
+		return required
+
+	for capability: StringName in recipe.get_all_required_capabilities():
+		if not required.has(capability):
+			required.append(capability)
+
+	return required
+
+
+## Capabilities [param drink] needs that this station does not have.
+func get_missing_capabilities(
+	drink: DrinkDefinition
+) -> Array[StringName]:
+	if drink == null:
+		return []
+
+	return StationCapabilities.get_missing(
+		station_capabilities, get_required_capabilities(drink)
+	)
+
+
+func has_capability(capability: StringName) -> bool:
+	return station_capabilities.has(capability)
+
+
+## Fills this station's service container from a bulk source.
+##
+## The bulk-to-service half of the transfer framework. Returns a result rather
+## than a bool so the UI can report a mismatch or a full destination.
+func receive_transfer(
+	source: FilledContainer,
+	measures: int = -1
+) -> BeverageTransferResult:
+	if _service_batch == null:
+		return BeverageTransferResult.failure(
+			FilledContainer.Refusal.CONTAINER_MISSING
+		)
+
+	var requested: int = (
+		measures if measures > 0 else _service_batch.get_remaining_capacity()
+	)
+
+	var result: BeverageTransferResult = BeverageTransferService.transfer(
+		source,
+		_service_batch,
+		requested,
+		_get_world_minutes(),
+		beverage_registry
+	)
+
+	if result.is_success():
+		_sync_servings_from_batch()
+		_refresh_output()
+		_refresh_visuals()
+
+	return result
+
+
+## Recalculates the serving counter from the real stock in the container.
+func _sync_servings_from_batch() -> void:
+	if _service_batch == null:
+		return
+
+	var measures: int = get_measures_per_serving()
+
+	@warning_ignore("integer_division")
+	current_servings = clampi(
+		int(_service_batch.quantity / measures), 0, maximum_servings
+	)
+
+
+## Seeds the container from the station's starting servings.
+##
+## Lets an authored station keep using starting_servings in the inspector
+## while still holding real measures underneath.
+func _sync_batch_from_servings() -> void:
+	if _service_batch == null:
+		return
+
+	var wanted: int = current_servings * get_measures_per_serving()
+	var content_id: StringName = get_service_content_id()
+
+	_service_batch.clear_contents()
+	_service_batch.add(
+		wanted, content_id, _get_world_minutes(), beverage_registry
+	)
+	_service_batch.sealed = false
+
+	_sync_servings_from_batch()
+
+
+## Everything the management UI and diagnostics panel want to show.
+func get_beverage_summary() -> Dictionary:
+	var summary: Dictionary = {
+		"station": get_interaction_display_name(),
+		"migrated": _service_batch != null,
+		"capabilities": station_capabilities,
+		"drink_id": served_drink.item_id if served_drink != null else &"",
+		"drink_name": served_drink.display_name if served_drink != null else "",
+		"servings": current_servings,
+		"maximum_servings": maximum_servings,
+		"measures_per_serving": get_measures_per_serving(),
+		"stock_state": get_stock_state_name(),
+	}
+
+	if _service_batch == null:
+		return summary
+
+	summary["container_name"] = (
+		_service_batch.container.get_display_name_with_explanation()
+		if _service_batch.container != null
+		else "Unknown"
+	)
+	summary["content_id"] = _service_batch.content_id
+	summary["measures"] = _service_batch.quantity
+	summary["measures_maximum"] = _service_batch.get_maximum_quantity()
+	summary["reserved"] = _service_batch.reserved_quantity
+	summary["fill"] = _service_batch.get_fill_fraction()
+
+	if beverage_registry != null:
+		summary["display_name"] = _service_batch.get_display_name(
+			beverage_registry
+		)
+		summary["freshness"] = _service_batch.get_freshness(
+			_get_world_minutes(), beverage_registry
+		)
+
+	return summary
+
+
+func to_save_dict() -> Dictionary:
+	var data: Dictionary = {
+		"station_name": String(name),
+		"current_servings": current_servings,
+	}
+
+	if _service_batch != null:
+		data["batch"] = _service_batch.to_save_dict()
+
+	return data
+
+
+func from_save_dict(data: Dictionary) -> void:
+	current_servings = clampi(
+		int(data.get("current_servings", 0)), 0, maximum_servings
+	)
+
+	if data.has("batch") and beverage_registry != null:
+		var restored: FilledContainer = FilledContainer.from_save_dict(
+			data["batch"], beverage_registry
+		)
+
+		if restored != null:
+			_service_batch = restored
+			_sync_servings_from_batch()
+
+	_refresh_output()
+	_refresh_visuals()
+
+
+func _get_world_minutes() -> int:
+	var world_time: Node = get_node_or_null(^"/root/WorldTime")
+
+	if world_time == null or not world_time.has_method(&"get_timestamp"):
+		return 0
+
+	var stamp: Variant = world_time.call(&"get_timestamp")
+
+	return int(stamp.total_minutes) if stamp != null else 0
+
+
+## Rebuilds the service container after its configuration changed.
+##
+## Needed because a station's _ready runs before any scene-level setup node can
+## assign its container and content. Safe to call at any time; a station with
+## no container configured simply stays on the legacy counter.
+func rebuild_service_batch() -> void:
+	if service_container == null:
+		return
+
+	var previous_quantity: int = (
+		_service_batch.quantity if _service_batch != null else 0
+	)
+
+	_service_batch = null
+	_build_service_batch()
+
+	if _service_batch != null and previous_quantity > 0:
+		_service_batch.add(
+			previous_quantity,
+			get_service_content_id(),
+			_get_world_minutes(),
+			beverage_registry
+		)
+		_sync_servings_from_batch()
+
+
+## Puts [param measures] into the service container directly.
+##
+## TEMPORARY convenience for setup and debugging. Real stock should arrive by
+## transfer from bulk storage - see receive_transfer(). This exists so a
+## station is not empty before the delivery chain is connected.
+func grant_service_stock(measures: int) -> int:
+	if _service_batch == null or measures <= 0:
+		return 0
+
+	var added: int = _service_batch.add(
+		measures,
+		get_service_content_id(),
+		_get_world_minutes(),
+		beverage_registry
+	)
+
+	if added > 0:
+		_service_batch.sealed = false
+		_sync_servings_from_batch()
+		_refresh_output()
+		_refresh_visuals()
+
+	return added
+
+
+## Draws [param measures] out for a shared serving.
+##
+## The path a group order takes: real measures leave the station's cask, so a
+## pitcher or table cask costs the tavern exactly what it holds. Returns how
+## many were actually drawn.
+func draw_measures(measures: int) -> int:
+	if _service_batch == null or measures <= 0:
+		return 0
+
+	var result: BeverageTransferResult = BeverageTransferService.draw(
+		_service_batch, measures
+	)
+
+	if not result.is_success():
+		return 0
+
+	_sync_servings_from_batch()
+	_refresh_output()
+	_refresh_visuals()
+
+	return result.amount_moved
+
+
+## Measures available for a shared order right now.
+func get_available_measures() -> int:
+	if _service_batch == null:
+		# Legacy station: fall back to the serving counter so a group order
+		# can still be costed against it.
+		return current_servings * get_measures_per_serving()
+
+	return _service_batch.get_available_quantity()

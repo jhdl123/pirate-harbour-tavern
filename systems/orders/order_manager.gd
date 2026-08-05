@@ -24,10 +24,24 @@ func submit_order(supplier: SupplierDefinition, quantities: Dictionary) -> Dicti
 	var total_cost := 0
 	for entry in supplier.entries:
 		if entry == null or not entry.is_valid(): continue
-		var quantity := clampi(int(quantities.get(entry.item.item_id, 0)), 0, entry.get_maximum_quantity())
+		# Offers are keyed generically: a filled container has no item to read
+		# an id from, so both shapes go through get_offer_id().
+		var offer_id := entry.get_offer_id()
+		if offer_id.is_empty(): continue
+		var quantity := clampi(int(quantities.get(offer_id, 0)), 0, entry.get_maximum_quantity())
 		if quantity <= 0: continue
 		var unit_price := entry.get_unit_price()
-		lines.append({"item_id": entry.item.item_id, "display_name": entry.item.display_name, "quantity": quantity, "remaining_quantity": quantity, "unit_price": unit_price, "line_total": unit_price * quantity, "item_definition": entry.item})
+		lines.append({
+			"item_id": offer_id,
+			"display_name": entry.get_display_name(_get_beverage_registry()),
+			"detail_text": entry.get_detail_text(_get_beverage_registry()),
+			"quantity": quantity,
+			"remaining_quantity": quantity,
+			"unit_price": unit_price,
+			"line_total": unit_price * quantity,
+			"item_definition": entry.item,
+			"catalogue_entry": entry,
+		})
 		total_cost += unit_price * quantity
 	if lines.is_empty(): return _reject("Choose at least one item before submitting.")
 	if not economy_manager.can_afford(total_cost): return _reject("You need £%d but only have £%d." % [total_cost, economy_manager.get_money()])
@@ -71,7 +85,19 @@ func _deliver_order(order: Dictionary) -> bool:
 	var all_received := true
 	for line in order.lines:
 		var remaining := int(line.get("remaining_quantity", line.quantity))
-		var moved := storage.add_item(line.item_definition, remaining)
+		var moved := 0
+
+		# A line is either a plain item bound for the item storage, or a
+		# filled container bound for a BeverageStorage. The order dictionary
+		# carries the catalogue entry so delivery can tell which without the
+		# ordering system knowing anything about casks.
+		var entry: OrderCatalogueEntry = line.get("catalogue_entry")
+
+		if entry != null and entry.is_filled_container():
+			moved = _deliver_filled_containers(entry, remaining)
+		else:
+			moved = storage.add_item(line.item_definition, remaining)
+
 		line.remaining_quantity = remaining - moved
 		if line.remaining_quantity > 0: all_received = false
 	if all_received:
@@ -90,6 +116,107 @@ func get_delivered_orders() -> Array[Dictionary]: return delivered_orders.duplic
 func _get_storage() -> StockStorage:
 	var nodes := get_tree().get_nodes_in_group(&"stock_storage")
 	return nodes[0] as StockStorage if not nodes.is_empty() else null
+
+
+## Delivers [param count] filled containers into a compatible location.
+##
+## Returns how many were actually accepted. A destination that is full stops
+## the delivery cleanly and the rest stays on the order as outstanding, which
+## is the same partial-delivery behaviour plain items already had.
+func _deliver_filled_containers(
+	entry: OrderCatalogueEntry,
+	count: int
+) -> int:
+	var registry := _get_beverage_registry()
+
+	if registry == null:
+		return 0
+
+	var delivered := 0
+
+	for _index in range(count):
+		var batch := entry.create_filled_container(
+			registry, _get_world_minutes()
+		)
+
+		if batch == null:
+			break
+
+		var destination := _find_storage_for(batch, entry)
+
+		if destination == null:
+			break
+
+		if not destination.add_batch(batch):
+			break
+
+		delivered += 1
+		_track_spoilage(batch, destination)
+
+	return delivered
+
+
+## The best BeverageStorage for [param batch].
+##
+## Prefers a location matching the entry's destination tags, so premium
+## bottles land in locked storage rather than the first place with room.
+func _find_storage_for(
+	batch: FilledContainer,
+	entry: OrderCatalogueEntry
+) -> BeverageStorage:
+	var fallback: BeverageStorage = null
+
+	for node in get_tree().get_nodes_in_group(&"beverage_storage"):
+		var storage := node as BeverageStorage
+
+		if storage == null or not storage.accepts(batch):
+			continue
+
+		if entry.destination_storage_tags.is_empty():
+			return storage
+
+		if ItemTags.has_any(
+			storage.storage_tags, entry.destination_storage_tags
+		):
+			return storage
+
+		if fallback == null:
+			fallback = storage
+
+	return fallback
+
+
+func _track_spoilage(
+	batch: FilledContainer,
+	storage: BeverageStorage
+) -> void:
+	for node in get_tree().get_nodes_in_group(&"spoilage_service"):
+		var service := node as SpoilageService
+
+		if service != null:
+			service.track_batch(batch, storage.spoilage_modifier)
+			return
+
+
+func _get_beverage_registry() -> BeverageRegistry:
+	for node in get_tree().get_nodes_in_group(&"beverage_storage"):
+		var storage := node as BeverageStorage
+
+		if storage != null and storage.registry != null:
+			return storage.registry
+
+	return load("res://Data/beverage/beverage_registry.tres")
+
+
+func _get_world_minutes() -> int:
+	var world_time := get_node_or_null(^"/root/WorldTime")
+
+	if world_time == null or not world_time.has_method(&"get_timestamp"):
+		return -1
+
+	var stamp: Variant = world_time.call(&"get_timestamp")
+
+	return int(stamp.total_minutes) if stamp != null else -1
 
 func _on_time_changed(_stamp: GameTimeStamp) -> void: process_due_orders()
 func _format_minutes(total: int) -> String:
