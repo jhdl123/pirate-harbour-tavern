@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StorageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/storage_profile_definition.gd" id="1_crpna"]
+
+[resource]
+script = ExtResource("1_crpna")
+profile_id = &"bulk_cellar_cask"
+display_name = "Bulk Cellar Cask"
+content_tags = Array[StringName]([&"liquid", &"spirit"])
+container_categories = Array[int]([0])
+spoilage_modifier = 0.8
+theft_value = 30
+bulk_space_requirement = 4.0

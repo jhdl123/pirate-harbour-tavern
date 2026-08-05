@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_ra3it"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/poured_drink.tres" id="2_7xdaj"]
+
+[resource]
+script = ExtResource("1_ra3it")
+drink_category = &"cider"
+historical_availability = 2
+general_popularity = 0.6
+rarity = 2
+content_id = &"cider"
+serving_format_ids = Array[StringName]([&"mug", &"tankard", &"pitcher"])
+required_station_capabilities = Array[StringName]([&"draw_from_cask"])
+can_spoil_after_serving = true
+spoilage_profile = ExtResource("2_7xdaj")
+item_id = &"cider"
+display_name = "Cider"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"cider", &"weak_alcohol", &"merchant_favourite"])
+preferred_destination = 1
+base_sell_price = 6

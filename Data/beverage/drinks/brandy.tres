@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_38fdd"]
+
+[resource]
+script = ExtResource("1_38fdd")
+drink_category = &"brandy"
+historical_availability = 3
+general_popularity = 0.3999999999999999
+rarity = 3
+quality_tier = 4
+alcohol_strength = 2.4
+drink_duration_minutes = 12
+content_id = &"brandy"
+serving_format_ids = Array[StringName]([&"dram", &"glass", &"bottle_serving"])
+service_method = 1
+required_station_capabilities = Array[StringName]([&"pour_from_bottle", &"access_secured_bottles"])
+item_id = &"brandy"
+display_name = "French Brandy"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"spirit", &"strong_alcohol", &"premium", &"imported", &"luxury", &"captain_favourite", &"officer_favourite"])
+preferred_destination = 1
+base_sell_price = 35

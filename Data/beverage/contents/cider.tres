@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_u01fb"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/cask_cider.tres" id="2_1ydi4"]
+
+[resource]
+script = ExtResource("1_u01fb")
+content_id = &"cider"
+display_name = "Cider"
+tags = Array[StringName]([&"liquid", &"cider", &"weak_alcohol"])
+base_value_per_measure = 2
+can_spoil = true
+spoilage_profile = ExtResource("2_1ydi4")

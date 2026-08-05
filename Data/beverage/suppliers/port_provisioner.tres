@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="SupplierDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/orders/order_catalogue_entry.gd" id="1_wr8v5"]
+[ext_resource type="Resource" path="res://Data/beverage/ingredients/sugar_loaf.tres" id="2_jkvkp"]
+[ext_resource type="Resource" path="res://Data/beverage/ingredients/nutmeg.tres" id="3_sfnvq"]
+[ext_resource type="Resource" path="res://Data/beverage/ingredients/citrus.tres" id="4_7whnh"]
+[ext_resource type="Resource" path="res://Data/beverage/ingredients/coffee_beans.tres" id="5_mnc4j"]
+[ext_resource type="Resource" path="res://Data/beverage/ingredients/chocolate.tres" id="6_fcixj"]
+[ext_resource type="Resource" path="res://Data/beverage/ingredients/spices.tres" id="7_lqwi6"]
+[ext_resource type="Script" path="res://systems/orders/supplier_definition.gd" id="8_3xxgu"]
+
+[sub_resource type="Resource" id="Resource_o7i2b"]
+script = ExtResource("1_wr8v5")
+item = ExtResource("2_jkvkp")
+unit_price_override = 12
+maximum_order_quantity = 40
+
+[sub_resource type="Resource" id="Resource_vehg7"]
+script = ExtResource("1_wr8v5")
+item = ExtResource("3_sfnvq")
+unit_price_override = 6
+maximum_order_quantity = 60
+
+[sub_resource type="Resource" id="Resource_1r6dv"]
+script = ExtResource("1_wr8v5")
+item = ExtResource("4_7whnh")
+unit_price_override = 3
+maximum_order_quantity = 60
+
+[sub_resource type="Resource" id="Resource_plx1u"]
+script = ExtResource("1_wr8v5")
+item = ExtResource("5_mnc4j")
+unit_price_override = 15
+maximum_order_quantity = 30
+
+[sub_resource type="Resource" id="Resource_8awys"]
+script = ExtResource("1_wr8v5")
+item = ExtResource("6_fcixj")
+unit_price_override = 25
+
+[sub_resource type="Resource" id="Resource_b7xas"]
+script = ExtResource("1_wr8v5")
+item = ExtResource("7_lqwi6")
+unit_price_override = 8
+maximum_order_quantity = 40
+
+[resource]
+script = ExtResource("8_3xxgu")
+supplier_id = &"port_provisioner"
+display_name = "Port Provisioner"
+entries = Array[ExtResource("1_wr8v5")]([SubResource("Resource_o7i2b"), SubResource("Resource_vehg7"), SubResource("Resource_1r6dv"), SubResource("Resource_plx1u"), SubResource("Resource_8awys"), SubResource("Resource_b7xas")])

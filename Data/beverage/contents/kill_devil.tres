@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_ru866"]
+
+[resource]
+script = ExtResource("1_ru866")
+content_id = &"kill_devil"
+display_name = "Kill-Devil"
+tags = Array[StringName]([&"liquid", &"rum", &"spirit", &"strong_alcohol", &"cheap"])
+base_value_per_measure = 2

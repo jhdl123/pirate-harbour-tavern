@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ContainerDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/container_definition.gd" id="1_06l6u"]
+
+[resource]
+script = ExtResource("1_06l6u")
+container_id = &"firkin"
+historical_name = "Firkin"
+simplified_explanation = "small cask"
+description = "Capacity is a configurable game value, historically inspired rather than an exact period measure."
+maximum_capacity = 72
+bulk_storage = true
+storage_space_usage = 0.72

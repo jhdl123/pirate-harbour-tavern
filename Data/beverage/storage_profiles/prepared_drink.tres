@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="StorageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/storage_profile_definition.gd" id="1_pecey"]
+
+[resource]
+script = ExtResource("1_pecey")
+profile_id = &"prepared_drink"
+display_name = "Prepared Drink"
+content_tags = Array[StringName]([&"mixed_drink", &"hot_drink"])
+cellar_compatible = false
+behind_bar_compatible = true
+spoilage_modifier = 1.2
+bulk_space_requirement = 0.1
+shelf_space_requirement = 0.3

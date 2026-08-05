@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_rivi7"]
+
+[resource]
+script = ExtResource("1_rivi7")
+content_id = &"port_wine"
+display_name = "Port Wine"
+tags = Array[StringName]([&"liquid", &"wine", &"premium", &"imported"])
+base_value_per_measure = 6

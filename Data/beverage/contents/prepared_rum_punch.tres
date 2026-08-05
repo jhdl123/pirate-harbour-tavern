@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_aiask"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_punch.tres" id="2_gyrtb"]
+
+[resource]
+script = ExtResource("1_aiask")
+content_id = &"prepared_rum_punch"
+display_name = "Rum Punch"
+tags = Array[StringName]([&"liquid", &"mixed_drink", &"rum", &"shared"])
+base_value_per_measure = 4
+can_spoil = true
+spoilage_profile = ExtResource("2_gyrtb")

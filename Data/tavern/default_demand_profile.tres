@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="DemandProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://systems/tavern/demand_profile.gd" id="1_demand"]
+
+[resource]
+script = ExtResource("1_demand")
+profile_id = &"default_demand"
+display_name = "Standard Evening Trade"
+keyframes = {
+600: 0.3,
+720: 0.6,
+900: 0.9,
+1020: 1.0,
+1080: 1.4,
+1260: 1.8,
+1439: 1.2,
+1470: 0.5
+}
+use_interpolation = true
+minimum_multiplier = 0.0
+maximum_multiplier = 4.0

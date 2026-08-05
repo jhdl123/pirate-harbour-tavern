@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ContainerDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/container_definition.gd" id="1_5jst0"]
+
+[resource]
+script = ExtResource("1_5jst0")
+container_id = &"barrel"
+historical_name = "Barrel"
+simplified_explanation = "large cask"
+description = "Capacity is a configurable game value, historically inspired rather than an exact period measure."
+maximum_capacity = 288
+portable = false
+bulk_storage = true
+storage_space_usage = 2.88

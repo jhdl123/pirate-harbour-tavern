@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Personality" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/personality.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+baseline_mood = 0.75
+baseline_energy = 1.0
+social_tendency = 0.7
+generosity = 0.75
+temperance = 0.6
+curiosity = 0.6
+courage = 0.8
+wealth_multiplier = 2.2
+drink_appetite = 1.1
+intoxication_tolerance = 1.3
+visit_duration_multiplier = 1.2
+preferred_drink_count_multiplier = 1.2
+travel_willingness = 1.0

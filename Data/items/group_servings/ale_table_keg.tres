@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3 uid="uid://bbnjiuf06jli0"]
+
+[ext_resource type="Texture2D" uid="uid://tnkp4axmaw2b" path="res://assets/art/furniture/32x32_small_barrel.png" id="1_ctd18"]
+[ext_resource type="Script" uid="uid://dhrer24xmcsff" path="res://systems/items/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+item_id = &"ale_table_keg"
+display_name = "Small Ale Keg"
+description = "A filled small cask of ale, ready to be set down for a whole crew to share."
+tags = Array[StringName]([&"drink_stock", &"group_serving", &"bulky_item"])
+inventory_icon = ExtResource("1_ctd18")
+world_texture = ExtResource("1_ctd18")
+carried_texture = ExtResource("1_ctd18")
+maximum_stack_size = 4
+base_buy_price = 20
+base_sell_price = 30
+default_metadata = {
+"drink_id": &"ale",
+"serving_format_id": &"table_cask"
+}

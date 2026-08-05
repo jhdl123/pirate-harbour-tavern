@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_u7wb7"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/cask_ale.tres" id="2_1j1k6"]
+
+[resource]
+script = ExtResource("1_u7wb7")
+content_id = &"ale"
+display_name = "Ale"
+tags = Array[StringName]([&"liquid", &"ale", &"beer", &"weak_alcohol", &"cheap"])
+can_spoil = true
+spoilage_profile = ExtResource("2_1j1k6")

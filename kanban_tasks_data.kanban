@@ -1,0 +1,660 @@
+{
+	"categories": [
+		{
+			"uuid": "7f7c593f-f186-492d-ae50-28de1a5086f9",
+			"title": "Current Priority",
+			"color": "e6a23c"
+		},
+		{
+			"uuid": "eeca6a8a-75ab-43fd-9fbd-ebbc4e31a0f6",
+			"title": "Stability & Testing",
+			"color": "f56c6c"
+		},
+		{
+			"uuid": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"title": "Customer Simulation",
+			"color": "67c23a"
+		},
+		{
+			"uuid": "8a325910-f48e-4fc9-b626-f8bac691f963",
+			"title": "Staff & Tasks",
+			"color": "909399"
+		},
+		{
+			"uuid": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"title": "Management & UI",
+			"color": "409eff"
+		},
+		{
+			"uuid": "c54b49d7-cdac-474c-a848-7c051591f929",
+			"title": "World & Events",
+			"color": "9b59b6"
+		},
+		{
+			"uuid": "6b9c20aa-3e23-4553-b079-b9d3641546f4",
+			"title": "Progression",
+			"color": "d48806"
+		},
+		{
+			"uuid": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"title": "Technical Foundation",
+			"color": "00a6a6"
+		}
+	],
+	"stages": [
+		{
+			"uuid": "aaf26e8a-2a6c-422b-8ff6-066d21e7acf8",
+			"title": "Now \u2014 Phase 4A",
+			"tasks": [
+				"045980ae-6ca3-4760-91a5-a98bdfadb3d1",
+				"5bda47de-7e38-49c8-9b1f-f3f9b443e586",
+				"6fda5ec3-f546-4707-b237-947c3c986928",
+				"5811f211-c2af-454a-8ced-ec4d17072fab",
+				"0f646078-2667-4e92-abd1-37da67560588"
+			]
+		},
+		{
+			"uuid": "8553155c-0ae1-45e4-b896-289c75f076fb",
+			"title": "Next \u2014 Stabilise",
+			"tasks": [
+				"df758958-6486-4358-815d-36a3d176fd6a",
+				"d97225fa-2973-42bf-b0fa-a3415e3a3c54",
+				"37082c3f-1e13-481c-910d-acab943fa631",
+				"8c19e6e7-95c0-4149-a7fc-d8e0177d3528",
+				"61a484f1-10b3-4f85-ab42-ffbe7b0bc720",
+				"ff296581-e2e5-411b-8685-c981923914cd",
+				"d07cb8e1-9128-4b66-98ae-fdc082f70ca6"
+			]
+		},
+		{
+			"uuid": "6a92f261-0318-446b-a3a6-cc11297846cb",
+			"title": "Phase 5 \u2014 Activities",
+			"tasks": [
+				"0caf9d40-5bf7-4272-85cf-9faaf0ecd4cc",
+				"0aa2cb8e-ede5-449b-99c1-c6f6315510f4",
+				"46c38de8-0ae2-4ce7-bbf1-6263f0738b61",
+				"b490f63d-1e83-4b09-ba5d-5dbb5f78e059"
+			]
+		},
+		{
+			"uuid": "591b6ff1-c644-4ab7-a844-97a4f1ad2daf",
+			"title": "Phase 6 \u2014 Groups",
+			"tasks": [
+				"0265f12b-1ab2-41e1-8b42-00b014a9bcb9",
+				"7735dd6b-51d6-455c-b161-cdb47a8a690e",
+				"8f9ed6a4-c6cf-44c0-8c80-dc649d664de1",
+				"a2224037-8def-483c-b265-3366810f5a64"
+			]
+		},
+		{
+			"uuid": "094d95d9-fcc5-4575-bc37-2773342671ca",
+			"title": "Phase 7 \u2014 Staff Control",
+			"tasks": [
+				"b6407bce-1fe8-4f28-972c-3d293d4164b5",
+				"c1d4f505-e11c-4289-a5f1-d68280c5751a",
+				"b61528b7-fa3f-4499-9a00-4ac876b2a692",
+				"c0658602-87b9-4e67-9326-38da3af68d1a",
+				"345ae58d-c202-4dc0-901e-2b565a447b8d"
+			]
+		},
+		{
+			"uuid": "ac395abc-21af-45b5-b2c3-73af84ed7a94",
+			"title": "Phase 8 \u2014 Daily Management",
+			"tasks": [
+				"5f0e389b-b17f-4cc1-88ab-bbfed0d708fc",
+				"ac8fe474-6b4f-4357-8a84-2db35e1d27a9",
+				"25b6ac47-804d-4055-8426-d49e5ec3b31a",
+				"40fa1dbf-c216-4966-8404-344f8bf4a5af"
+			]
+		},
+		{
+			"uuid": "a1cde9f7-6c23-453c-a17e-82e5237db471",
+			"title": "Phase 9+ \u2014 World & Progression",
+			"tasks": [
+				"e3267691-6a82-4006-9240-8d18bd846a17",
+				"b58639b8-f26e-44f2-8602-52e2bb9a2201",
+				"e7cfaa7c-a13c-4a55-9a99-1591a40e74ec",
+				"44ee4cd1-69b8-4169-a11b-e0b0580cf112",
+				"0d4c056c-1040-45c9-9dd4-6648b9f37548",
+				"61c32414-d70c-4cc6-955c-e55fb9455280",
+				"5ce25cb2-0c6a-4805-bb9e-88b4d98c1fd6"
+			]
+		},
+		{
+			"uuid": "396cb925-1d7c-4eee-8610-d5898e5e54e8",
+			"title": "Backlog / Later",
+			"tasks": [
+				"e906160d-ced6-4e38-a477-2c4638297a29",
+				"aac7e71a-4342-4213-8697-af82f25f2094",
+				"e12d8a1a-0675-4155-8627-50ad03304de4",
+				"bec5b05a-b25a-4d1d-b1a2-8a2eecd038b5",
+				"892014e9-8657-4923-a7c1-57c78bc75dec",
+				"837b07fb-4b70-4a88-beb7-ddcd4ab9cc25",
+				"bc5d267b-d66d-49a7-8cd7-21adb976282d"
+			]
+		},
+		{
+			"uuid": "50cbba3c-1373-49bc-a45c-90dda691741e",
+			"title": "Completed Foundations",
+			"tasks": [
+				"050571a2-152f-4e66-9770-210fc85344f5",
+				"92495d6f-cfb4-41d1-9f2e-1f00fdfdcdd4",
+				"574867bf-b29a-4236-9da4-c78ac351e663",
+				"b15fbde5-b6cf-4287-afae-08433847a065",
+				"3f61ef77-759f-4cfc-ac51-86b5da0d50a5",
+				"90685ac1-eb3b-4b7e-ade7-ed8a4b8e7b77",
+				"fb1a4536-55e2-400a-907a-eb210ca0a8dd",
+				"2b86544a-90f6-4484-8c9b-651f7ed0f37f",
+				"c10a4281-f360-47a9-ac71-ffae0e9dce1b",
+				"dbafcfdf-d84e-4495-b821-44fb25723f22",
+				"2fe1b214-f1a3-4ec5-bd27-3b71a0cf6745",
+				"e19ee150-cc59-408a-896f-3c38d6d5388b",
+				"e673bba1-fd43-4aa7-afaa-2434c5d7edd1"
+			]
+		}
+	],
+	"tasks": [
+		{
+			"uuid": "045980ae-6ca3-4760-91a5-a98bdfadb3d1",
+			"title": "Complete daily-cycle HUD and state display",
+			"description": "Expose the existing lifecycle as a clear player-facing feature.\n\nShow preparation, open, last orders, closing and closed states. Include countdowns to the next lifecycle transition and clear guidance during the preparation period.",
+			"category": "7f7c593f-f186-492d-ae50-28de1a5086f9",
+			"steps": [
+				"Opening-state display",
+				"Countdown to opening",
+				"Countdown to last orders",
+				"Countdown to closing",
+				"Preparation-period guidance"
+			]
+		},
+		{
+			"uuid": "5bda47de-7e38-49c8-9b1f-f3f9b443e586",
+			"title": "Build end-of-day summary screen",
+			"description": "Create a readable daily results screen using the existing daily-cycle and economy data. It must support reviewing the completed day before starting the next one.",
+			"category": "7f7c593f-f186-492d-ae50-28de1a5086f9",
+			"steps": [
+				"Daily income and tips",
+				"Sales by drink",
+				"Customers served and lost",
+				"Breakages",
+				"Stock usage",
+				"Start next day flow"
+			]
+		},
+		{
+			"uuid": "6fda5ec3-f546-4707-b237-947c3c986928",
+			"title": "Expand F10 daily-cycle controls",
+			"description": "Add developer controls for lifecycle testing, demand inspection and modifier debugging without bypassing the normal underlying systems.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": [
+				"Force lifecycle state",
+				"Inspect demand curve",
+				"Inspect active modifiers",
+				"Apply and clear test modifier presets"
+			]
+		},
+		{
+			"uuid": "5811f211-c2af-454a-8ced-ec4d17072fab",
+			"title": "Wire deferred modifier targets",
+			"description": "Connect the generic modifier framework to the remaining planned customer-generation and visit variables. Keep all values configurable and data-driven.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": [
+				"Customer-type weighting",
+				"Group-size weighting",
+				"Visit duration"
+			]
+		},
+		{
+			"uuid": "0f646078-2667-4e92-abd1-37da67560588",
+			"title": "Expand daily-cycle diagnostics",
+			"description": "Include enough lifecycle, demand and modifier context in exports to support future balancing, regression testing and bug investigation.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": [
+				"State transition timeline",
+				"Demand values over time",
+				"Active modifier sources",
+				"Daily totals",
+				"Unexpected lifecycle transitions"
+			]
+		},
+		{
+			"uuid": "df758958-6486-4358-815d-36a3d176fd6a",
+			"title": "Run full autonomous evening tests",
+			"description": "Run complete service periods with no player assistance. Use several tables, finite stock, darts, staff, ordering, deliveries, closing and next-day transitions. Save diagnostic exports for every meaningful failure.",
+			"category": "eeca6a8a-75ab-43fd-9fbd-ebbc4e31a0f6",
+			"steps": [
+				"Normal demand test",
+				"High demand test",
+				"Low-stock test",
+				"Closing-time test",
+				"Multi-day test"
+			]
+		},
+		{
+			"uuid": "d97225fa-2973-42bf-b0fa-a3415e3a3c54",
+			"title": "Fix M menu stock refresh",
+			"description": "The management menu is not reliably updating stock. Make it react to station usage, storage changes, deliveries, refills and new-day transitions.",
+			"category": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"steps": []
+		},
+		{
+			"uuid": "37082c3f-1e13-481c-910d-acab943fa631",
+			"title": "Correct bartender bar-side behaviour",
+			"description": "The bartender currently collects drinks from the north side of the bar and walks around to the south side to place them. Keep staff behind the bar and use valid interaction/service positions.",
+			"category": "8a325910-f48e-4fc9-b626-f8bac691f963",
+			"steps": []
+		},
+		{
+			"uuid": "8c19e6e7-95c0-4149-a7fc-d8e0177d3528",
+			"title": "Harden global task-board behaviour",
+			"description": "Investigate duplicate tasks, stale reservations, starvation, invalid carried items and tasks that become impossible after assignment. Improve diagnostics alongside fixes.",
+			"category": "8a325910-f48e-4fc9-b626-f8bac691f963",
+			"steps": [
+				"Duplicate prevention",
+				"Task viability recheck",
+				"Reservation cleanup",
+				"Carried-item recovery",
+				"Idle-reason reporting"
+			]
+		},
+		{
+			"uuid": "61a484f1-10b3-4f85-ab42-ffbe7b0bc720",
+			"title": "Test darts and seat-return edge cases",
+			"description": "Confirm customers reserve darts correctly, retain their chair, return to it, release all reservations, and recover when the destination or route becomes invalid.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": []
+		},
+		{
+			"uuid": "ff296581-e2e5-411b-8685-c981923914cd",
+			"title": "Targeted navigation reliability fixes",
+			"description": "Do not perform the full navigation overhaul yet. Fix only navigation failures that stop customers or staff completing existing actions. Log stuck agents and recovery attempts.",
+			"category": "eeca6a8a-75ab-43fd-9fbd-ebbc4e31a0f6",
+			"steps": []
+		},
+		{
+			"uuid": "d07cb8e1-9128-4b66-98ae-fdc082f70ca6",
+			"title": "Balance current simulation values",
+			"description": "Use diagnostics rather than intuition alone to tune the fast testing values into a playable baseline while preserving easy test presets.",
+			"category": "eeca6a8a-75ab-43fd-9fbd-ebbc4e31a0f6",
+			"steps": [
+				"Arrival demand",
+				"Patience",
+				"Drink duration",
+				"Service timings",
+				"Cleaning timings",
+				"Stock consumption"
+			]
+		},
+		{
+			"uuid": "0caf9d40-5bf7-4272-85cf-9faaf0ecd4cc",
+			"title": "Add standing-at-bar activity",
+			"description": "Create a non-seated customer activity that tests bar crowding, limited standing points, service access and customers who do not need a table for the entire visit.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": [
+				"Reserved standing positions",
+				"Order or drink at bar",
+				"Avoid bartender work zone",
+				"Return to seat or leave"
+			]
+		},
+		{
+			"uuid": "0aa2cb8e-ede5-449b-99c1-c6f6315510f4",
+			"title": "Add quiet tavern activity",
+			"description": "Add either a fireplace or noticeboard activity. It should contrast with darts by supporting quiet solo use and future world-information hooks.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": [
+				"Configurable duration",
+				"Utility scoring",
+				"Multiple usable positions",
+				"Satisfaction or information effect"
+			]
+		},
+		{
+			"uuid": "46c38de8-0ae2-4ce7-bbf1-6263f0738b61",
+			"title": "Upgrade generic activity points",
+			"description": "Generalise the system proven by darts so future activities can be added primarily through scenes and resources rather than bespoke customer code.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": [
+				"Capacity greater than one",
+				"Activity cooldowns",
+				"Multiple equivalent points",
+				"Time/customer-type availability",
+				"Fallback and recovery"
+			]
+		},
+		{
+			"uuid": "b490f63d-1e83-4b09-ba5d-5dbb5f78e059",
+			"title": "Add activity-specific spending and outcomes",
+			"description": "Allow activities to optionally consume money, affect satisfaction, intoxication, social needs, reputation or future information systems through configurable effects.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": []
+		},
+		{
+			"uuid": "0265f12b-1ab2-41e1-8b42-00b014a9bcb9",
+			"title": "Implement customer group arrivals",
+			"description": "Create a reusable group framework so companions arrive together, seek suitable seating and share visit context without hard-coding one group type.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": [
+				"Group definition/resource",
+				"Shared arrival",
+				"Group seating request",
+				"Wait or abandon rules"
+			]
+		},
+		{
+			"uuid": "7735dd6b-51d6-455c-b161-cdb47a8a690e",
+			"title": "Build group activity behaviour",
+			"description": "Allow members to socialise, split temporarily for darts or bar visits, and rejoin without losing group state or seat ownership.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": [
+				"Split and rejoin",
+				"Shared activities",
+				"Companion waiting",
+				"Group departure coordination"
+			]
+		},
+		{
+			"uuid": "8f9ed6a4-c6cf-44c0-8c80-dc649d664de1",
+			"title": "Add group satisfaction and spending",
+			"description": "Track group-level outcomes such as seating success, shared rounds, service quality and whether one member encourages additional purchases.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": []
+		},
+		{
+			"uuid": "a2224037-8def-483c-b265-3366810f5a64",
+			"title": "Expand group diagnostics",
+			"description": "Export group membership, split/rejoin history, seating failures, abandonment reasons and individual versus group decisions.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": []
+		},
+		{
+			"uuid": "b6407bce-1fe8-4f28-972c-3d293d4164b5",
+			"title": "Add staff task-priority controls",
+			"description": "Let the player control existing workers before adding many new staff types. Priorities must feed the global task system rather than bypass it.",
+			"category": "8a325910-f48e-4fc9-b626-f8bac691f963",
+			"steps": [
+				"Enable/disable task categories",
+				"Priority weights",
+				"Temporary focus commands",
+				"Player-created urgent task"
+			]
+		},
+		{
+			"uuid": "c1d4f505-e11c-4289-a5f1-d68280c5751a",
+			"title": "Add staff work zones",
+			"description": "Allow configurable zones or permitted interaction areas for staff, including keeping the bartender behind the bar and assigning cleaning/service regions later.",
+			"category": "8a325910-f48e-4fc9-b626-f8bac691f963",
+			"steps": []
+		},
+		{
+			"uuid": "b61528b7-fa3f-4499-9a00-4ac876b2a692",
+			"title": "Build staff management panel",
+			"description": "Show current task, queued task, carried item, workload, idle reason, blocked reason and relevant task priorities.",
+			"category": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"steps": []
+		},
+		{
+			"uuid": "c0658602-87b9-4e67-9326-38da3af68d1a",
+			"title": "Add shifts, breaks and fatigue foundation",
+			"description": "Introduce a configurable framework for availability, breaks and fatigue without yet building a deep employee simulation.",
+			"category": "8a325910-f48e-4fc9-b626-f8bac691f963",
+			"steps": []
+		},
+		{
+			"uuid": "345ae58d-c202-4dc0-901e-2b565a447b8d",
+			"title": "Add one new specialist staff role",
+			"description": "Only after management controls are useful, add either a cleaner/server or security/doorman. Delay cook staff until food exists.",
+			"category": "8a325910-f48e-4fc9-b626-f8bac691f963",
+			"steps": []
+		},
+		{
+			"uuid": "5f0e389b-b17f-4cc1-88ab-bbfed0d708fc",
+			"title": "Make preparation time meaningful",
+			"description": "Use the pre-opening period for optional planning without turning it into a mandatory inspection checklist.",
+			"category": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"steps": [
+				"Review previous summary",
+				"Check projected demand",
+				"Order and refill stock",
+				"Set staff priorities",
+				"Review upcoming conditions"
+			]
+		},
+		{
+			"uuid": "ac8fe474-6b4f-4357-8a84-2db35e1d27a9",
+			"title": "Add pricing and daily-special framework",
+			"description": "Create data-driven controls for prices and optional specials that interact with demand, customer preferences, reputation and daily summaries.",
+			"category": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"steps": []
+		},
+		{
+			"uuid": "25b6ac47-804d-4055-8426-d49e5ec3b31a",
+			"title": "Add projected demand and stock guidance",
+			"description": "Use time curves, modifiers, customer weighting and recent sales to estimate demand and warn about likely shortages without guaranteeing outcomes.",
+			"category": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"steps": []
+		},
+		{
+			"uuid": "40fa1dbf-c216-4966-8404-344f8bf4a5af",
+			"title": "Add flexible opening decisions",
+			"description": "Support opening early/late or remaining closed where appropriate, with clear consequences and modifier/event integration.",
+			"category": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"steps": []
+		},
+		{
+			"uuid": "e3267691-6a82-4006-9240-8d18bd846a17",
+			"title": "Persist customers and create regulars",
+			"description": "Create persistent customer records with favourite drinks/activities, spending tendencies, relationship values and memories of notable visits.",
+			"category": "6b9c20aa-3e23-4553-b079-b9d3641546f4",
+			"steps": []
+		},
+		{
+			"uuid": "b58639b8-f26e-44f2-8602-52e2bb9a2201",
+			"title": "Add customer archetypes and high-value visitors",
+			"description": "Expand data-driven occupations and social classes, including captains, traders, officials and other visitors the player may want to identify quickly.",
+			"category": "6b9c20aa-3e23-4553-b079-b9d3641546f4",
+			"steps": []
+		},
+		{
+			"uuid": "e7cfaa7c-a13c-4a55-9a99-1591a40e74ec",
+			"title": "Build scheduled event system",
+			"description": "Use data-driven event resources that apply modifier bundles and communicate their timing and effects through the existing alert and lifecycle systems.",
+			"category": "c54b49d7-cdac-474c-a848-7c051591f929",
+			"steps": [
+				"Busy harbour",
+				"Heavy storm",
+				"Payday",
+				"Naval inspection",
+				"Festival",
+				"Supply shortage"
+			]
+		},
+		{
+			"uuid": "44ee4cd1-69b8-4169-a11b-e0b0580cf112",
+			"title": "Build rumours and information gameplay",
+			"description": "Create information records with source, trust, freshness, factions, buyers and possible actions: verify, sell, share, keep or use.",
+			"category": "c54b49d7-cdac-474c-a848-7c051591f929",
+			"steps": []
+		},
+		{
+			"uuid": "0d4c056c-1040-45c9-9dd4-6648b9f37548",
+			"title": "Add special visitor dialogue encounters",
+			"description": "Use the alert/dialogue foundation for captains, smugglers, traders and officials who request attention or private meetings.",
+			"category": "c54b49d7-cdac-474c-a848-7c051591f929",
+			"steps": []
+		},
+		{
+			"uuid": "61c32414-d70c-4cc6-955c-e55fb9455280",
+			"title": "Expand economy and suppliers",
+			"description": "Develop supplier differences, changing prices, delivery risk, quality, shortages, contraband and special contracts using existing inventory, ordering and modifier foundations.",
+			"category": "c54b49d7-cdac-474c-a848-7c051591f929",
+			"steps": []
+		},
+		{
+			"uuid": "5ce25cb2-0c6a-4805-bb9e-88b4d98c1fd6",
+			"title": "Add tavern progression and expansion",
+			"description": "Introduce upgrades, new rooms, staff capacity, storage, activity space, reputation and broader business progression only after the core tavern loop is proven.",
+			"category": "6b9c20aa-3e23-4553-b079-b9d3641546f4",
+			"steps": []
+		},
+		{
+			"uuid": "e906160d-ced6-4e38-a477-2c4638297a29",
+			"title": "Full navigation and collision-avoidance overhaul",
+			"description": "Research and implement a high-quality scalable system for natural movement, crowd flow, group movement, recovery and diagnostics. Defer until current gameplay systems reveal the actual movement requirements.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": []
+		},
+		{
+			"uuid": "aac7e71a-4342-4213-8697-af82f25f2094",
+			"title": "Food and kitchen system",
+			"description": "Recipes, ingredients, preparation stations, kitchen tasks, meals, cook staff and food service. Build only after drinks, staff control and daily management are stable.",
+			"category": "c54b49d7-cdac-474c-a848-7c051591f929",
+			"steps": []
+		},
+		{
+			"uuid": "e12d8a1a-0675-4155-8627-50ad03304de4",
+			"title": "Security, drunkenness and fights",
+			"description": "Extend intoxication into arguments, theft, fights, ejection and security tasks. Requires reliable navigation, alerts and task interruption.",
+			"category": "c54b49d7-cdac-474c-a848-7c051591f929",
+			"steps": []
+		},
+		{
+			"uuid": "bec5b05a-b25a-4d1d-b1a2-8a2eecd038b5",
+			"title": "Save/load production pass",
+			"description": "Harden persistence after the major simulation data structures are settled.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": []
+		},
+		{
+			"uuid": "892014e9-8657-4923-a7c1-57c78bc75dec",
+			"title": "Art, audio and presentation overhaul",
+			"description": "Delay major polish until mechanics, scale and content requirements are clearer. Continue only essential production assets during development.",
+			"category": "6b9c20aa-3e23-4553-b079-b9d3641546f4",
+			"steps": []
+		},
+		{
+			"uuid": "837b07fb-4b70-4a88-beb7-ddcd4ab9cc25",
+			"title": "AI Director",
+			"description": "Consider a dynamic director only after ordinary events, demand curves and balancing are mature. It should orchestrate existing data-driven systems, not secretly compensate for broken balance.",
+			"category": "c54b49d7-cdac-474c-a848-7c051591f929",
+			"steps": []
+		},
+		{
+			"uuid": "bc5d267b-d66d-49a7-8cd7-21adb976282d",
+			"title": "Multiple taverns and trading empire",
+			"description": "Long-term endgame direction: warehouses, ships, multiple venues, political influence, factions and a wider pirate economy.",
+			"category": "6b9c20aa-3e23-4553-b079-b9d3641546f4",
+			"steps": []
+		},
+		{
+			"uuid": "050571a2-152f-4e66-9770-210fc85344f5",
+			"title": "World time and lifecycle foundation",
+			"description": "Configurable world time, lifecycle states and time controls are implemented.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": []
+		},
+		{
+			"uuid": "92495d6f-cfb4-41d1-9f2e-1f00fdfdcdd4",
+			"title": "Demand curves and modifier framework",
+			"description": "Time-of-day demand, capacity sensitivity, modifier presets and generic modifier foundations are implemented.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": []
+		},
+		{
+			"uuid": "574867bf-b29a-4236-9da4-c78ac351e663",
+			"title": "Customer utility AI",
+			"description": "Data-driven activity selection, needs, satisfaction, thirst, intoxication, visit pressure and repetition decay are implemented.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": []
+		},
+		{
+			"uuid": "b15fbde5-b6cf-4287-afae-08433847a065",
+			"title": "Darts activity",
+			"description": "Darts exists as an off-seat reserved tavern activity with utility scoring, diagnostics and return-to-seat behaviour.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": []
+		},
+		{
+			"uuid": "3f61ef77-759f-4cfc-ac51-86b5da0d50a5",
+			"title": "Table socialising and relaxing",
+			"description": "Customers can relax and socialise through the existing activity/decision framework.",
+			"category": "d112445c-3fd1-4c63-8754-b48ad52ce827",
+			"steps": []
+		},
+		{
+			"uuid": "90685ac1-eb3b-4b7e-ade7-ed8a4b8e7b77",
+			"title": "Inventory and item framework",
+			"description": "Item definitions, stacks, carriers, containers, slots and category restrictions are implemented.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": []
+		},
+		{
+			"uuid": "fb1a4536-55e2-400a-907a-eb210ca0a8dd",
+			"title": "Finite drink stations and stock storage",
+			"description": "Drink sources use finite stock and can be refilled from central storage.",
+			"category": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"steps": []
+		},
+		{
+			"uuid": "2b86544a-90f6-4484-8c9b-651f7ed0f37f",
+			"title": "Ordering and deliveries",
+			"description": "Order ledger and delivery processing foundations are implemented.",
+			"category": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"steps": []
+		},
+		{
+			"uuid": "c10a4281-f360-47a9-ac71-ffae0e9dce1b",
+			"title": "Global tavern task system",
+			"description": "Reusable prepare, serve, clean and refill task flow is implemented.",
+			"category": "8a325910-f48e-4fc9-b626-f8bac691f963",
+			"steps": []
+		},
+		{
+			"uuid": "dbafcfdf-d84e-4495-b821-44fb25723f22",
+			"title": "Bartender and Tavern Hand",
+			"description": "Initial autonomous staff roles are implemented and functioning.",
+			"category": "8a325910-f48e-4fc9-b626-f8bac691f963",
+			"steps": []
+		},
+		{
+			"uuid": "2fe1b214-f1a3-4ec5-bd27-3b71a0cf6745",
+			"title": "Alerts, notifications and speaker messages",
+			"description": "Toast, persistent alerts, escalation, resolution, speech bubbles and history foundations are implemented.",
+			"category": "2a4ca911-c5de-4b3d-861f-1d0b4d94ac3e",
+			"steps": []
+		},
+		{
+			"uuid": "e19ee150-cc59-408a-896f-3c38d6d5388b",
+			"title": "Interaction and action frameworks",
+			"description": "Reusable interaction menus, highlights, action execution and cancellation foundations are implemented.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": []
+		},
+		{
+			"uuid": "e673bba1-fd43-4aa7-afaa-2434c5d7edd1",
+			"title": "Diagnostics foundations",
+			"description": "Customer and staff diagnostic reporting/export foundations are implemented.",
+			"category": "133c35c5-a004-493d-9c94-e32808a3d56e",
+			"steps": []
+		}
+	],
+	"layout": {
+		"columns": [
+			[
+				"aaf26e8a-2a6c-422b-8ff6-066d21e7acf8",
+				"8553155c-0ae1-45e4-b896-289c75f076fb",
+				"50cbba3c-1373-49bc-a45c-90dda691741e"
+			],
+			[
+				"6a92f261-0318-446b-a3a6-cc11297846cb",
+				"591b6ff1-c644-4ab7-a844-97a4f1ad2daf",
+				"094d95d9-fcc5-4575-bc37-2773342671ca"
+			],
+			[
+				"ac395abc-21af-45b5-b2c3-73af84ed7a94",
+				"a1cde9f7-6c23-453c-a17e-82e5237db471",
+				"396cb925-1d7c-4eee-8610-d5898e5e54e8"
+			]
+		]
+	}
+}

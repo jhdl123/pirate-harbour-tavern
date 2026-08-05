@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ServingFormatDefinition" format=3 uid="uid://cq0cctvqhn3a7"]
+
+[ext_resource type="Script" uid="uid://bcxw6lhuadhkr" path="res://systems/beverage/serving_format_definition.gd" id="1_6aiux"]
+
+[resource]
+script = ExtResource("1_6aiux")
+format_id = &"table_cask"
+historical_name = "Table Cask"
+simplified_explanation = "shared small keg"
+required_container_id = &"table_cask"
+measures_per_serving = 48
+portion_count = 8
+is_shared = true
+minimum_group_size = 2
+maximum_group_size = 8
+allows_standing_area = true
+creates_group_anchor = true
+service_time_modifier = 1.48
+price_modifier = 4.3
+valid_drink_tags = Array[StringName]([&"rum", &"spirit", &"ale", &"beer"])

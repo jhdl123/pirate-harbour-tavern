@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="StorageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/storage_profile_definition.gd" id="1_umir6"]
+
+[resource]
+script = ExtResource("1_umir6")
+profile_id = &"ordinary_bottled"
+display_name = "Ordinary Bottled Alcohol"
+content_tags = Array[StringName]([&"wine"])
+container_categories = Array[int]([2, 1])
+behind_bar_compatible = true
+locked_storage_compatible = true
+spoilage_modifier = 0.9
+theft_value = 25
+bulk_space_requirement = 0.5
+shelf_space_requirement = 1.0

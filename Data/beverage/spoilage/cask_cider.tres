@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SpoilageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/spoilage_profile_definition.gd" id="1_sopug"]
+
+[resource]
+script = ExtResource("1_sopug")
+profile_id = &"cask_cider"
+display_name = "Cask Cider"
+description = "Placeholder balance values, not historical measurements."
+expiry_minutes = 3600
+grace_minutes = 240
+spoiled_below_freshness = 0.1

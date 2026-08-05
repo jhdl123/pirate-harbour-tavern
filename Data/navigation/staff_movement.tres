@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ActorMovementProfile" format=3]
+[gd_resource type="Resource" script_class="ActorMovementProfile" format=3 uid="uid://bubt2l0er1xb5"]
 
 [ext_resource type="Script" uid="uid://bxq5gwg7ibi31" path="res://systems/navigation/actor_movement_profile.gd" id="1_movement"]
 

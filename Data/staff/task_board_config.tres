@@ -1,13 +1,16 @@
-[gd_resource type="Resource" script_class="TavernTaskBoardConfig" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="TavernTaskBoardConfig" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://systems/staff/tasks/tavern_task_board_config.gd" id="1_boardcfg"]
 [ext_resource type="Resource" path="res://Data/staff/tasks/serve_drink.tres" id="2_serve"]
 [ext_resource type="Resource" path="res://Data/staff/tasks/clean_seat.tres" id="3_clean"]
 [ext_resource type="Resource" path="res://Data/staff/task_viability_config.tres" id="4_viability"]
+[ext_resource type="Resource" path="res://Data/staff/tasks/prepare_drink.tres" id="5_prepare"]
+[ext_resource type="Resource" path="res://Data/staff/tasks/refill_station.tres" id="6_refill"]
+[ext_resource type="Resource" path="res://Data/staff/tasks/deliver_group_keg.tres" id="7_keg"]
 
 [resource]
 script = ExtResource("1_boardcfg")
-task_definitions = Array[Resource]([ExtResource("2_serve"), ExtResource("3_clean")])
+task_definitions = Array[Resource]([ExtResource("2_serve"), ExtResource("3_clean"), ExtResource("5_prepare"), ExtResource("6_refill"), ExtResource("7_keg")])
 sweep_interval_seconds = 0.5
 cancel_tasks_with_missing_targets = true
 maximum_retained_finished_tasks = 400

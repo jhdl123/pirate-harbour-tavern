@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ContainerDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/container_definition.gd" id="1_djk7v"]
+
+[resource]
+script = ExtResource("1_djk7v")
+container_id = &"table_cask"
+historical_name = "Table Cask"
+simplified_explanation = "shared small keg"
+description = "Capacity is a configurable game value, historically inspired rather than an exact period measure."
+category = 5
+maximum_capacity = 48
+customer_serving = true

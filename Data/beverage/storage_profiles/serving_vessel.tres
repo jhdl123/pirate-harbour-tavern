@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="StorageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/storage_profile_definition.gd" id="1_8ltot"]
+
+[resource]
+script = ExtResource("1_8ltot")
+profile_id = &"serving_vessel"
+display_name = "Serving Vessel"
+content_tags = Array[StringName]([&"serving_vessel"])
+cellar_compatible = false
+behind_bar_compatible = true
+dry_storage_compatible = true
+theft_value = 5
+bulk_space_requirement = 0.1
+shelf_space_requirement = 0.3

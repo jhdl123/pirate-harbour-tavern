@@ -1,24 +1,34 @@
 [gd_resource type="Resource" script_class="DrinkDefinition" format=3 uid="uid://daaltvd55kxky"]
 
-[ext_resource type="Texture2D" uid="uid://cp6r43esf7s1e" path="res://assets/art/items/drinks/16x16_grog.png" id="1_ax3qy"]
-[ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="1_iprwb"]
-[ext_resource type="Texture2D" uid="uid://cct8e1k0ufipy" path="res://assets/art/items/drinks/16x16_grog_empty.png" id="2_mphei"]
-[ext_resource type="Texture2D" uid="uid://6ad81w61hhgn" path="res://assets/art/items/drinks/16x16_grog_broken.png" id="3_grogb"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_grog.png" id="1_ax3qy"]
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_iprwb"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_grog_empty.png" id="2_mphei"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_grog_broken.png" id="3_grogb"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/poured_drink.tres" id="5_f5swd"]
 
 [resource]
 script = ExtResource("1_iprwb")
-item_id = &"grog"
-display_name = "Grog"
-description = "A basic mug of tavern grog."
-tags = Array[StringName]([&"prepared_drink", &"service_item"])
-inventory_icon = ExtResource("1_ax3qy")
-world_texture = ExtResource("1_ax3qy")
-carried_texture = ExtResource("1_ax3qy")
-maximum_stack_size = 1
-preferred_destination = 1
-base_sell_price = 5
+drink_category = &"kill_devil"
+historical_availability = 0
+general_popularity = 0.8
+rarity = 0
+quality_tier = 0
 alcohol_strength = 1.3
+content_id = &"kill_devil"
+serving_format_ids = Array[StringName]([&"mug", &"tankard"])
+required_station_capabilities = Array[StringName]([&"draw_from_cask"])
+can_spoil_after_serving = true
+spoilage_profile = ExtResource("5_f5swd")
 order_icon_texture = ExtResource("1_ax3qy")
 empty_container_texture = ExtResource("2_mphei")
 broken_container_texture = ExtResource("3_grogb")
+item_id = &"grog"
+display_name = "Grog"
+description = "A basic mug of tavern grog."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"rum", &"weak_alcohol", &"cheap", &"sailor_favourite", &"pirate_favourite"])
+inventory_icon = ExtResource("1_ax3qy")
+world_texture = ExtResource("1_ax3qy")
+carried_texture = ExtResource("1_ax3qy")
+preferred_destination = 1
+base_sell_price = 5
 metadata/_custom_type_script = "uid://bmwkoswb21je6"

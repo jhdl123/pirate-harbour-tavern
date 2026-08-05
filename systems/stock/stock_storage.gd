@@ -4,7 +4,27 @@ extends StaticBody2D
 signal contents_changed
 
 @export var slot_count: int = 12
+
+## Upper bound on items per slot.
+##
+## The real limit is always the smaller of this and the item's own
+## maximum_stack_size, so raising it never lets a barrel stack.
+@export_range(1, 9999, 1)
+var slot_capacity: int = 99
 @export var storage_menu_scene: PackedScene
+
+## Item tags this storage will hold.
+##
+## Was hardcoded to drink_stock, which meant delivered ingredients had nowhere
+## to go - sugar and nutmeg were silently refused. Exported so a new class of
+## goods (food, tools, trade goods) is a tag on a resource rather than an edit
+## here.
+@export var accepted_tags: Array[StringName] = [
+	&"drink_stock",
+	&"ingredient",
+	&"serving_vessel",
+]
+
 @onready var interactable: Interactable = $InteractionArea
 
 var inventory: ItemContainer
@@ -12,15 +32,19 @@ var inventory: ItemContainer
 func _ready() -> void:
 	add_to_group(&"stock_storage")
 	var rules := ItemSlotRules.new()
-	rules.capacity = 1
-	rules.accepted_tags = [&"drink_stock"]
+	# Effective capacity is min(this, item.maximum_stack_size), so a generous
+	# slot lets each item decide its own stacking. A barrel still holds one.
+	rules.capacity = slot_capacity
+	rules.accepted_tags = accepted_tags.duplicate()
 	rules.allow_insert = true
 	rules.allow_remove = true
 	rules.allow_merge = true
 	rules.allow_swap = true
 	rules.allow_partial = true
 	inventory = ItemContainer.new(&"main_stock_storage", slot_count, rules)
-	inventory.container_tags = [&"storage", &"drink_stock"]
+	var container_tags: Array[StringName] = [&"storage"]
+	container_tags.append_array(accepted_tags)
+	inventory.container_tags = container_tags
 	inventory.contents_changed.connect(_on_contents_changed)
 
 func get_interaction_display_name() -> String:
@@ -54,6 +78,14 @@ func add_item(definition: ItemDefinition, quantity: int = 1) -> int:
 			break
 		moved += result.amount_moved
 	return moved
+
+
+func count_item(item_id: StringName) -> int:
+	var total := 0
+	for slot in inventory.get_slots():
+		if slot != null and not slot.is_empty() and slot.get_item_id() == item_id:
+			total += slot.get_quantity()
+	return total
 
 func take_one(item_id: StringName, carrier: ItemCarrier) -> ItemTransferResult:
 	if carrier == null:

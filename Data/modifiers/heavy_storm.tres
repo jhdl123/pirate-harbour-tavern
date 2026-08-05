@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="ModifierPreset" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://systems/modifiers/modifier_preset.gd" id="1_preset"]
+
+[resource]
+script = ExtResource("1_preset")
+preset_id = &"heavy_storm"
+display_name = "Heavy Storm"
+announcement = "Heavy rain is keeping travellers away."
+duration_minutes = 180
+stacking = 1
+maximum_stacks = 1
+entries = [{
+"label": "Weather: heavy storm",
+"operation": "MULTIPLY",
+"target": "customer_arrival_rate",
+"value": 0.65
+}, {
+"label": "Weather: heavy storm",
+"operation": "MULTIPLY",
+"target": "customer_stay_duration",
+"value": 1.4
+}, {
+"label": "Weather: heavy storm",
+"operation": "MULTIPLY",
+"target": "delivery_speed",
+"value": 0.6
+}]

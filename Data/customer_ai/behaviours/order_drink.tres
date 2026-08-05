@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="OrderDrinkBehaviour" format=3 uid="uid://ca87nf2h37p0c"]
+[gd_resource type="Resource" script_class="OrderDrinkBehaviour" format=3]
 
-[ext_resource type="Script" uid="uid://bafdaj1pb583u" path="res://systems/customer_ai/activities/behaviours/order_drink_behaviour.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/customer_ai/activities/behaviours/order_drink_behaviour.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")

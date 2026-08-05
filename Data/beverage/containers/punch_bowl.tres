@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ContainerDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/container_definition.gd" id="1_sv4ue"]
+
+[resource]
+script = ExtResource("1_sv4ue")
+container_id = &"punch_bowl"
+historical_name = "Punch Bowl"
+simplified_explanation = "shared bowl"
+description = "Capacity is a configurable game value, historically inspired rather than an exact period measure."
+category = 4
+maximum_capacity = 36
+customer_serving = true

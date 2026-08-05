@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_wskoo"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_drink_fast.tres" id="2_xr3s0"]
+
+[resource]
+script = ExtResource("1_wskoo")
+drink_category = &"prepared_bumbo"
+general_popularity = 0.8
+alcohol_strength = 1.6
+drink_duration_minutes = 9
+content_id = &"prepared_bumbo"
+serving_format_ids = Array[StringName]([&"cup", &"mug"])
+service_method = 2
+recipe_id = &"bumbo_recipe"
+can_spoil_after_serving = true
+spoilage_profile = ExtResource("2_xr3s0")
+item_id = &"bumbo"
+display_name = "Bumbo"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"mixed_drink", &"rum", &"pirate_favourite", &"sailor_favourite"])
+preferred_destination = 1
+base_sell_price = 12

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ServingFormatDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/serving_format_definition.gd" id="1_4nja3"]
+
+[resource]
+script = ExtResource("1_4nja3")
+format_id = &"firkin_serving"
+historical_name = "Firkin"
+simplified_explanation = "small cask"
+required_container_id = &"firkin"
+measures_per_serving = 72
+portion_count = 12
+is_shared = true
+minimum_group_size = 6
+maximum_group_size = 12
+allows_standing_area = true
+creates_group_anchor = true
+service_time_modifier = 1.72
+price_modifier = 0.75
+valid_drink_tags = Array[StringName]([&"ale", &"beer", &"rum"])

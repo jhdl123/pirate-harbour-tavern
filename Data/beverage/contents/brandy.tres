@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_j6lou"]
+
+[resource]
+script = ExtResource("1_j6lou")
+content_id = &"brandy"
+display_name = "French Brandy"
+tags = Array[StringName]([&"liquid", &"spirit", &"strong_alcohol", &"premium", &"imported", &"luxury"])
+base_value_per_measure = 10

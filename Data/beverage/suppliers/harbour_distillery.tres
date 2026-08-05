@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="SupplierDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/orders/order_catalogue_entry.gd" id="1_0xmpp"]
+[ext_resource type="Script" path="res://systems/orders/supplier_definition.gd" id="2_mhho6"]
+
+[sub_resource type="Resource" id="Resource_md8gn"]
+script = ExtResource("1_0xmpp")
+shape = 1
+container_id = &"barrel"
+content_id = &"kill_devil"
+unit_price_override = 220
+maximum_order_quantity = 10
+rarity = 0
+delivery_minutes = 120
+destination_storage_tags = Array[StringName]([&"cellar_storage"])
+
+[sub_resource type="Resource" id="Resource_hgo7i"]
+script = ExtResource("1_0xmpp")
+shape = 1
+container_id = &"hogshead"
+content_id = &"kill_devil"
+unit_price_override = 300
+maximum_order_quantity = 6
+rarity = 0
+delivery_minutes = 180
+destination_storage_tags = Array[StringName]([&"cellar_storage"])
+
+[sub_resource type="Resource" id="Resource_2cmtm"]
+script = ExtResource("1_0xmpp")
+shape = 1
+container_id = &"puncheon"
+content_id = &"kill_devil"
+unit_price_override = 400
+maximum_order_quantity = 4
+delivery_minutes = 240
+destination_storage_tags = Array[StringName]([&"cellar_storage"])
+
+[sub_resource type="Resource" id="Resource_74tkn"]
+script = ExtResource("1_0xmpp")
+shape = 1
+container_id = &"firkin"
+content_id = &"kill_devil"
+unit_price_override = 70
+maximum_order_quantity = 12
+rarity = 0
+delivery_minutes = 90
+destination_storage_tags = Array[StringName]([&"cellar_storage"])
+
+[resource]
+script = ExtResource("2_mhho6")
+supplier_id = &"harbour_distillery"
+display_name = "Harbour Distillery"
+entries = Array[ExtResource("1_0xmpp")]([SubResource("Resource_md8gn"), SubResource("Resource_hgo7i"), SubResource("Resource_2cmtm"), SubResource("Resource_74tkn")])

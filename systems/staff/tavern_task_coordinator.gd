@@ -105,16 +105,13 @@ func _on_board_task_finished(
 			# after every cleaning task however it ended.
 			_create_clean_task(task.get_target() as Chair)
 
-		TavernTaskTypes.SERVE_DRINK:
-			# A customer who orders again re-announces itself through
-			# service_state_changed, so nothing is needed here yet. Left as an
-			# explicit branch so the next task type added has somewhere obvious
-			# to go.
-			pass
+		TavernTaskTypes.SERVE_DRINK, TavernTaskTypes.PREPARE_DRINK, TavernTaskTypes.REFILL_STATION:
+			call_deferred(&"_refresh_bartender_tasks")
 
 
 func _initial_scan() -> void:
 	_connect_chairs()
+	_refresh_bartender_tasks()
 
 	if game_manager == null:
 		push_warning(
@@ -144,6 +141,7 @@ func _process(
 	_urgency_elapsed = 0.0
 
 	_refresh_serve_urgency()
+	_refresh_bartender_tasks()
 
 
 # -----------------------------------------------------------------------------
@@ -164,6 +162,16 @@ func _register_validators() -> void:
 	TaskBoard.register_validator(
 		TavernTaskTypes.CLEAN_SEAT,
 		_is_clean_task_still_needed
+	)
+
+	TaskBoard.register_validator(
+		TavernTaskTypes.PREPARE_DRINK,
+		_is_prepare_task_still_needed
+	)
+
+	TaskBoard.register_validator(
+		TavernTaskTypes.REFILL_STATION,
+		_is_refill_task_still_needed
 	)
 
 
@@ -513,3 +521,124 @@ func rescan() -> int:
 			_on_customer_service_state_changed(customer)
 
 	return TaskBoard.get_open_task_count() - created_before
+
+# -----------------------------------------------------------------------------
+# Bartender production
+# -----------------------------------------------------------------------------
+
+func _refresh_bartender_tasks() -> void:
+	_create_prepare_tasks()
+	_create_refill_tasks()
+
+func _create_prepare_tasks() -> void:
+	var demand: Dictionary = {}
+	for serve_task: TavernTask in TaskBoard.get_open_tasks_of_type(TavernTaskTypes.SERVE_DRINK):
+		if serve_task.required_definition == null:
+			continue
+		var item_id := serve_task.required_definition.item_id
+		demand[item_id] = int(demand.get(item_id, 0)) + 1
+
+	for counter_node: Node in get_tree().get_nodes_in_group(&"bar_counters"):
+		var counter := counter_node as BarCounter
+		if counter == null:
+			continue
+		for item_id in demand.keys():
+			if _count_prepared_on_bars(item_id) >= int(demand[item_id]):
+				continue
+			if not _counter_has_empty_slot(counter):
+				continue
+			var station := _find_station_for_drink(item_id)
+			if station == null or station.served_drink == null:
+				continue
+			var key := "prepare_drink:%s:%d" % [String(item_id), counter.get_instance_id()]
+			TaskBoard.create_task(TavernTaskTypes.PREPARE_DRINK, key, {
+				"source": station,
+				"target": counter,
+				"required_item": station.served_drink,
+				"required_quantity": 1,
+				"urgency": _highest_serve_urgency(item_id),
+				"metadata": {"drink": String(item_id), "counter": String(counter.name)},
+			})
+
+func _create_refill_tasks() -> void:
+	var storage := _find_stock_storage()
+	if storage == null:
+		return
+	for node: Node in get_tree().get_nodes_in_group(&"drink_stations"):
+		var station := node as DrinksStation
+		if station == null or station.refill_item == null:
+			continue
+		if station.current_servings > station.low_stock_threshold:
+			continue
+		var key := TavernTaskService.build_node_key(TavernTaskTypes.REFILL_STATION, station)
+		var urgency := 1.0 if station.current_servings <= 0 else 0.55
+		TaskBoard.create_task(TavernTaskTypes.REFILL_STATION, key, {
+			"source": storage,
+			"target": station,
+			"required_item": station.refill_item,
+			"required_quantity": 1,
+			"urgency": urgency,
+			"metadata": {"station": String(station.name), "stock_item": String(station.refill_item.item_id)},
+		})
+
+func _is_prepare_task_still_needed(task: TavernTask) -> bool:
+	var counter := task.get_target() as BarCounter
+	var station := task.get_source() as DrinksStation
+	if counter == null or station == null or task.required_definition == null:
+		return false
+	if not _counter_has_empty_slot(counter):
+		return false
+	return _count_open_serve_demand(task.required_definition.item_id) > _count_prepared_on_bars(task.required_definition.item_id)
+
+func _is_refill_task_still_needed(task: TavernTask) -> bool:
+	var station := task.get_target() as DrinksStation
+	return station != null and station.current_servings < station.stock_reset_threshold
+
+func _count_open_serve_demand(item_id: StringName) -> int:
+	var total := 0
+	for task: TavernTask in TaskBoard.get_open_tasks_of_type(TavernTaskTypes.SERVE_DRINK):
+		if task.required_definition != null and task.required_definition.item_id == item_id:
+			total += 1
+	return total
+
+func _count_prepared_on_bars(item_id: StringName) -> int:
+	var total := 0
+	for node: Node in get_tree().get_nodes_in_group(&"bar_counters"):
+		if not node.has_method(&"get_service_container"):
+			continue
+		var container := node.call(&"get_service_container") as ItemContainer
+		if container == null:
+			continue
+		for slot in container.get_slots():
+			if slot != null and not slot.is_empty() and slot.get_item_id() == item_id:
+				total += slot.get_quantity()
+	return total
+
+func _counter_has_empty_slot(counter: BarCounter) -> bool:
+	if counter == null or counter.get_service_container() == null:
+		return false
+	for slot in counter.get_service_container().get_slots():
+		if slot != null and slot.is_empty():
+			return true
+	return false
+
+func _find_station_for_drink(item_id: StringName) -> DrinksStation:
+	for node: Node in get_tree().get_nodes_in_group(&"drink_stations"):
+		var station := node as DrinksStation
+		if station != null and station.served_drink != null and station.served_drink.item_id == item_id:
+			return station
+	return null
+
+func _find_stock_storage() -> StockStorage:
+	for node: Node in get_tree().get_nodes_in_group(&"stock_storage"):
+		var storage := node as StockStorage
+		if storage != null:
+			return storage
+	return null
+
+func _highest_serve_urgency(item_id: StringName) -> float:
+	var result := 0.0
+	for task: TavernTask in TaskBoard.get_open_tasks_of_type(TavernTaskTypes.SERVE_DRINK):
+		if task.required_definition != null and task.required_definition.item_id == item_id:
+			result = maxf(result, task.urgency)
+	return result

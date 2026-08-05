@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ContainerDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/container_definition.gd" id="1_n5mmp"]
+
+[resource]
+script = ExtResource("1_n5mmp")
+container_id = &"tankard"
+historical_name = "Tankard"
+simplified_explanation = "large mug"
+description = "Capacity is a configurable game value, historically inspired rather than an exact period measure."
+category = 6
+maximum_capacity = 6
+customer_serving = true
+storage_space_usage = 0.05

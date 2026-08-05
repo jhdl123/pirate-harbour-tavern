@@ -75,6 +75,9 @@ const ISSUE_DUPLICATE_SERVICE: StringName = &"attempted_duplicate_service"
 const ISSUE_DUPLICATE_CLEANING: StringName = &"attempted_duplicate_cleaning"
 const ISSUE_STUCK_RECOVERY: StringName = &"staff_stuck_recovery"
 
+## A worker tried to take or finish work outside its role.
+const ISSUE_CAPABILITY_VIOLATION: StringName = &"capability_violation"
+
 
 @export var config: TavernTaskBoardConfig = null
 
@@ -104,6 +107,7 @@ var _rejection_index: Dictionary = {}
 
 var _decisions_dropped: int = 0
 var _non_viable_rejections: int = 0
+var _capability_violations: int = 0
 
 ## resolution reason -> count, for the report's cancellation breakdown.
 var _cancellation_reason_counts: Dictionary = {}
@@ -908,6 +912,25 @@ func claim(
 	if task == null or worker == null:
 		return false
 
+	# The single chokepoint for acquiring work, and therefore the right place
+	# to enforce role boundaries.
+	#
+	# select_best_task() already filters by capability, but it is not the only
+	# route to a claim: carried-item reassignment, recovery and developer tools
+	# all reach this method directly. Checking only in the selector is what let
+	# a bartender pick up serve_drink tasks through the reassignment path in
+	# the long autonomous test. Enforcing here closes every route at once,
+	# including any added later.
+	if not _worker_may_perform(worker, task):
+		report_capability_violation(
+			worker,
+			worker_id,
+			task,
+			&"claim"
+		)
+
+		return false
+
 	if not task.is_claimable():
 		return false
 
@@ -1533,6 +1556,100 @@ func get_decisions() -> Array[Dictionary]:
 
 
 # -----------------------------------------------------------------------------
+# Role boundaries
+# -----------------------------------------------------------------------------
+
+## True when [param worker] holds every capability [param task] requires.
+##
+## Deliberately fails closed: a worker that cannot report its capabilities is
+## refused rather than trusted, because the alternative is a silent role
+## bypass that only shows up in a report days later.
+func _worker_may_perform(
+	worker: Node,
+	task: TavernTask
+) -> bool:
+	if task == null or task.definition == null:
+		return false
+
+	if task.definition.required_capabilities.is_empty():
+		return true
+
+	if worker == null or not worker.has_method(&"get_staff_capabilities"):
+		return false
+
+	var capabilities: Array[StringName] = worker.call(
+		&"get_staff_capabilities"
+	)
+
+	return StaffCapabilities.satisfies(
+		capabilities,
+		task.definition.required_capabilities
+	)
+
+
+## Records an attempt to take or finish work outside a worker's role.
+##
+## Debug-only in the sense that it never changes behaviour - the claim is
+## already refused by the time this runs - but always recorded, because a
+## violation that stops happening silently is indistinguishable from one that
+## was never fixed.
+func report_capability_violation(
+	worker: Node,
+	worker_id: StringName,
+	task: TavernTask,
+	route: StringName
+) -> void:
+	var capabilities: Array = []
+	var archetype: String = ""
+	var carried: String = ""
+
+	if worker != null:
+		if worker.has_method(&"get_staff_capabilities"):
+			for capability: StringName in worker.call(
+				&"get_staff_capabilities"
+			):
+				capabilities.append(String(capability))
+
+		if worker.has_method(&"get_archetype_id"):
+			archetype = String(worker.call(&"get_archetype_id"))
+
+		carried = String(_get_carried_id(worker))
+
+	var required: Array = []
+
+	if task != null and task.definition != null:
+		for capability: StringName in task.definition.required_capabilities:
+			required.append(String(capability))
+
+	_capability_violations += 1
+
+	report_issue(
+		ISSUE_CAPABILITY_VIOLATION,
+		"%s (%s) was refused %s '%s' via %s." % [
+			String(worker_id),
+			archetype,
+			("task" if task == null else String(task.task_type)),
+			("" if task == null else String(task.task_id)),
+			String(route),
+		],
+		{
+			"worker_id": String(worker_id),
+			"worker_archetype": archetype,
+			"worker_capabilities": capabilities,
+			"task_id": ("" if task == null else String(task.task_id)),
+			"task_type": ("" if task == null else String(task.task_type)),
+			"required_capabilities": required,
+			"carried_item": carried,
+			"assignment_route": String(route),
+		}
+	)
+
+
+func get_capability_violation_count() -> int:
+	return _capability_violations
+
+
+# -----------------------------------------------------------------------------
 # Issues
 # -----------------------------------------------------------------------------
 
@@ -1595,6 +1712,7 @@ func get_summary() -> Dictionary:
 		"decisions_recorded": _decisions.size(),
 		"decisions_dropped": _decisions_dropped,
 		"non_viable_rejections": _non_viable_rejections,
+		"capability_violations": _capability_violations,
 		"finished_tasks_dropped": _finished_tasks_dropped,
 	}
 
@@ -1843,6 +1961,7 @@ func reset() -> void:
 
 	_decisions_dropped = 0
 	_non_viable_rejections = 0
+	_capability_violations = 0
 	_issues_dropped = 0
 	_finished_tasks_dropped = 0
 	_total_created = 0

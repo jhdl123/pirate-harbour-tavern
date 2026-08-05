@@ -12,6 +12,7 @@ script = ExtResource("1_fhm20")
 display_name = "Sailor"
 customer_texture = ExtResource("3_cr3d8")
 spawn_weight = 8.0
+patience_duration_minutes = 25
 available_drinks = Array[ExtResource("1_2gva5")]([ExtResource("2_j2whw"), ExtResource("3_i7hx0")])
 preferred_drink = ExtResource("2_j2whw")
 personality = ExtResource("4_personality")

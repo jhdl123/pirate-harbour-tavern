@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_eykov"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_drink_fast.tres" id="2_w78al"]
+
+[resource]
+script = ExtResource("1_eykov")
+content_id = &"brewed_coffee"
+display_name = "Coffee"
+tags = Array[StringName]([&"liquid", &"hot_drink", &"non_alcoholic", &"imported"])
+base_value_per_measure = 5
+can_spoil = true
+spoilage_profile = ExtResource("2_w78al")

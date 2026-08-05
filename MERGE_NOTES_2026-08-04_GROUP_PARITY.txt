@@ -1,0 +1,11 @@
+MERGE BASIS
+- Base: pirateharbourtavern_2026-08-04_17-17-24.zip (user's latest project/layout)
+- Integrated: pirate-harbour-tavern_group_parity.zip (Claude group parity update)
+
+MERGE METHOD
+- Preserved the user's main.tscn layout, tile collisions, furniture positions, art references, and scene edits.
+- Added only Claude's required GroupKegStockService resources/node wiring to main.tscn.
+- Applied Claude's new and changed group, staff, diagnostics, stock dev, data, and test files.
+
+IMPORTANT
+- Test in Godot before deleting your original archives.

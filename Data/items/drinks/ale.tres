@@ -1,24 +1,33 @@
 [gd_resource type="Resource" script_class="DrinkDefinition" format=3 uid="uid://ptruohkabman"]
 
-[ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="1_i7n1g"]
-[ext_resource type="Texture2D" uid="uid://boqe0wg4y4kwx" path="res://assets/art/items/drinks/16x16_ale_broken.png" id="1_vfukt"]
-[ext_resource type="Texture2D" uid="uid://dcdjnr6xoseiq" path="res://assets/art/items/drinks/16x16_ale.png" id="2_kiewq"]
-[ext_resource type="Texture2D" uid="uid://bhd5tthhkfc5x" path="res://assets/art/items/drinks/16x16_ale_empty.png" id="3_85aeh"]
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_i7n1g"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_ale_broken.png" id="1_vfukt"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_ale.png" id="2_kiewq"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_ale_empty.png" id="3_85aeh"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/poured_drink.tres" id="5_kiewq"]
 
 [resource]
 script = ExtResource("1_i7n1g")
-item_id = &"ale"
-display_name = "Ale"
-description = "A mug of tavern ale."
-tags = Array[StringName]([&"prepared_drink", &"service_item"])
-inventory_icon = ExtResource("2_kiewq")
-world_texture = ExtResource("2_kiewq")
-carried_texture = ExtResource("2_kiewq")
-maximum_stack_size = 1
-preferred_destination = 1
-base_sell_price = 7
+drink_category = &"ale"
+historical_availability = 0
+general_popularity = 0.85
+rarity = 0
 alcohol_strength = 0.8
+content_id = &"ale"
+serving_format_ids = Array[StringName]([&"mug", &"tankard", &"pitcher", &"table_cask", &"firkin_serving", &"kilderkin_serving"])
+required_station_capabilities = Array[StringName]([&"draw_from_cask"])
+can_spoil_after_serving = true
+spoilage_profile = ExtResource("5_kiewq")
 order_icon_texture = ExtResource("2_kiewq")
 empty_container_texture = ExtResource("3_85aeh")
 broken_container_texture = ExtResource("1_vfukt")
+item_id = &"ale"
+display_name = "Ale"
+description = "A mug of tavern ale."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"ale", &"beer", &"weak_alcohol", &"cheap", &"sailor_favourite", &"pirate_favourite"])
+inventory_icon = ExtResource("2_kiewq")
+world_texture = ExtResource("2_kiewq")
+carried_texture = ExtResource("2_kiewq")
+preferred_destination = 1
+base_sell_price = 7
 metadata/_custom_type_script = "uid://bmwkoswb21je6"

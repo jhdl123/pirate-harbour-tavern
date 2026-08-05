@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://wfl8kjme2q47"]
 
 [ext_resource type="Script" uid="uid://wc66lhuvxmlp" path="res://scripts/Interactables/table.gd" id="1_1xtif"]
-[ext_resource type="Texture2D" uid="uid://dj1nka5mdap4e" path="res://assets/art/furniture/64x64_table.png" id="1_gwdqj"]
+[ext_resource type="Texture2D" uid="uid://dsca4kyygjvah" path="res://assets/art/furniture/64x64_square_table_04.png" id="2_h0p5r"]
 [ext_resource type="PackedScene" uid="uid://3lf7nuao3mnl" path="res://scenes/furniture/chair.tscn" id="3_hnlri"]
 [ext_resource type="Texture2D" uid="uid://bjf7hyxfoxdvy" path="res://assets/art/furniture/40x40_chair_back.png" id="4_h0p5r"]
 [ext_resource type="Texture2D" uid="uid://13k06q025yll" path="res://assets/art/furniture/40x40_chair_front.png" id="5_8t28f"]
@@ -13,7 +13,7 @@ size = Vector2(67, 47)
 script = ExtResource("1_1xtif")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=35773453]
-texture = ExtResource("1_gwdqj")
+texture = ExtResource("2_h0p5r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1213118664]
 position = Vector2(-0.5, -7.5)

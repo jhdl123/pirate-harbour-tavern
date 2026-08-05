@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ReturnToSeatBehaviour" format=3 uid="uid://bcuam0ojlcqdh"]
+[gd_resource type="Resource" script_class="ReturnToSeatBehaviour" format=3]
 
-[ext_resource type="Script" uid="uid://btolowp4sjocy" path="res://systems/customer_ai/activities/behaviours/return_to_seat_behaviour.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/customer_ai/activities/behaviours/return_to_seat_behaviour.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")

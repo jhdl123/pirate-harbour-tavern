@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_af4bt"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_drink_fast.tres" id="2_skqew"]
+
+[resource]
+script = ExtResource("1_af4bt")
+content_id = &"drinking_chocolate"
+display_name = "Drinking Chocolate"
+tags = Array[StringName]([&"liquid", &"hot_drink", &"non_alcoholic", &"luxury", &"imported"])
+base_value_per_measure = 9
+can_spoil = true
+spoilage_profile = ExtResource("2_skqew")

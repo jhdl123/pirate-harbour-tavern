@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="DrinkRecipeDefinition" format=3 uid="uid://c618bxcqrb50v"]
+
+[ext_resource type="Script" uid="uid://df8vxk67ofe32" path="res://systems/beverage/recipe_ingredient.gd" id="1_uobyd"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_drink_fast.tres" id="2_h74lt"]
+[ext_resource type="Script" uid="uid://chkxoebsf80sy" path="res://systems/beverage/drink_recipe_definition.gd" id="3_3f4vu"]
+
+[sub_resource type="Resource" id="Resource_an0k1"]
+script = ExtResource("1_uobyd")
+source_kind = 1
+content_id = &"kill_devil"
+quantity = 2
+required_access_capability = &"draw_from_cask"
+
+[sub_resource type="Resource" id="Resource_4ll5b"]
+script = ExtResource("1_uobyd")
+source_kind = 1
+content_id = &"water"
+quantity = 2
+required_access_capability = &"access_water"
+
+[sub_resource type="Resource" id="Resource_kmvda"]
+script = ExtResource("1_uobyd")
+item_id = &"sugar_loaf"
+required_access_capability = &"access_dry_ingredients"
+
+[sub_resource type="Resource" id="Resource_bcnrm"]
+script = ExtResource("1_uobyd")
+item_id = &"nutmeg"
+required_access_capability = &"access_dry_ingredients"
+
+[resource]
+script = ExtResource("3_3f4vu")
+recipe_id = &"bumbo_recipe"
+display_name = "Bumbo"
+ingredients = Array[ExtResource("1_uobyd")]([SubResource("Resource_an0k1"), SubResource("Resource_4ll5b"), SubResource("Resource_kmvda"), SubResource("Resource_bcnrm")])
+output_drink_id = &"bumbo"
+output_content_id = &"prepared_bumbo"
+output_serving_format_id = &"mug"
+output_measures = 4
+required_station_capabilities = Array[StringName]([&"mix_single"])
+required_vessel_container_id = &"mug"
+result_spoilage_profile = ExtResource("2_h74lt")

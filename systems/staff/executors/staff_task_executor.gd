@@ -48,8 +48,14 @@ enum ActionResult {
 const EXECUTOR_SCRIPTS: Dictionary = {
 	TavernTaskTypes.SERVE_DRINK:
 		"res://systems/staff/executors/serve_drink_executor.gd",
+	TavernTaskTypes.DELIVER_GROUP_KEG:
+		"res://systems/staff/executors/deliver_group_keg_executor.gd",
 	TavernTaskTypes.CLEAN_SEAT:
 		"res://systems/staff/executors/clean_seat_executor.gd",
+	TavernTaskTypes.PREPARE_DRINK:
+		"res://systems/staff/executors/prepare_drink_executor.gd",
+	TavernTaskTypes.REFILL_STATION:
+		"res://systems/staff/executors/refill_station_executor.gd",
 }
 
 

@@ -33,7 +33,7 @@ extends StaticBody2D
 @export_category("Service Slots")
 
 @export_range(1, 10, 1)
-var service_slot_count: int = 3
+var service_slot_count: int = 4
 
 
 @export_category("Interaction")
@@ -54,6 +54,9 @@ var slot_interaction_distance: float = 48.0
 
 
 @onready var service_slots_node: Node2D = $ServiceSlots
+
+## Slots already warned about, so one missing marker does not warn every frame.
+var _warned_missing_access_points: Dictionary = {}
 @onready var interactable: Interactable = $InteractionArea
 
 
@@ -134,6 +137,93 @@ func get_service_slot(slot_index: int) -> ItemSlot:
 		return null
 
 	return service_container.get_slot(slot_index)
+
+
+## Which side of the counter a worker approaches a slot from.
+##
+## A bar has two faces. Staff work behind it and customers stand in front of
+## it, and a bartender that walks round to the customer side to put a drink
+## down looks wrong even though the item ends up in the right place - which is
+## exactly what the long autonomous test showed.
+##
+## The logical slot is unchanged: one [ItemSlot], one item stack, one
+## reservation. Only the point a worker walks to differs.
+enum SlotAccess {
+	## Behind the counter. Preparation and deposit work.
+	DEPOSIT,
+
+	## In front of the counter. Collection and customer service.
+	COLLECT,
+}
+
+## Child node names looked up under each slot marker.
+const DEPOSIT_POINT_NAME: StringName = &"DepositPoint"
+const COLLECTION_POINT_NAME: StringName = &"CollectionPoint"
+
+
+## Where a worker should stand to reach [param slot_index] for [param access].
+##
+## Scene-driven: the points are Marker2D children of the slot marker, so a
+## future serving hatch or an island counter with different sides is a scene
+## change rather than a code change. Falls back to the slot marker itself and
+## warns once, so a counter authored before this existed still works instead
+## of silently sending everybody to the origin.
+func get_slot_access_position(
+	slot_index: int,
+	access: SlotAccess
+) -> Vector2:
+	var marker: Marker2D = get_service_slot_marker(slot_index)
+
+	if marker == null:
+		push_warning(
+			"BarCounter '%s' has no marker for slot %d." % [name, slot_index]
+		)
+
+		return global_position
+
+	var point_name: StringName = (
+		DEPOSIT_POINT_NAME if access == SlotAccess.DEPOSIT
+		else COLLECTION_POINT_NAME
+	)
+
+	var point: Marker2D = marker.get_node_or_null(
+		NodePath(point_name)
+	) as Marker2D
+
+	if point != null:
+		return point.global_position
+
+	if not _warned_missing_access_points.has(slot_index):
+		_warned_missing_access_points[slot_index] = true
+
+		push_warning(
+			"BarCounter '%s' slot %d has no %s; falling back to the slot "
+			% [name, slot_index, String(point_name)]
+			+ "marker. Add a Marker2D with that name to control which side "
+			+ "staff approach from."
+		)
+
+	return marker.global_position
+
+
+## True when the scene author has provided both access points for every slot.
+##
+## Used by the developer integrity scan so a half-configured counter is a
+## reported finding rather than a subtle behavioural oddity.
+func has_complete_access_points() -> bool:
+	for slot_index: int in range(service_container.get_slot_count()):
+		var marker: Marker2D = get_service_slot_marker(slot_index)
+
+		if marker == null:
+			return false
+
+		if marker.get_node_or_null(NodePath(DEPOSIT_POINT_NAME)) == null:
+			return false
+
+		if marker.get_node_or_null(NodePath(COLLECTION_POINT_NAME)) == null:
+			return false
+
+	return true
 
 
 func get_service_slot_marker(

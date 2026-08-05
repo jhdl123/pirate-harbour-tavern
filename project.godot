@@ -22,6 +22,8 @@ WorldTime="*res://systems/time/world_time.tscn"
 InteractionMenu="*res://systems/ui/interaction_menu_controller.gd"
 TaskBoard="*res://systems/staff/tasks/tavern_task_service.gd"
 Comms="*res://systems/communication/communication_service.gd"
+Modifiers="*res://systems/modifiers/modifier_service.gd"
+Tavern="*res://systems/tavern/tavern_lifecycle.gd"
 
 [display]
 
@@ -134,3 +136,4 @@ stock_dev_panel={
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.09923177, 0.09923177, 0.09923176, 1)

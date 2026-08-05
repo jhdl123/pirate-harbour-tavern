@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_geaib"]
+
+[resource]
+script = ExtResource("1_geaib")
+content_id = &"water"
+display_name = "Water"
+tags = Array[StringName]([&"liquid", &"non_alcoholic"])
+base_value_per_measure = 0

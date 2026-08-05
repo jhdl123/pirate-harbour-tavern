@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="TavernTaskDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/staff/tasks/tavern_task_definition.gd" id="1_taskdef"]
+
+[resource]
+script = ExtResource("1_taskdef")
+task_type = &"deliver_group_keg"
+display_name = "Deliver Group Keg"
+description = "Carry one filled small keg from storage to a waiting group and set it down."
+diagnostic_category = &"service"
+base_priority = 110.0
+urgency_weight = 90.0
+age_weight = 2.0
+maximum_age_bonus = 30.0
+distance_weight = 12.0
+carried_item_bonus = 60.0
+failure_penalty = 25.0
+required_capabilities = Array[StringName]([&"deliver_group_kegs"])
+maximum_retries = 3
+maximum_failures = 4
+timeout_world_minutes = 60
+retry_cooldown_seconds = 3.0
+can_be_interrupted = false
+player_may_override = true
+notify_on_completion = false
+carried_item_rule = 0
+viability_weight = 1.0

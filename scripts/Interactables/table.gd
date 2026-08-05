@@ -6,6 +6,10 @@ var chairs: Array[Chair] = []
 
 
 func _ready() -> void:
+	# Group place selection finds tables by group rather than by scene path,
+	# so the bar can be re-laid-out without touching any script.
+	add_to_group(&"tables")
+
 	refresh_chairs()
 
 	print(

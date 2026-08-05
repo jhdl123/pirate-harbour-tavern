@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CustomerGroupDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/groups/customer_group_definition.gd" id="1_u6q6a"]
+
+[resource]
+script = ExtResource("1_u6q6a")
+group_id = &"sailor_pair"
+display_name = "Sailor Pair"
+description = "Placeholder balance values, not final tuning."
+maximum_size = 2
+spawn_weight = 4.0
+size_weights = {
+2: 1.0
+}
+shared_order_chance = 0.45
+preferred_serving_tags = Array[StringName]([&"ale", &"beer", &"rum"])
+maximum_shared_portions = 6
+reorder_chance = 0.6
+spending_modifier = 0.9
+social_tags = Array[StringName]([&"sailor"])
+captain_chance = 0.1
+captain_category = &"captain"

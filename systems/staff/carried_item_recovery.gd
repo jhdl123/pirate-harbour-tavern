@@ -151,9 +151,13 @@ static func _plan_reassign(
 	var best: TavernTask = null
 	var best_distance: float = INF
 
-	for task: TavernTask in TaskBoard.get_open_tasks_of_type(
-		TavernTaskTypes.SERVE_DRINK
-	):
+	# Only task types this worker is actually allowed to perform.
+	#
+	# The previous version looked exclusively at serve_drink, which handed a
+	# bartender holding a prepared drink a customer-delivery task and was the
+	# route by which the bartender completed two serves in the long test. A
+	# drink in the hand is not permission to leave your role.
+	for task: TavernTask in _get_reassignable_tasks(worker):
 		if task.required_definition == null:
 			continue
 
@@ -197,6 +201,40 @@ static func _plan_reassign(
 	}
 
 
+## Open tasks this worker could legitimately take, across every task type that
+## consumes an item.
+##
+## Asking the board per type rather than scanning all open tasks keeps this on
+## the indexed path, and asking the worker for its capabilities keeps the rule
+## in one place instead of hard-coding which role may do what.
+static func _get_reassignable_tasks(
+	worker: Node
+) -> Array[TavernTask]:
+	var candidates: Array[TavernTask] = []
+
+	if worker == null or not worker.has_method(&"get_staff_capabilities"):
+		return candidates
+
+	var capabilities: Array[StringName] = worker.call(
+		&"get_staff_capabilities"
+	)
+
+	for task_type: StringName in TavernTaskTypes.get_implemented_types():
+		for task: TavernTask in TaskBoard.get_open_tasks_of_type(task_type):
+			if task.definition == null:
+				continue
+
+			if not StaffCapabilities.satisfies(
+				capabilities,
+				task.definition.required_capabilities
+			):
+				continue
+
+			candidates.append(task)
+
+	return candidates
+
+
 static func _plan_service_slot(
 	worker: Node,
 	definition: ItemDefinition
@@ -235,7 +273,11 @@ static func _plan_service_slot(
 			if slot.get_acceptable_amount(definition) <= 0:
 				continue
 
-			var slot_position: Vector2 = _get_slot_position(node, slot_index)
+			var slot_position: Vector2 = _get_slot_position(
+				node,
+				slot_index,
+				worker
+			)
 			var distance: float = worker_position.distance_to(slot_position)
 
 			if distance < best_distance:
@@ -617,19 +659,41 @@ static func _get_reach(
 	return 40.0
 
 
+## Where [param worker] stands to put something into a slot.
+##
+## Which side depends on the role, not on the item: a bartender returns a
+## drink from behind the counter, a hand from in front of it. Both reach the
+## same logical slot.
 static func _get_slot_position(
 	counter: Node,
-	slot_index: int
+	slot_index: int,
+	worker: Node = null
 ) -> Vector2:
-	if counter.has_method(&"get_service_slot_marker"):
-		var marker: Marker2D = counter.call(
-			&"get_service_slot_marker",
-			slot_index
-		) as Marker2D
+	if counter == null:
+		return Vector2.ZERO
 
-		if marker != null:
-			return marker.global_position
+	if counter.has_method(&"get_slot_access_position"):
+		return counter.call(
+			&"get_slot_access_position",
+			slot_index,
+			_get_access_for_worker(worker)
+		)
 
 	var counter_2d: Node2D = counter as Node2D
 
 	return Vector2.ZERO if counter_2d == null else counter_2d.global_position
+
+
+## Deposit side for anyone who prepares drinks, collection side otherwise.
+static func _get_access_for_worker(
+	worker: Node
+) -> BarCounter.SlotAccess:
+	if worker != null and worker.has_method(&"get_staff_capabilities"):
+		var capabilities: Array[StringName] = worker.call(
+			&"get_staff_capabilities"
+		)
+
+		if capabilities.has(StaffCapabilities.PREPARE_DRINKS):
+			return BarCounter.SlotAccess.DEPOSIT
+
+	return BarCounter.SlotAccess.COLLECT

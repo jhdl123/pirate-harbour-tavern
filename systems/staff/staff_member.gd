@@ -423,7 +423,10 @@ func _handle_carried_item() -> bool:
 	if outcome == CarriedItemPolicy.Outcome.REASSIGN:
 		var task: TavernTask = plan.get("task", null) as TavernTask
 
-		if task != null and _take_task(task):
+		if task != null and _take_task(
+			task,
+			StaffTransitionReason.CARRIED_ITEM_REASSIGNED
+		):
 			_carried_item_recoveries += 1
 
 			_record_carried_event(
@@ -738,9 +741,25 @@ func _is_collecting_leg() -> bool:
 # Task lifecycle
 # -----------------------------------------------------------------------------
 
+## The single route by which this worker acquires any task.
+##
+## Selection, carried-item reassignment and developer tools all come through
+## here, so the capability check below is not redundant with the one in
+## TaskBoard.claim() - it is the near side of the same gate, and it is what
+## makes the refusal attributable to a route rather than appearing as an
+## anonymous rejected claim.
 func _take_task(
-	task: TavernTask
+	task: TavernTask,
+	route: StringName = StaffTransitionReason.TASK_CLAIMED
 ) -> bool:
+	if task == null:
+		return false
+
+	if not can_perform_task(task):
+		TaskBoard.report_capability_violation(self, staff_id, task, route)
+
+		return false
+
 	var executor: StaffTaskExecutor = StaffTaskExecutor.create_for(
 		task.task_type
 	)
@@ -1154,6 +1173,24 @@ func get_staff_capabilities() -> Array[StringName]:
 ##
 ## Read from the movement profile rather than stored, so retuning the profile
 ## automatically retunes every viability estimate that depends on it.
+## True when this worker's role covers [param task].
+func can_perform_task(
+	task: TavernTask
+) -> bool:
+	if task == null or task.definition == null:
+		return false
+
+	return StaffCapabilities.satisfies(
+		get_staff_capabilities(),
+		task.definition.required_capabilities
+	)
+
+
+## Archetype id, for capability-violation diagnostics and speaker selection.
+func get_archetype_id() -> StringName:
+	return &"" if definition == null else definition.archetype_id
+
+
 func get_movement_speed() -> float:
 	if definition != null and definition.movement_profile != null:
 		return definition.movement_profile.maximum_speed

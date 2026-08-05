@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SpoilageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/spoilage_profile_definition.gd" id="1_nt5o2"]
+
+[resource]
+script = ExtResource("1_nt5o2")
+profile_id = &"ground_provisions"
+display_name = "Ground Provisions"
+description = "Placeholder balance values, not historical measurements."
+expiry_minutes = 20160
+spoiled_below_freshness = 0.05
+sealed_state_pauses_spoilage = false

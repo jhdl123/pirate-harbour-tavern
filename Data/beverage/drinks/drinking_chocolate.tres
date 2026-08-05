@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_j507e"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_drink_fast.tres" id="2_tbl65"]
+
+[resource]
+script = ExtResource("1_j507e")
+drink_category = &"drinking_chocolate"
+historical_availability = 3
+general_popularity = 0.3999999999999999
+rarity = 3
+quality_tier = 4
+alcohol_strength = 0.0
+drink_duration_minutes = 12
+content_id = &"drinking_chocolate"
+serving_format_ids = Array[StringName]([&"cup"])
+service_method = 2
+recipe_id = &"chocolate_recipe"
+can_spoil_after_serving = true
+spoilage_profile = ExtResource("2_tbl65")
+item_id = &"drinking_chocolate"
+display_name = "Drinking Chocolate"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"hot_drink", &"non_alcoholic", &"luxury", &"imported", &"captain_favourite", &"merchant_favourite"])
+preferred_destination = 1
+base_sell_price = 30

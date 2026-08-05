@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://systems/groups/group_standing_area.gd" id="1_area"]
+[ext_resource type="Script" path="res://systems/reservation/reservable.gd" id="2_res"]
+
+[node name="GroupStandingArea" type="Node2D"]
+script = ExtResource("1_area")
+minimum_group_size = 2
+maximum_group_size = 8
+formation_radius = 40.0
+draw_debug_gizmo = true
+
+[node name="Reservable" type="Node" parent="."]
+script = ExtResource("2_res")
+
+[node name="Centre" type="Marker2D" parent="."]
+
+[node name="Entry" type="Marker2D" parent="."]
+position = Vector2(0, 44)
+
+[node name="ServingPoint" type="Marker2D" parent="."]

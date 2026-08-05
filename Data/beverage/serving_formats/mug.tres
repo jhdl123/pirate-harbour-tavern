@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ServingFormatDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/serving_format_definition.gd" id="1_3cf32"]
+
+[resource]
+script = ExtResource("1_3cf32")
+format_id = &"mug"
+historical_name = "Mug"
+required_container_id = &"mug"
+measures_per_serving = 4
+service_time_modifier = 1.04

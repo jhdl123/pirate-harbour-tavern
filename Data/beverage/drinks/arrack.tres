@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_vw8fe"]
+
+[resource]
+script = ExtResource("1_vw8fe")
+drink_category = &"arrack"
+historical_availability = 3
+general_popularity = 0.3999999999999999
+rarity = 3
+quality_tier = 3
+alcohol_strength = 2.3
+drink_duration_minutes = 11
+content_id = &"arrack"
+serving_format_ids = Array[StringName]([&"dram", &"glass"])
+service_method = 1
+required_station_capabilities = Array[StringName]([&"pour_from_bottle", &"access_secured_bottles"])
+item_id = &"arrack"
+display_name = "Arrack"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"spirit", &"strong_alcohol", &"premium", &"imported", &"captain_favourite"])
+preferred_destination = 1
+base_sell_price = 28

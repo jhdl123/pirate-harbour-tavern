@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="IngredientDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/ingredient_definition.gd" id="1_twe6x"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/ground_provisions.tres" id="2_spd36"]
+[ext_resource type="Resource" path="res://Data/beverage/storage_profiles/dry_ingredient.tres" id="3_prr16"]
+
+[resource]
+script = ExtResource("1_twe6x")
+unit_name = "block"
+unit_name_plural = "blocks"
+can_spoil = true
+spoilage_profile = ExtResource("2_spd36")
+storage_profile = ExtResource("3_prr16")
+item_id = &"chocolate"
+display_name = "Cocoa"
+tags = Array[StringName]([&"ingredient", &"small_item", &"dry_good", &"imported", &"luxury"])
+maximum_stack_size = 20
+preferred_destination = 3
+base_buy_price = 25
+base_sell_price = 12

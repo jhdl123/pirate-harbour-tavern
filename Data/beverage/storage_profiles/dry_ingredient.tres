@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="StorageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/storage_profile_definition.gd" id="1_6qtil"]
+
+[resource]
+script = ExtResource("1_6qtil")
+profile_id = &"dry_ingredient"
+display_name = "Dry Ingredient"
+content_tags = Array[StringName]([&"dry_good"])
+cellar_compatible = false
+behind_bar_compatible = true
+dry_storage_compatible = true
+theft_value = 15
+bulk_space_requirement = 0.2
+shelf_space_requirement = 0.5

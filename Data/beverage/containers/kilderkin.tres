@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ContainerDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/container_definition.gd" id="1_xex3l"]
+
+[resource]
+script = ExtResource("1_xex3l")
+container_id = &"kilderkin"
+historical_name = "Kilderkin"
+simplified_explanation = "medium cask"
+description = "Capacity is a configurable game value, historically inspired rather than an exact period measure."
+maximum_capacity = 144
+portable = false
+bulk_storage = true
+storage_space_usage = 1.44

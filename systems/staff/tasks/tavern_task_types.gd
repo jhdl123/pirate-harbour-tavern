@@ -35,6 +35,9 @@ const CLEAN_SEAT: StringName = &"clean_seat"
 const PREPARE_DRINK: StringName = &"prepare_drink"
 const REFILL_STATION: StringName = &"refill_station"
 const MOVE_STOCK: StringName = &"move_stock"
+
+## Carry one filled shared keg from storage to a waiting customer group.
+const DELIVER_GROUP_KEG: StringName = &"deliver_group_keg"
 const UNLOAD_DELIVERY: StringName = &"unload_delivery"
 const CLEAR_BROKEN_GLASS: StringName = &"clear_broken_glass"
 const REPAIR_FURNITURE: StringName = &"repair_furniture"
@@ -53,4 +56,6 @@ static func get_implemented_types() -> Array[StringName]:
 	return [
 		SERVE_DRINK,
 		CLEAN_SEAT,
+		PREPARE_DRINK,
+		REFILL_STATION,
 	]

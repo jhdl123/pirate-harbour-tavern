@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_1rtno"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/poured_drink.tres" id="2_jyrfo"]
+
+[resource]
+script = ExtResource("1_1rtno")
+drink_category = &"kill_devil"
+historical_availability = 0
+general_popularity = 1.0
+rarity = 0
+quality_tier = 0
+alcohol_strength = 2.2
+drink_duration_minutes = 7
+content_id = &"kill_devil"
+serving_format_ids = Array[StringName]([&"dram", &"cup", &"mug", &"table_cask"])
+required_station_capabilities = Array[StringName]([&"draw_from_cask"])
+can_spoil_after_serving = true
+spoilage_profile = ExtResource("2_jyrfo")
+item_id = &"kill_devil"
+display_name = "Kill-Devil"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"rum", &"spirit", &"strong_alcohol", &"cheap", &"pirate_favourite", &"sailor_favourite"])
+preferred_destination = 1
+base_sell_price = 6

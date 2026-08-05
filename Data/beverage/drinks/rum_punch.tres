@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_aqvtw"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_punch.tres" id="2_0lb4d"]
+
+[resource]
+script = ExtResource("1_aqvtw")
+drink_category = &"prepared_rum_punch"
+general_popularity = 0.8
+quality_tier = 2
+alcohol_strength = 1.4
+drink_duration_minutes = 10
+content_id = &"prepared_rum_punch"
+serving_format_ids = Array[StringName]([&"punch_bowl"])
+service_method = 3
+recipe_id = &"rum_punch_recipe"
+can_spoil_after_serving = true
+spoilage_profile = ExtResource("2_0lb4d")
+item_id = &"rum_punch"
+display_name = "Rum Punch"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"mixed_drink", &"rum", &"shared", &"pirate_favourite", &"captain_favourite"])
+preferred_destination = 1
+base_sell_price = 40

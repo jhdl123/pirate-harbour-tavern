@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ServingFormatDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/serving_format_definition.gd" id="1_30riq"]
+
+[resource]
+script = ExtResource("1_30riq")
+format_id = &"kilderkin_serving"
+historical_name = "Kilderkin"
+simplified_explanation = "medium cask"
+required_container_id = &"kilderkin"
+measures_per_serving = 144
+portion_count = 24
+is_shared = true
+minimum_group_size = 10
+maximum_group_size = 24
+allows_standing_area = true
+creates_group_anchor = true
+service_time_modifier = 2.44
+price_modifier = 0.7
+valid_drink_tags = Array[StringName]([&"ale", &"beer"])

@@ -2,8 +2,33 @@ class_name Customer
 extends CharacterBody2D
 
 
+## Total paid, kept for compatibility with existing listeners.
 signal customer_paid(amount: int)
+
+## The same payment, with the identity of what was actually bought.
+##
+## The drink is known at payment time but was being discarded before the
+## signal, which is why the daily sales breakdown had nothing to key on. The
+## base price travels too so a tip can be separated from the sale without the
+## listener needing to look the drink up again.
+signal customer_paid_for_drink(
+	amount: int,
+	item_id: StringName,
+	base_price: int,
+	customer_id: StringName
+)
 signal customer_finished(customer: Node)
+
+## Emitted once as a customer leaves, with why and whether they were served.
+##
+## The distinction matters: a customer who drank, paid and went home is not a
+## lost customer, and counting every unpaid departure as a loss would make the
+## service rate meaningless.
+signal customer_departed(
+	customer: Node,
+	reason: StringName,
+	was_served: bool
+)
 signal customer_abandoned_seat(customer: Node)
 
 ## Phase 3A: this customer started or stopped waiting to be served.
@@ -14,6 +39,9 @@ signal customer_abandoned_seat(customer: Node)
 ## several times a second. Nothing in the customer's own behaviour depends on
 ## it, so a scene with no coordinator behaves exactly as before.
 signal service_state_changed(customer: Node)
+
+## Group entry: emitted when this member has crossed the inside door marker.
+signal group_entry_crossed(customer: Node)
 
 
 enum State {
@@ -37,6 +65,17 @@ enum State {
 	USING_ACTIVITY,
 	## Phase 2C: travelling back to reserved_chair after USING_ACTIVITY.
 	RETURNING_TO_SEAT,
+	## Group visit: walking to an assigned formation slot in a standing area.
+	MOVING_TO_GROUP_SLOT,
+	## Group visit: standing at the slot, socialising and drinking with the
+	## group. Deliberately distinct from SOCIALISING, which is seated.
+	IN_GROUP,
+	## Group visit: waiting outside until the group entry controller releases us.
+	GROUP_WAITING_OUTSIDE,
+	## Group visit: crossing the doorway before receiving the final place target.
+	GROUP_ENTERING,
+	## Group visit: crossed the door and waiting for the final destination.
+	GROUP_INSIDE_STAGING,
 }
 
 
@@ -48,6 +87,39 @@ enum State {
 
 
 @export_category("Stuck Detection")
+@export_category("Departure Safety")
+
+## How close to the exit counts as having left, in pixels.
+##
+## The exit marker sits OUTSIDE the navigation mesh - deliberately, so
+## customers walk out of the doorway rather than vanishing inside it. But an
+## agent cannot report arrival at a point it can never path onto: it stops at
+## the mesh edge and waits forever. This radius is what actually ends the
+## visit.
+@export_range(4.0, 256.0, 1.0)
+var exit_arrival_radius: float = 64.0
+
+## World minutes in EXITING before the customer is removed regardless.
+##
+## Last-resort backstop. A customer that cannot reach the exit at all must
+## still leave, or it holds a population slot forever and no new customer can
+## arrive - which reads in game as "nobody is coming in".
+@export_range(1, 240, 1)
+var exit_timeout_minutes: int = 5
+
+## World minutes in LEAVING_TO_DOOR before the route is refreshed, and then
+## before the customer is pushed straight into EXITING.
+##
+## LEAVING_TO_DOOR had no backstop at all: an agent that neither arrived nor
+## failed sat in it indefinitely. One observed group member stayed there for
+## over 180 world minutes, holding a population slot the whole time.
+@export_range(1, 240, 1)
+var leaving_timeout_minutes: int = 6
+
+## Times the door route is re-planned before the customer skips to EXITING.
+@export_range(0, 5, 1)
+var maximum_leaving_refreshes: int = 2
+
 @export var stuck_check_interval: float = 0.5
 @export var minimum_stuck_movement: float = 1.0
 @export var maximum_stuck_checks: int = 3
@@ -184,6 +256,69 @@ var _report_manager: CustomerAIReportManager = null
 ## CustomerAIReportManager at configure time - stays -1 (and every
 ## report_manager call becomes a safe no-op) when reporting is not wired up.
 var runtime_customer_id: int = -1
+
+## Group this customer belongs to, or empty for a solo visitor.
+##
+## Read by [method SharedServing.is_consumer_eligible], which is what lets a
+## member drink from its own group's pitcher and nobody else's. Stamped by
+## [method CustomerGroup.add_member].
+var group_id: StringName = &""
+
+## The controller running this customer's group visit.
+var group_controller: Node = null
+
+## Where the group wants this member to stand, when standing.
+var group_slot_position: Vector2 = Vector2.ZERO
+
+## The centre of the group, used for facing.
+var group_centre_position: Vector2 = Vector2.ZERO
+
+## World minute this member may next take a drink from the shared serving.
+var next_group_drink_minutes: int = -1
+
+## Portions taken from a shared serving this visit. Counted apart from
+## [member drinks_consumed_this_visit] so the report can show that keg
+## drinking happened even when no individual drink was ever ordered.
+var shared_drinks_consumed: int = 0
+
+## Times the group had to recover this member onto its formation slot.
+var group_slot_recoveries: int = 0
+
+## Temporary position this member steps out to while a keg is delivered.
+##
+## Held apart from [member group_slot_position] on purpose: the normal
+## drinking slot must survive the whole delivery unchanged, so the group can
+## put everybody back exactly where they were.
+var delivery_slot_position: Vector2 = Vector2.ZERO
+
+## True while this member is standing clear for a delivery.
+var is_stepped_back_for_delivery: bool = false
+
+## Activity point booked for this member by its group during leisure.
+##
+## Held here rather than in [CustomerBrain] because a group member's leisure
+## is chosen by the group, not by the utility brain - but it is released
+## through exactly the same [Reservable] API, so darts cannot end up with two
+## competing booking systems.
+var group_activity_reservation: Reservable = null
+
+## Activity this member did last, so leisure does not repeat it immediately.
+var last_group_activity_id: StringName = &""
+
+## World minute this customer entered EXITING. Minus one when it has not.
+var _exit_started_minutes: int = -1
+
+## World minute this customer entered LEAVING_TO_DOOR. Minus one when it has
+## not. Drives the bounded exit-route recovery in _check_leaving_progress().
+var _leaving_started_minutes: int = -1
+var _leaving_refresh_attempts: int = 0
+var _group_wait_started_msec: int = -1
+var _group_entry_started_msec: int = -1
+
+## Real-time group-entry safety. A parked member must never occupy a tavern
+## population slot forever.
+@export_range(2.0, 60.0, 0.5)
+var group_outside_timeout_seconds: float = 30.0
 
 ## Empty until departure begins; set to exactly one of &"patience_expired",
 ## &"visit_time_expired" or &"utility_decision" the moment begin_leaving()
@@ -441,7 +576,117 @@ func _physics_process(
 	# Movement is owned by ActorNavigation and ActorMovement. The customer only
 	# decides *where* to go and what to do on arrival, which is the whole point
 	# of the split: this state machine works identically for a bartender.
-	pass
+	#
+	# The one exception is leaving. The exit marker sits outside the navigation
+	# mesh, so the agent stops at the mesh edge and reports neither arrival nor
+	# failure - customers piled up in the doorway forever, holding population
+	# slots so nobody new could come in. This checks the distance itself.
+	if current_state == State.EXITING:
+		_check_exit_progress()
+	elif current_state == State.LEAVING_TO_DOOR:
+		_check_leaving_progress()
+	elif current_state == State.GROUP_WAITING_OUTSIDE:
+		_check_group_outside_timeout()
+	elif current_state == State.GROUP_ENTERING:
+		_check_group_entry_timeout()
+
+
+func _check_group_outside_timeout() -> void:
+	if _group_wait_started_msec < 0:
+		_group_wait_started_msec = Time.get_ticks_msec()
+		return
+
+	if float(Time.get_ticks_msec() - _group_wait_started_msec) / 1000.0 < group_outside_timeout_seconds:
+		return
+
+	departure_reason = &"group_entry_timeout"
+	finish_customer()
+
+
+func _check_group_entry_timeout() -> void:
+	if _group_entry_started_msec < 0:
+		_group_entry_started_msec = Time.get_ticks_msec()
+		return
+
+	if float(Time.get_ticks_msec() - _group_entry_started_msec) / 1000.0 < group_outside_timeout_seconds:
+		return
+
+	departure_reason = &"group_entry_timeout"
+	finish_customer()
+
+
+## Bounded recovery for a customer that cannot reach the inside door point.
+##
+## Refreshes the route first, because the usual cause is a transient blockage,
+## and only then pushes the customer into EXITING - which has its own timeout
+## and its own distance-based completion, so the visit always ends.
+func _check_leaving_progress() -> void:
+	if _leaving_started_minutes < 0:
+		_leaving_started_minutes = _get_world_minutes()
+		return
+
+	if _get_world_minutes() - _leaving_started_minutes < leaving_timeout_minutes:
+		return
+
+	_leaving_started_minutes = _get_world_minutes()
+
+	if _leaving_refresh_attempts < maximum_leaving_refreshes:
+		_leaving_refresh_attempts += 1
+
+		if _report_manager != null:
+			_report_manager.record_navigation_recovery(runtime_customer_id)
+
+		_travel_to(
+			entrance_inside_position,
+			navigation_arrival_distance,
+			"door, leaving"
+		)
+
+		return
+
+	if _report_manager != null:
+		_report_manager.report_issue(
+			runtime_customer_id,
+			&"leaving_route_timed_out",
+			"Could not reach the door within %d minutes after %d retries; "
+			% [leaving_timeout_minutes, _leaving_refresh_attempts]
+			+ "moved straight to EXITING.",
+			get_diagnostics_snapshot()
+		)
+
+	begin_exiting()
+
+
+## Ends the visit once the customer has effectively left.
+##
+## Two ways out, because the exit point may be unreachable by path: close
+## enough counts, and so does taking too long. Either way the customer must
+## stop occupying the tavern.
+func _check_exit_progress() -> void:
+	if global_position.distance_to(entrance_outside_position) <= exit_arrival_radius:
+		finish_customer()
+		return
+
+	if _exit_started_minutes < 0:
+		_exit_started_minutes = _get_world_minutes()
+		return
+
+	if _get_world_minutes() - _exit_started_minutes < exit_timeout_minutes:
+		return
+
+	if _report_manager != null:
+		_report_manager.report_issue(
+			runtime_customer_id,
+			&"exit_timed_out",
+			"Could not reach the exit within %d minutes; removed at %.0f px "
+			% [exit_timeout_minutes, global_position.distance_to(
+				entrance_outside_position
+			)]
+			+ "from it.",
+			get_diagnostics_snapshot()
+		)
+
+	finish_customer()
 
 
 func choose_order() -> void:
@@ -561,7 +806,7 @@ func set_chair_target(
 		return
 
 	reserved_chair = chair
-	current_state = State.ENTERING
+	_set_state(State.ENTERING)
 
 	_travel_to(
 		entrance_inside_position,
@@ -648,6 +893,12 @@ func _on_destination_reached(
 		State.RETURNING_TO_SEAT:
 			_on_returned_to_seat()
 
+		State.MOVING_TO_GROUP_SLOT:
+			_on_reached_group_slot()
+
+		State.GROUP_ENTERING:
+			_on_group_entry_crossed()
+
 
 ## The navigation framework gave up on the current destination.
 ##
@@ -666,6 +917,9 @@ func _on_destination_failed(
 			reason,
 			")."
 		)
+
+	if _report_manager != null:
+		_report_manager.record_navigation_failure(runtime_customer_id)
 
 	if current_state == State.EXITING:
 		# Already outside and on the way out; there is nothing left to salvage.
@@ -729,7 +983,7 @@ func begin_walking_to_staging() -> void:
 		handle_invalid_destination()
 		return
 
-	current_state = State.WALKING_TO_STAGING
+	_set_state(State.WALKING_TO_STAGING)
 
 	_travel_to(
 		reserved_chair.get_staging_position(),
@@ -739,7 +993,7 @@ func begin_walking_to_staging() -> void:
 
 
 func begin_exiting() -> void:
-	current_state = State.EXITING
+	_set_state(State.EXITING)
 
 	# The outside marker sits beyond the navigation mesh, so this is an exact
 	# destination: the framework paths as far as the mesh allows and then walks
@@ -766,7 +1020,10 @@ func begin_leaving() -> void:
 	release_reserved_chair()
 	customer_abandoned_seat.emit(self)
 
-	current_state = State.LEAVING_TO_DOOR
+	_leaving_started_minutes = -1
+	_leaving_refresh_attempts = 0
+
+	_set_state(State.LEAVING_TO_DOOR)
 
 	_travel_to(
 		entrance_inside_position,
@@ -780,7 +1037,7 @@ func begin_moving_to_seat() -> void:
 		handle_invalid_destination()
 		return
 
-	current_state = State.MOVING_TO_SEAT
+	_set_state(State.MOVING_TO_SEAT)
 
 	# A seat sits inside furniture and therefore off the navigation mesh. The
 	# framework handles that as a final approach rather than as a special case
@@ -818,6 +1075,18 @@ func arrive_at_seat() -> void:
 	# Phase 2C: makes this customer discoverable by
 	# find_nearby_social_partner() - left in release_reserved_chair().
 	add_to_group(&"seated_customers")
+
+	# A seated group member is controlled by CustomerGroup from this point.
+	# Previously this function continued into the solo AI path, causing every
+	# member to place an individual order while GroupManager simultaneously
+	# attempted to create the group's shared order.
+	if has_group() and is_instance_valid(group_controller):
+		_cancel_all_scheduled()
+		order_icon.visible = false
+		patience_bar.hide_bar()
+		_set_state(State.IN_GROUP)
+		next_group_drink_minutes = _get_world_minutes() + randi_range(0, 2)
+		return
 
 	if needs != null:
 		# Phase 2B: the visit clock starts now, not at spawn, so time spent
@@ -859,7 +1128,7 @@ func begin_waiting_to_order() -> void:
 		handle_invalid_destination()
 		return
 
-	current_state = State.WAITING_TO_ORDER
+	_set_state(State.WAITING_TO_ORDER)
 	order_icon.modulate = Color.WHITE
 	_order_event = WorldTime.schedule_in(
 		_order_delay_minutes,
@@ -886,7 +1155,7 @@ func begin_relaxing(
 	minimum_minutes: float,
 	maximum_minutes: float
 ) -> void:
-	current_state = State.RELAXING
+	_set_state(State.RELAXING)
 
 	var duration_minutes: int = maxi(
 		1,
@@ -934,6 +1203,9 @@ func _on_relax_finished() -> void:
 			") - asking the brain to decide again."
 		)
 
+	if _return_group_member_after_activity(&"relax"):
+		return
+
 	if _brain != null:
 		_brain.think()
 	else:
@@ -946,6 +1218,11 @@ func _on_relax_finished() -> void:
 ## waiting for service" (WAITING_TO_ORDER counts as "waiting for service"
 ## too, so it is excluded here as well, not just DRINKING/LEAVING_TO_DOOR).
 func is_available_for_social() -> bool:
+	if has_group():
+		# A group member standing at its slot is exactly as interruptible as
+		# a solo customer relaxing in a chair.
+		return current_state == State.IN_GROUP or current_state == State.RELAXING
+
 	return current_state == State.RELAXING
 
 
@@ -1011,7 +1288,7 @@ func begin_socialising(
 	partner_satisfaction_gain: float,
 	engagement_gain: float
 ) -> void:
-	current_state = State.SOCIALISING
+	_set_state(State.SOCIALISING)
 	social_partner = partner
 
 	_social_satisfaction_gain = satisfaction_gain
@@ -1079,6 +1356,9 @@ func _on_socialise_finished() -> void:
 
 	social_partner = null
 
+	if _return_group_member_after_activity(&"socialise"):
+		return
+
 	if _is_ai_debug_enabled():
 		print(
 			"[CustomerAI] ", name,
@@ -1099,7 +1379,7 @@ func _on_socialise_finished() -> void:
 ## on chair retention in docs/CUSTOMER_AI_SYSTEM.md's Phase 2C section.
 func begin_visiting_activity(point: TavernActivityPoint) -> void:
 	_current_activity_point = point
-	current_state = State.MOVING_TO_ACTIVITY
+	_set_state(State.MOVING_TO_ACTIVITY)
 
 	_travel_to(
 		point.get_use_position(),
@@ -1115,7 +1395,7 @@ func arrive_at_activity() -> void:
 
 	actor_navigation.park()
 
-	current_state = State.USING_ACTIVITY
+	_set_state(State.USING_ACTIVITY)
 
 	var duration_minutes: int = maxi(
 		1,
@@ -1168,6 +1448,9 @@ func _on_activity_use_finished() -> void:
 			" finished using '", point.activity_id, "'."
 		)
 
+	if _return_group_member_after_activity(point.activity_id):
+		return
+
 	if point.return_to_seat_after_use and _brain != null:
 		_brain.enter_activity(&"return_to_seat")
 	else:
@@ -1190,7 +1473,7 @@ func begin_returning_to_seat() -> void:
 		handle_invalid_destination()
 		return
 
-	current_state = State.RETURNING_TO_SEAT
+	_set_state(State.RETURNING_TO_SEAT)
 
 	_travel_to_exactly(
 		reserved_chair.get_seat_position(),
@@ -1202,6 +1485,12 @@ func begin_returning_to_seat() -> void:
 
 func _on_returned_to_seat() -> void:
 	actor_navigation.park()
+
+	if has_group():
+		_on_reached_group_slot()
+		_notify_group_member_returned()
+
+		return
 
 	if reserved_chair != null:
 		reserved_chair.set_occupied_zone_enabled(true)
@@ -1371,7 +1660,7 @@ func _on_order_ready() -> void:
 		handle_invalid_destination()
 		return
 
-	current_state = State.ORDERING
+	_set_state(State.ORDERING)
 	order_icon.visible = true
 
 	if _report_manager != null:
@@ -1607,7 +1896,7 @@ func _serve_drink() -> void:
 		)
 
 	order_icon.visible = false
-	current_state = State.DRINKING
+	_set_state(State.DRINKING)
 	_drink_event = WorldTime.schedule_in(
 		_drink_duration_minutes,
 		_on_drink_finished,
@@ -1716,6 +2005,13 @@ func _on_drink_finished() -> void:
 
 	customer_paid.emit(payment_amount)
 
+	customer_paid_for_drink.emit(
+		payment_amount,
+		ordered_drink.item_id,
+		ordered_drink.base_sell_price,
+		get_stable_customer_id()
+	)
+
 	# Phase 2A: the chair used to be released and marked for cleaning right
 	# here. It no longer is - the same chair now carries the customer through
 	# Relax and any further orders, and is only released when the visit
@@ -1787,6 +2083,15 @@ func _on_drink_finished() -> void:
 		_brain.think()
 	else:
 		begin_leaving()
+
+
+## A stable identifier for this customer for the lifetime of the visit.
+##
+## Uses the instance id rather than runtime_customer_id, which is only
+## allocated when a diagnostics report manager is present and is -1 otherwise.
+## Daily statistics must count unique people whether or not diagnostics are on.
+func get_stable_customer_id() -> StringName:
+	return StringName("customer_%d" % get_instance_id())
 
 
 func _on_patience_expired() -> void:
@@ -1923,6 +2228,40 @@ func _is_ai_debug_enabled() -> bool:
 	)
 
 
+## The reason recorded for this departure, never left as "unknown" when the
+## customer is plainly part of a group.
+##
+## A member removed while still IN_GROUP or MOVING_TO_GROUP_SLOT used to be
+## filed as "unknown", which said nothing about what had actually gone wrong.
+## Group membership is enough to name it.
+func _resolve_departure_reason() -> StringName:
+	if not departure_reason.is_empty():
+		return departure_reason
+
+	if has_group():
+		match current_state:
+			State.IN_GROUP, State.MOVING_TO_GROUP_SLOT, \
+			State.GROUP_INSIDE_STAGING:
+				return &"group_departure"
+			State.GROUP_WAITING_OUTSIDE, State.GROUP_ENTERING:
+				return &"group_entry_abandoned"
+			_:
+				return &"group_departure"
+
+	return &"unknown"
+
+
+## The owning group's state, for the diagnostic record. Empty when solo.
+func _describe_group_state() -> String:
+	if not is_instance_valid(group_controller):
+		return ""
+
+	if group_controller.has_method(&"get_state_label"):
+		return String(group_controller.call(&"get_state_label"))
+
+	return ""
+
+
 func finish_customer() -> void:
 	actor_navigation.stop()
 	_cancel_all_scheduled()
@@ -1936,12 +2275,25 @@ func finish_customer() -> void:
 	# means it never has to.
 	service_state_changed.emit(self)
 
+	# One departure announcement, at the single point every exit funnels
+	# through, carrying enough for a listener to tell a satisfied customer
+	# from a lost one.
+	customer_departed.emit(
+		self,
+		_resolve_departure_reason(),
+		drinks_consumed_this_visit > 0
+	)
+
 	if _report_manager != null and needs != null:
 		var limit: int = get_effective_drink_limit()
 
+		_report_manager.record_group_state(
+			runtime_customer_id, _describe_group_state()
+		)
+
 		_report_manager.record_departure(
 			runtime_customer_id,
-			departure_reason if not departure_reason.is_empty() else &"unknown",
+			_resolve_departure_reason(),
 			needs.wealth,
 			needs.thirst,
 			needs.mood,
@@ -1954,6 +2306,8 @@ func finish_customer() -> void:
 	# reaching finish_customer() directly while still seated, and for
 	# consistency with _exit_tree() below.
 	release_reserved_chair()
+	release_group_activity_reservation()
+	hide_group_order_icon()
 
 	customer_finished.emit(self)
 	queue_free()
@@ -1980,3 +2334,627 @@ func _exit_tree() -> void:
 		)
 
 	release_reserved_chair()
+	release_group_activity_reservation()
+
+
+# --- Group visits ------------------------------------------------------------
+#
+# A group member is an ordinary customer with a destination chosen by its group
+# instead of by its own utility brain. Everything below only sets intent - the
+# existing navigation, avoidance and stuck recovery carry it out unchanged,
+# which is why groups needed no navigation work at all.
+
+
+func has_group() -> bool:
+	return not group_id.is_empty()
+
+
+## Stamps this customer as part of [param new_group_id].
+##
+## One entry point for membership so the diagnostic record learns the group id
+## at the same moment the customer does. [CustomerGroup] used to set() the
+## property directly, which worked but left the report with no group column.
+func join_group(new_group_id: StringName, controller: Node) -> void:
+	group_id = new_group_id
+	group_controller = controller
+
+	if _report_manager != null:
+		_report_manager.record_group_context(
+			runtime_customer_id, String(new_group_id)
+		)
+
+
+## Clears this customer's group membership. Idempotent.
+func leave_group() -> void:
+	group_id = &""
+	group_controller = null
+	group_slot_position = Vector2.ZERO
+	group_centre_position = Vector2.ZERO
+	delivery_slot_position = Vector2.ZERO
+	is_stepped_back_for_delivery = false
+
+	hide_group_order_icon()
+
+
+## Holds a group member safely outside until the group releases it.
+func wait_for_group_entry(queue_position: Vector2) -> void:
+	_cancel_all_scheduled()
+	_set_state(State.GROUP_WAITING_OUTSIDE)
+	_group_wait_started_msec = Time.get_ticks_msec()
+	_group_entry_started_msec = -1
+	global_position = queue_position
+	actor_navigation.park()
+
+
+## Starts the controlled doorway crossing for this member.
+func begin_group_entry() -> void:
+	_group_entry_started_msec = Time.get_ticks_msec()
+	_set_state(State.GROUP_ENTERING)
+	_travel_to(
+		entrance_inside_position,
+		navigation_arrival_distance,
+		"group entrance"
+	)
+
+
+func _on_group_entry_crossed() -> void:
+	_group_wait_started_msec = -1
+	_group_entry_started_msec = -1
+	_set_state(State.GROUP_INSIDE_STAGING)
+	actor_navigation.park()
+	group_entry_crossed.emit(self)
+
+
+## Sends this member to a standing position assigned by its group.
+func assign_group_position(
+	target: Vector2,
+	centre: Vector2
+) -> void:
+	group_slot_position = target
+	group_centre_position = centre
+
+	_cancel_all_scheduled()
+
+	_set_state(State.MOVING_TO_GROUP_SLOT)
+
+	_travel_to(
+		target,
+		navigation_arrival_distance,
+		"group position"
+	)
+
+
+## Sends this member to a chair the group reserved on its behalf.
+##
+## The chair is already booked by the group, so this hands it over rather than
+## reserving again - a second reservation would fail against the group's own.
+func assign_group_chair(chair: Node) -> void:
+	var seat: Chair = chair as Chair
+
+	if seat == null:
+		handle_invalid_destination()
+		return
+
+	# Take ownership of the reservation. The group booked this chair as the
+	# group, but from here the member is who sits in it and who releases it -
+	# and Reservable ignores a release from anyone but the holder, so without
+	# this handover the chair would never be freed.
+	seat.transfer_reservation(self)
+
+	reserved_chair = seat
+
+	begin_moving_to_seat()
+
+
+func _on_reached_group_slot() -> void:
+	_set_state(State.IN_GROUP)
+
+	# Face roughly toward the group, not exactly - see GroupFormation.
+	var facing: Vector2 = GroupFormation.get_facing(
+		global_position, group_centre_position
+	)
+
+	if facing.length_squared() > 0.001:
+		_update_facing(facing)
+
+	# Stagger the first drink so members do not all reach for the cask on the
+	# same tick. Without this a group drinks in lockstep, which reads as
+	# obviously scripted.
+	next_group_drink_minutes = _get_world_minutes() + randi_range(2, 5)
+
+
+## Sends this member outward so staff can reach the middle of the group.
+##
+## The tavern hand could not get to the centre: the ring of members is not
+## occupying the delivery point, but their avoidance radii close the gaps
+## between them, and the carried keg has nowhere to be put down. Stepping
+## outward for the length of the delivery opens a real path without touching
+## collision shapes or letting staff walk through anybody.
+func begin_delivery_step_back(target: Vector2) -> void:
+	delivery_slot_position = target
+	is_stepped_back_for_delivery = true
+
+	_cancel_all_scheduled()
+
+	_set_state(State.MOVING_TO_GROUP_SLOT)
+
+	_travel_to(
+		target,
+		navigation_arrival_distance,
+		"stepping back for delivery"
+	)
+
+
+## Re-issues the step-back journey. Part of the bounded clearance recovery.
+func refresh_delivery_step_back() -> void:
+	if delivery_slot_position == Vector2.ZERO:
+		return
+
+	group_slot_recoveries += 1
+
+	if _report_manager != null:
+		_report_manager.record_navigation_recovery(runtime_customer_id)
+
+	begin_delivery_step_back(delivery_slot_position)
+
+
+## Accepts this member as clear without waiting for it to finish walking.
+func accept_delivery_clearance(snap_to_slot: bool = false) -> void:
+	if snap_to_slot and delivery_slot_position != Vector2.ZERO:
+		global_position = delivery_slot_position
+
+	actor_navigation.park()
+
+	if current_state != State.IN_GROUP:
+		_set_state(State.IN_GROUP)
+
+
+## Puts this member back on its original drinking slot after a delivery.
+func end_delivery_step_back() -> void:
+	is_stepped_back_for_delivery = false
+	delivery_slot_position = Vector2.ZERO
+
+	if group_slot_position == Vector2.ZERO:
+		return
+
+	_cancel_all_scheduled()
+
+	_set_state(State.MOVING_TO_GROUP_SLOT)
+
+	_travel_to(
+		group_slot_position,
+		navigation_arrival_distance,
+		"reforming after delivery"
+	)
+
+
+## How far this member is from a point, for clearance checks.
+func get_distance_to(point: Vector2) -> float:
+	return global_position.distance_to(point)
+
+
+# --- Group order icon --------------------------------------------------------
+#
+# Reuses the same OrderIcon sprite a solo customer uses. There is deliberately
+# no second icon system: the group simply asks its leader to show the one this
+# customer already owns.
+
+## True while this customer is showing its group's order icon.
+var _showing_group_order_icon: bool = false
+
+
+## Shows the shared-order icon above this member, as the group's leader.
+func show_group_order_icon(texture: Texture2D) -> void:
+	if texture != null:
+		order_icon.texture = texture
+
+	order_icon.modulate = Color.WHITE
+	order_icon.visible = true
+
+	_showing_group_order_icon = true
+
+
+## Hides the group order icon. Idempotent, and safe on a non-leader.
+func hide_group_order_icon() -> void:
+	if not _showing_group_order_icon:
+		return
+
+	_showing_group_order_icon = false
+
+	order_icon.visible = false
+	order_icon.modulate = Color.WHITE
+
+
+func is_showing_group_order_icon() -> bool:
+	return _showing_group_order_icon
+
+
+## Re-issues the journey to this member's assigned formation slot.
+##
+## Used by the group's bounded assembly recovery. Deliberately goes back
+## through assign_group_position() so there is one path to a slot, not two.
+func refresh_group_slot() -> void:
+	if group_slot_position == Vector2.ZERO:
+		return
+
+	group_slot_recoveries += 1
+
+	if _report_manager != null:
+		_report_manager.record_navigation_recovery(runtime_customer_id)
+		_report_manager.record_group_slot_recovery(runtime_customer_id)
+
+	assign_group_position(group_slot_position, group_centre_position)
+
+
+## Accepts this member as arrived at its slot without waiting for navigation.
+##
+## The group calls this when a member is already within tolerance, or when
+## every retry has been used and the member has to be placed. The member is
+## never removed or abandoned - it joins the group either way.
+func accept_group_slot_arrival(snap_to_slot: bool = false) -> void:
+	if current_state == State.IN_GROUP:
+		return
+
+	if snap_to_slot and group_slot_position != Vector2.ZERO:
+		global_position = group_slot_position
+
+	group_slot_recoveries += 1
+
+	if _report_manager != null:
+		_report_manager.record_group_slot_recovery(runtime_customer_id)
+
+	actor_navigation.park()
+
+	_on_reached_group_slot()
+
+
+## True when this member is ready for another pull from the shared serving.
+func is_ready_for_group_drink() -> bool:
+	if current_state != State.IN_GROUP:
+		return false
+
+	# A member that has had its fill stops taking portions. Without this the
+	# rotation kept handing the keg to somebody who should have stopped.
+	if drinks_consumed_this_visit >= get_effective_drink_limit():
+		return false
+
+	return _get_world_minutes() >= next_group_drink_minutes
+
+
+## Records that this member just drank, and sets the next opportunity.
+##
+## [param drink] is the shared serving's drink, used for intoxication. It is
+## optional so the existing single-argument call site keeps working.
+func on_group_drink_taken(
+	minutes_between: int,
+	drink: DrinkDefinition = null
+) -> void:
+	drinks_consumed_this_visit += 1
+	shared_drinks_consumed += 1
+	has_had_a_drink = true
+
+	# Jittered rather than fixed, so the group keeps drifting out of sync
+	# instead of settling into a rhythm.
+	next_group_drink_minutes = (
+		_get_world_minutes() + minutes_between + randi_range(0, 2)
+	)
+
+	# Drinking satisfies thirst. Uses the generic adjust() rather than a
+	# drink-specific call so the needs model stays unaware of groups.
+	if needs != null:
+		if _balance_config != null:
+			needs.adjust(
+				&"thirst",
+				-_balance_config.thirst_reduction_per_drink
+			)
+		else:
+			needs.adjust(&"thirst", -0.35)
+
+		needs.adjust(&"drinks_consumed", 1.0)
+
+		_apply_group_intoxication(drink)
+
+	# The report's drinks_consumed comes from here, not from the counter
+	# above. Keg drinking used to reduce thirst while every group member was
+	# reported as having consumed nothing at all.
+	if _report_manager != null and needs != null:
+		_report_manager.record_drink_consumed(
+			runtime_customer_id,
+			needs.wealth,
+			needs.thirst,
+			needs.mood,
+			needs.intoxication
+		)
+		_report_manager.record_shared_drink(runtime_customer_id)
+
+
+## Applies the same intoxication maths an individually served drink uses.
+func _apply_group_intoxication(drink: DrinkDefinition) -> void:
+	if needs == null or _balance_config == null or drink == null:
+		return
+
+	var temperance: float = 0.5
+
+	if customer_type != null and customer_type.personality != null:
+		temperance = customer_type.personality.temperance
+
+	needs.adjust(
+		&"intoxication",
+		drink.alcohol_strength
+		* _balance_config.intoxication_gain_scale
+		* (2.0 - temperance)
+	)
+
+
+# --- Group leisure -----------------------------------------------------------
+#
+# The group decides WHEN a member takes a break and WHICH break it is; the
+# member performs it with the same methods a solo customer uses. There is
+# deliberately no group-only darts, socialising or relaxing implementation -
+# begin_relaxing(), begin_socialising() and begin_visiting_activity() below are
+# the same calls CustomerBrain's behaviours make.
+
+
+## Whether this member is standing with its group and free to do something.
+func is_group_member_idle() -> bool:
+	return has_group() and current_state == State.IN_GROUP
+
+
+## Whether this member is part-way through a leisure activity.
+func is_group_member_busy() -> bool:
+	return current_state in [
+		State.RELAXING,
+		State.SOCIALISING,
+		State.MOVING_TO_ACTIVITY,
+		State.USING_ACTIVITY,
+		State.RETURNING_TO_SEAT,
+	]
+
+
+## Books [param point] for this member and sends it there.
+##
+## The reservation goes through the ordinary [Reservable] on the activity
+## point, so a group member and a solo customer compete for the darts board on
+## exactly equal terms.
+func begin_group_activity(point: TavernActivityPoint) -> bool:
+	if point == null or point.reservable == null:
+		return false
+
+	if not point.reservable.reserve(self):
+		return false
+
+	group_activity_reservation = point.reservable
+	last_group_activity_id = point.activity_id
+
+	begin_visiting_activity(point)
+
+	return true
+
+
+## Starts a relax at this member's own group slot. No chair is involved.
+func begin_group_relax(
+	minimum_minutes: float,
+	maximum_minutes: float
+) -> void:
+	last_group_activity_id = &"relax"
+
+	begin_relaxing(minimum_minutes, maximum_minutes)
+
+
+## Starts a conversation with [param partner], both standing at their slots.
+func begin_group_socialise(
+	partner: Customer,
+	minimum_minutes: float,
+	maximum_minutes: float,
+	satisfaction_gain: float,
+	partner_satisfaction_gain: float,
+	engagement_gain: float
+) -> void:
+	last_group_activity_id = &"socialise"
+
+	begin_socialising(
+		partner,
+		minimum_minutes,
+		maximum_minutes,
+		true,
+		satisfaction_gain,
+		partner_satisfaction_gain,
+		engagement_gain
+	)
+
+
+## Sends a group member back to its assigned formation slot.
+##
+## Reuses RETURNING_TO_SEAT rather than adding a state: the meaning is
+## identical - going back to where the visit is anchored - and _on_returned_
+## to_seat() already branches on group membership.
+func begin_returning_to_group_slot() -> void:
+	_current_activity_point = null
+
+	release_group_activity_reservation()
+
+	if group_slot_position == Vector2.ZERO:
+		if is_instance_valid(group_controller):
+			_set_state(State.IN_GROUP)
+			_notify_group_member_returned()
+		else:
+			handle_invalid_destination()
+
+		return
+
+	_set_state(State.RETURNING_TO_SEAT)
+
+	_travel_to(
+		group_slot_position,
+		navigation_arrival_distance,
+		"back to group slot"
+	)
+
+
+## Ends any leisure activity immediately, releasing whatever it held.
+##
+## Called by the group when it starts recalling. Safe from any state, and safe
+## to call more than once.
+func cancel_group_activity() -> void:
+	_cancel_all_scheduled()
+
+	release_group_activity_reservation()
+
+	social_partner = null
+	_current_activity_point = null
+
+	order_icon.visible = false
+	order_icon.modulate = Color.WHITE
+
+
+## Returns the activity point booking, if this member holds one. Idempotent.
+func release_group_activity_reservation() -> void:
+	if group_activity_reservation == null:
+		return
+
+	var held: Reservable = group_activity_reservation
+
+	group_activity_reservation = null
+
+	if is_instance_valid(held) and held.is_held_by(self):
+		held.release(self)
+
+
+## Sends a group member back to its slot after finishing a leisure activity.
+##
+## Returns true when this customer is a group member and has been handled, so
+## the caller knows not to fall through to the solo brain.
+func _return_group_member_after_activity(activity_id: StringName) -> bool:
+	if not has_group() or not is_instance_valid(group_controller):
+		return false
+
+	last_group_activity_id = activity_id
+
+	if group_controller.has_method(&"on_member_activity_finished"):
+		group_controller.call(&"on_member_activity_finished", self, activity_id)
+
+	begin_returning_to_group_slot()
+
+	return true
+
+
+func _notify_group_member_returned() -> void:
+	if not is_instance_valid(group_controller):
+		return
+
+	if group_controller.has_method(&"on_member_returned_to_slot"):
+		group_controller.call(&"on_member_returned_to_slot", self)
+
+
+## Called by the group when the whole party is leaving.
+func begin_group_departure() -> void:
+	cancel_group_activity()
+	hide_group_order_icon()
+
+	is_stepped_back_for_delivery = false
+	delivery_slot_position = Vector2.ZERO
+
+	if current_state == State.LEAVING_TO_DOOR or current_state == State.EXITING:
+		return
+
+	departure_reason = &"group_departure"
+
+	begin_leaving()
+
+
+func _update_facing(direction: Vector2) -> void:
+	# Uses whatever facing hook the sprite already exposes; silently does
+	# nothing when there is none, so this never becomes a hard dependency.
+	if has_method(&"set_facing_direction"):
+		call(&"set_facing_direction", direction)
+	elif customer_sprite != null:
+		customer_sprite.flip_h = direction.x < 0.0
+
+
+func _get_world_minutes() -> int:
+	var world_time: Node = get_node_or_null(^"/root/WorldTime")
+
+	if world_time == null or not world_time.has_method(&"get_timestamp"):
+		return 0
+
+	var stamp: Variant = world_time.call(&"get_timestamp")
+
+	return int(stamp.total_minutes) if stamp != null else 0
+
+
+# --- Diagnostics -------------------------------------------------------------
+
+
+## Sets the state and records it for the diagnostics report.
+##
+## Every state change goes through here rather than assigning current_state
+## directly. That is the point: a lifecycle trail with gaps in it is worse
+## than none, because it makes a stuck visit look like it stopped somewhere it
+## did not.
+func _set_state(next_state: State) -> void:
+	if current_state == next_state:
+		return
+
+	current_state = next_state
+
+	if next_state == State.EXITING:
+		_exit_started_minutes = _get_world_minutes()
+
+	if _report_manager == null:
+		# Resolve lazily: the first state change can happen before the AI is
+		# configured, and a trail with a hole at the start is misleading.
+		var found: Array[Node] = get_tree().get_nodes_in_group(
+			&"customer_ai_report_manager"
+		)
+
+		if not found.is_empty():
+			_report_manager = found[0]
+
+	if _report_manager == null:
+		return
+
+	_report_manager.record_state(
+		runtime_customer_id,
+		State.keys()[next_state],
+		float(_get_world_minutes())
+	)
+
+	# The two milestones that answer "did this customer actually get in, and
+	# did it ever sit down?".
+	match next_state:
+		State.WALKING_TO_STAGING:
+			_report_manager.record_reached_inside(
+				runtime_customer_id, float(_get_world_minutes())
+			)
+
+		State.WAITING_TO_ORDER:
+			_report_manager.record_seated(
+				runtime_customer_id, float(_get_world_minutes())
+			)
+
+		State.ORDERING:
+			_report_manager.record_first_order(
+				runtime_customer_id, float(_get_world_minutes())
+			)
+
+
+## Current position and destination, for the report exporter.
+func report_position_to(manager: Node, door_position: Vector2) -> void:
+	if manager == null or not manager.has_method(&"record_position"):
+		return
+
+	var target: Vector2 = Vector2.ZERO
+	var label: String = ""
+
+	if navigation_agent != null and navigation_agent.target_position != Vector2.ZERO:
+		target = navigation_agent.target_position
+		label = State.keys()[current_state]
+
+	manager.call(
+		&"record_position",
+		runtime_customer_id,
+		global_position,
+		door_position,
+		target,
+		label
+	)

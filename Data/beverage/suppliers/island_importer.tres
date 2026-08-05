@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="SupplierDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/orders/order_catalogue_entry.gd" id="1_mq5cy"]
+[ext_resource type="Script" path="res://systems/orders/supplier_definition.gd" id="2_t27l4"]
+
+[sub_resource type="Resource" id="Resource_qavm5"]
+script = ExtResource("1_mq5cy")
+shape = 1
+container_id = &"pipe"
+content_id = &"madeira"
+unit_price_override = 700
+maximum_order_quantity = 2
+region_tags = Array[StringName]([&"imported"])
+delivery_minutes = 480
+destination_storage_tags = Array[StringName]([&"cellar_storage"])
+
+[sub_resource type="Resource" id="Resource_lsikg"]
+script = ExtResource("1_mq5cy")
+shape = 1
+container_id = &"hogshead"
+content_id = &"madeira"
+unit_price_override = 420
+maximum_order_quantity = 4
+region_tags = Array[StringName]([&"imported"])
+delivery_minutes = 420
+destination_storage_tags = Array[StringName]([&"cellar_storage"])
+
+[sub_resource type="Resource" id="Resource_3oipu"]
+script = ExtResource("1_mq5cy")
+shape = 1
+container_id = &"crate"
+content_id = &"port_wine"
+unit_price_override = 260
+maximum_order_quantity = 4
+rarity = 2
+region_tags = Array[StringName]([&"imported"])
+delivery_minutes = 480
+destination_storage_tags = Array[StringName]([&"cellar_storage", &"locked_storage"])
+
+[sub_resource type="Resource" id="Resource_nik10"]
+script = ExtResource("1_mq5cy")
+shape = 1
+container_id = &"crate"
+content_id = &"canary_wine"
+unit_price_override = 280
+maximum_order_quantity = 3
+rarity = 2
+region_tags = Array[StringName]([&"imported"])
+delivery_minutes = 480
+destination_storage_tags = Array[StringName]([&"cellar_storage", &"locked_storage"])
+
+[sub_resource type="Resource" id="Resource_n2elb"]
+script = ExtResource("1_mq5cy")
+shape = 1
+container_id = &"crate"
+content_id = &"brandy"
+unit_price_override = 520
+maximum_order_quantity = 2
+availability = 0.5
+rarity = 3
+region_tags = Array[StringName]([&"imported"])
+delivery_minutes = 600
+destination_storage_tags = Array[StringName]([&"locked_storage"])
+
+[sub_resource type="Resource" id="Resource_5h7v0"]
+script = ExtResource("1_mq5cy")
+shape = 1
+container_id = &"crate"
+content_id = &"arrack"
+unit_price_override = 480
+maximum_order_quantity = 1
+availability = 0.3
+rarity = 3
+region_tags = Array[StringName]([&"imported"])
+reputation_requirement = 25
+delivery_minutes = 720
+destination_storage_tags = Array[StringName]([&"locked_storage"])
+
+[resource]
+script = ExtResource("2_t27l4")
+supplier_id = &"island_importer"
+display_name = "Island Importer"
+entries = Array[ExtResource("1_mq5cy")]([SubResource("Resource_qavm5"), SubResource("Resource_lsikg"), SubResource("Resource_3oipu"), SubResource("Resource_nik10"), SubResource("Resource_n2elb"), SubResource("Resource_5h7v0")])

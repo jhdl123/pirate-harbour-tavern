@@ -287,9 +287,24 @@ func _attach_speaker(
 	if not attribute_alerts_to_staff:
 		return
 
-	var speaker: Node = Comms.find_speaker()
+	# Whoever can actually do something about an empty barrel: the role that
+	# refills stations. Falls through to any speaker, then to the neutral
+	# station voice set by the caller.
+	var speaker: Node = Comms.find_speaker_for_capability(
+		StaffCapabilities.REFILL_STATIONS
+	)
 
 	if speaker == null:
+		# Nobody appropriate exists - no bartender hired, or the only staff
+		# are disabled. The station speaks for itself rather than borrowing a
+		# worker's name, which keeps "who is telling me this" honest.
+		message.speaker_id = &"station"
+		var source_node: Node = message.get_source()
+
+		message.speaker_name = (
+			"Tavern" if source_node == null else String(source_node.name)
+		)
+
 		return
 
 	if speaker.has_method(&"get_staff_id"):

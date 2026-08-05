@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="IngredientDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/ingredient_definition.gd" id="1_v7fdu"]
+[ext_resource type="Resource" path="res://Data/beverage/storage_profiles/dry_ingredient.tres" id="2_kebh6"]
+
+[resource]
+script = ExtResource("1_v7fdu")
+unit_name = "loaf"
+unit_name_plural = "loaves"
+storage_profile = ExtResource("2_kebh6")
+item_id = &"sugar_loaf"
+display_name = "Sugar Loaf"
+tags = Array[StringName]([&"ingredient", &"small_item", &"dry_good"])
+maximum_stack_size = 20
+preferred_destination = 3
+base_buy_price = 12
+base_sell_price = 6

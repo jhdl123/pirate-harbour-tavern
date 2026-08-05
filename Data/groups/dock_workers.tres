@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="CustomerGroupDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/groups/customer_group_definition.gd" id="1_numpa"]
+
+[resource]
+script = ExtResource("1_numpa")
+group_id = &"dock_workers"
+display_name = "Dock Workers"
+description = "Placeholder balance values, not final tuning."
+minimum_size = 3
+maximum_size = 5
+spawn_weight = 3.0
+size_weights = {
+3: 3.0,
+4: 2.0,
+5: 1.0
+}
+place_preference = 1
+shared_order_chance = 0.8
+preferred_serving_tags = Array[StringName]([&"ale", &"beer", &"cheap"])
+minimum_shared_portions = 4
+maximum_shared_portions = 12
+reorder_chance = 0.65
+patience_modifier = 1.1
+spending_modifier = 0.8
+social_tags = Array[StringName]([&"labourer"])
+captain_chance = 0.15
+captain_category = &"captain"

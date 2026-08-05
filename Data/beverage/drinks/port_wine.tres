@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_le48h"]
+
+[resource]
+script = ExtResource("1_le48h")
+drink_category = &"port_wine"
+historical_availability = 2
+general_popularity = 0.6
+rarity = 2
+quality_tier = 3
+alcohol_strength = 1.6
+drink_duration_minutes = 12
+content_id = &"port_wine"
+serving_format_ids = Array[StringName]([&"glass", &"bottle_serving"])
+service_method = 1
+required_station_capabilities = Array[StringName]([&"pour_from_bottle"])
+item_id = &"port_wine"
+display_name = "Port Wine"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"wine", &"premium", &"imported", &"merchant_favourite", &"officer_favourite"])
+preferred_destination = 1
+base_sell_price = 20

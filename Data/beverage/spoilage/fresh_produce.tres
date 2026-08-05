@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SpoilageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/spoilage_profile_definition.gd" id="1_6kpfn"]
+
+[resource]
+script = ExtResource("1_6kpfn")
+profile_id = &"fresh_produce"
+display_name = "Fresh Produce"
+description = "Placeholder balance values, not historical measurements."
+expiry_minutes = 4320
+spoiled_below_freshness = 0.05
+sealed_state_pauses_spoilage = false

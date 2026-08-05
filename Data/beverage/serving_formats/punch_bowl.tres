@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ServingFormatDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/serving_format_definition.gd" id="1_asi6c"]
+
+[resource]
+script = ExtResource("1_asi6c")
+format_id = &"punch_bowl"
+historical_name = "Punch Bowl"
+simplified_explanation = "shared bowl"
+required_container_id = &"punch_bowl"
+measures_per_serving = 36
+portion_count = 6
+is_shared = true
+minimum_group_size = 3
+maximum_group_size = 6
+requires_table = true
+creates_group_anchor = true
+service_time_modifier = 1.3599999999999999
+price_modifier = 0.85
+valid_drink_tags = Array[StringName]([&"mixed_drink"])

@@ -449,6 +449,10 @@ func _is_slot_taken_by_another_task(
 	return false
 
 
+## Where this executor's worker stands to reach a slot.
+##
+## Serving is collection work, so it always uses the customer side. The item
+## itself does not move: only the approach point differs from the bartender's.
 func _get_slot_position(
 	counter: Node,
 	slot_index: int
@@ -456,14 +460,12 @@ func _get_slot_position(
 	if counter == null:
 		return Vector2.ZERO
 
-	if counter.has_method(&"get_service_slot_marker"):
-		var marker: Marker2D = counter.call(
-			&"get_service_slot_marker",
-			slot_index
-		) as Marker2D
-
-		if marker != null:
-			return marker.global_position
+	if counter.has_method(&"get_slot_access_position"):
+		return counter.call(
+			&"get_slot_access_position",
+			slot_index,
+			BarCounter.SlotAccess.COLLECT
+		)
 
 	var counter_2d: Node2D = counter as Node2D
 

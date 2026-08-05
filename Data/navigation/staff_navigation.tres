@@ -1,25 +1,8 @@
-[gd_resource type="Resource" script_class="ActorNavigationProfile" format=3]
+[gd_resource type="Resource" script_class="ActorNavigationProfile" format=3 uid="uid://cgbbqpg34duwl"]
 
 [ext_resource type="Script" uid="uid://dlqfy1welt4iv" path="res://systems/navigation/actor_navigation_profile.gd" id="1_navigation"]
 
 [resource]
 script = ExtResource("1_navigation")
-avoidance_radius = 12.0
 avoidance_priority = 0.75
-neighbour_distance = 80.0
-maximum_neighbours = 10
-time_horizon_agents = 0.7
-time_horizon_obstacles = 0.25
-path_desired_distance = 12.0
-target_desired_distance = 10.0
-path_maximum_distance = 32.0
-steering_smoothing = 0.55
 minimum_repath_interval = 0.4
-destination_move_repath_distance = 24.0
-stuck_check_interval = 0.5
-stuck_minimum_movement = 1.0
-stuck_checks_before_recovery = 3
-maximum_recovery_attempts = 3
-sidestep_distance = 28.0
-sidestep_duration = 0.45
-parked_avoidance_priority = 1.0

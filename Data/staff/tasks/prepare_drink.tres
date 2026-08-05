@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="TavernTaskDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/staff/tasks/tavern_task_definition.gd" id="1_taskdef"]
+
+[resource]
+script = ExtResource("1_taskdef")
+task_type = &"prepare_drink"
+display_name = "Prepare Drink"
+description = "Pour a requested drink and place it in an available bar service slot."
+diagnostic_category = &"bar"
+base_priority = 82.0
+urgency_weight = 55.0
+age_weight = 1.0
+maximum_age_bonus = 20.0
+distance_weight = 10.0
+carried_item_bonus = 45.0
+failure_penalty = 20.0
+required_capabilities = Array[StringName]([&"prepare_drinks"])
+maximum_retries = 3
+maximum_failures = 5
+timeout_world_minutes = 30
+retry_cooldown_seconds = 2.0
+can_be_interrupted = false
+player_may_override = true
+notify_on_completion = false
+carried_item_rule = 1

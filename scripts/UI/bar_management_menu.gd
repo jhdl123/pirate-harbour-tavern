@@ -107,6 +107,9 @@ func _ready() -> void:
 	_connect_refresh_sources()
 
 
+var _refresh_queued: bool = false
+
+
 func _connect_refresh_sources() -> void:
 	if economy_manager != null:
 		economy_manager.money_changed.connect(_on_relevant_change)
@@ -143,8 +146,11 @@ func open_menu() -> void:
 		return
 
 	screen.visible = true
-	refresh_overview()
-	refresh_progression()
+
+	# A full refresh on every open, so reopening can never show a value that
+	# was true the last time the menu happened to be looked at.
+	_connect_stock_sources()
+	refresh_all()
 
 	if not Simulation.is_paused():
 		Simulation.push_state(
@@ -234,8 +240,158 @@ func _get_milestone_text(served_total: int) -> String:
 
 func _on_relevant_change(_a = null, _b = null, _c = null) -> void:
 	if screen.visible:
-		refresh_overview()
-		refresh_progression()
+		request_refresh()
+
+
+## Queues a refresh for the end of the frame.
+##
+## A delivery, a refill and a preparation can all land in the same frame, and
+## rebuilding the row list three times would be wasted work and a visible
+## flicker. Coalescing also means the menu never polls: it sits idle until
+## something authoritative actually changes.
+func request_refresh() -> void:
+	if _refresh_queued or not screen.visible:
+		return
+
+	_refresh_queued = true
+
+	_flush_refresh.call_deferred()
+
+
+func _flush_refresh() -> void:
+	_refresh_queued = false
+
+	if screen.visible:
+		refresh_all()
+
+
+## Refreshes every page, not only the visible one.
+##
+## Cheap enough at this scale, and it removes a whole class of bug where
+## switching pages shows values from whenever that page was last built.
+func refresh_all() -> void:
+	refresh_overview()
+	refresh_progression()
+	_refresh_stock_page()
+
+
+## Subscribes to the authoritative sources of stock truth.
+##
+## The menu previously listened only to money, statistics and the world clock -
+## none of which fire when a barrel is delivered, a station is refilled or a
+## drink is poured, which is exactly why its stock figures went stale.
+##
+## Connections are made through a guarded helper so reopening the menu, or a
+## station being added at runtime, cannot produce duplicates.
+func _connect_stock_sources() -> void:
+	var tree: SceneTree = get_tree()
+
+	if tree == null:
+		return
+
+	for node: Node in tree.get_nodes_in_group(&"drink_stations"):
+		var station: DrinksStation = node as DrinksStation
+
+		if station == null:
+			continue
+
+		_connect_once(station.stock_changed, _on_relevant_change)
+		_connect_once(station.stock_state_changed, _on_relevant_change)
+
+	for node: Node in tree.get_nodes_in_group(&"stock_storage"):
+		var storage: StockStorage = node as StockStorage
+
+		if storage == null:
+			continue
+
+		_connect_once(storage.contents_changed, _on_relevant_change)
+
+	for node: Node in tree.get_nodes_in_group(&"order_manager"):
+		var manager: OrderManager = node as OrderManager
+
+		if manager == null:
+			continue
+
+		_connect_once(manager.order_submitted, _on_relevant_change)
+		_connect_once(manager.order_delivered, _on_relevant_change)
+		_connect_once(
+			manager.delivery_partially_received,
+			_on_relevant_change
+		)
+
+
+## Connects [param handler] to [param source] unless it already is.
+##
+## Godot allows the same connection twice and then calls it twice, which would
+## double every refresh each time the menu was reopened.
+func _connect_once(
+	source: Signal,
+	handler: Callable
+) -> void:
+	if not source.is_connected(handler):
+		source.connect(handler)
+
+
+## The raw values behind the display, for the debug integrity check.
+##
+## Returned in the same shape the report expects, so a tester can compare what
+## the menu shows against what the world actually holds without reading the UI
+## node tree.
+func get_stock_snapshot() -> Dictionary:
+	var stations: Array = []
+	var storage_entries: Array = []
+	var pending: Array = []
+
+	var tree: SceneTree = get_tree()
+
+	if tree == null:
+		return {}
+
+	for node: Node in tree.get_nodes_in_group(&"drink_stations"):
+		var station: DrinksStation = node as DrinksStation
+
+		if station == null:
+			continue
+
+		var info: Dictionary = station.get_stock_summary()
+
+		stations.append({
+			"station": String(station.name),
+			"name": info.get("name", ""),
+			"current_servings": info.get("current", 0),
+			"maximum_servings": info.get("maximum", 0),
+		})
+
+	for node: Node in tree.get_nodes_in_group(&"stock_storage"):
+		var storage: StockStorage = node as StockStorage
+
+		if storage == null:
+			continue
+
+		for entry: Dictionary in storage.get_summary():
+			storage_entries.append({
+				"display_name": entry.get("display_name", ""),
+				"quantity": entry.get("quantity", 0),
+			})
+
+	for node: Node in tree.get_nodes_in_group(&"order_manager"):
+		var manager: OrderManager = node as OrderManager
+
+		if manager == null:
+			continue
+
+		for order: Variant in manager.get_pending_orders():
+			pending.append({
+				"order_number": order.order_number,
+				"expected_at": order.expected_at_text,
+			})
+
+	return {
+		"captured_world_minutes": WorldTime.get_total_minutes_precise(),
+		"stations": stations,
+		"storage": storage_entries,
+		"pending_deliveries": pending,
+	}
 
 func close_menu() -> void:
 	if not screen.visible:
@@ -288,11 +444,46 @@ func _install_stock_page() -> void:
 	_stock_page = ScrollContainer.new()
 	_stock_page.visible = false
 	_stock_page.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_stock_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pages.add_child(_stock_page)
+
+	# "Pages" is a plain Control, not a Container, so it lays nothing out. The
+	# pages authored in the scene get their size from their own anchors; a
+	# page created in code gets anchors of 0,0 and therefore a rect of exactly
+	# zero by zero. It still builds its rows perfectly happily - they are just
+	# inside a box with no area, which looks precisely like "the stock menu
+	# shows nothing".
+	#
+	# Mirroring the overview page's rect rather than assuming a full-rect
+	# preset keeps this correct if the scene ever gives the pages margins.
+	_match_page_rect(_stock_page, overview_page)
+
 	_stock_rows = VBoxContainer.new()
 	_stock_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_stock_rows.add_theme_constant_override("separation", 8)
 	_stock_page.add_child(_stock_rows)
+
+
+## Gives [param page] the same anchors and offsets as [param reference].
+##
+## Used for pages added at runtime, so they occupy the same area as the ones
+## authored in the scene.
+func _match_page_rect(
+	page: Control,
+	reference: Control
+) -> void:
+	if page == null or reference == null:
+		return
+
+	page.anchor_left = reference.anchor_left
+	page.anchor_top = reference.anchor_top
+	page.anchor_right = reference.anchor_right
+	page.anchor_bottom = reference.anchor_bottom
+
+	page.offset_left = reference.offset_left
+	page.offset_top = reference.offset_top
+	page.offset_right = reference.offset_right
+	page.offset_bottom = reference.offset_bottom
 
 func _show_stock_page() -> void:
 	overview_page.visible = false
@@ -301,12 +492,17 @@ func _show_stock_page() -> void:
 	overview_button.disabled = false
 	progression_button.disabled = false
 	_stock_button.disabled = true
+	_connect_stock_sources()
 	_refresh_stock_page()
 
 func _refresh_stock_page() -> void:
 	if _stock_rows == null:
 		return
+	# Removed from the tree before being freed. queue_free() alone is
+	# deferred, so a rebuild would briefly show the old rows and the new ones
+	# together - which at a one-second refresh cadence reads as flicker.
 	for child in _stock_rows.get_children():
+		_stock_rows.remove_child(child)
 		child.queue_free()
 	_add_stock_heading("STORAGE")
 	var storages := get_tree().get_nodes_in_group(&"stock_storage")

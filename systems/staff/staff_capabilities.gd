@@ -31,6 +31,13 @@ const CLEAN_SEATS: StringName = &"clean_seats"
 const PREPARE_DRINKS: StringName = &"prepare_drinks"
 const REFILL_STATIONS: StringName = &"refill_stations"
 const MOVE_STOCK: StringName = &"move_stock"
+
+## Carrying a filled shared keg from storage to a waiting group.
+##
+## Its own capability rather than reusing SERVE_DRINKS: a keg is heavy floor
+## work, and the bartender staying behind the bar is a role boundary, not an
+## accident of which task types happen to exist.
+const DELIVER_GROUP_KEGS: StringName = &"deliver_group_kegs"
 const UNLOAD_DELIVERIES: StringName = &"unload_deliveries"
 const REPAIR: StringName = &"repair"
 const COOK: StringName = &"cook"

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="IngredientDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/ingredient_definition.gd" id="1_kne7c"]
+[ext_resource type="Resource" path="res://Data/beverage/storage_profiles/dry_ingredient.tres" id="2_xkw6p"]
+
+[resource]
+script = ExtResource("1_kne7c")
+unit_name = "measure"
+unit_name_plural = "measures"
+storage_profile = ExtResource("2_xkw6p")
+item_id = &"spices"
+display_name = "Mixed Spices"
+tags = Array[StringName]([&"ingredient", &"small_item", &"dry_good", &"imported"])
+maximum_stack_size = 40
+preferred_destination = 3
+base_buy_price = 8
+base_sell_price = 4

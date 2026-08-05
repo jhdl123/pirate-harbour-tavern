@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="TavernSchedule" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://systems/tavern/tavern_schedule.gd" id="1_sched"]
+
+[resource]
+script = ExtResource("1_sched")
+schedule_id = &"default"
+display_name = "Standard Trading Day"
+preparation_hour = 17
+preparation_minute = 0
+opening_hour = 18
+opening_minute = 0
+last_orders_hour = 0
+last_orders_minute = 30
+closing_hour = 1
+closing_minute = 0
+closing_grace_minutes = 30
+allow_end_day_before_closed = false
+allow_early_open = true
+allow_early_close = true

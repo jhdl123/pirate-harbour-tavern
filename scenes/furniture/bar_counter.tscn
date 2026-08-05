@@ -1,25 +1,25 @@
 [gd_scene format=3 uid="uid://b3ds1eskeev02"]
 
-[ext_resource type="Script" path="res://scripts/Interactables/bar_counter.gd" id="1_ovp2e"]
-[ext_resource type="Texture2D" uid="uid://d71vngekygoc" path="res://assets/art/furniture/128x64_bar.png" id="1_xxs0u"]
-[ext_resource type="Script" path="res://systems/interaction/interactable.gd" id="2_interact"]
+[ext_resource type="Script" uid="uid://m7p7vmkiep6h" path="res://scripts/Interactables/bar_counter.gd" id="1_ovp2e"]
+[ext_resource type="Script" uid="uid://cmq6hx5itg654" path="res://systems/interaction/interactable.gd" id="2_interact"]
+[ext_resource type="Texture2D" uid="uid://cmym75xo6n2ua" path="res://assets/art/furniture/448x32_bar.png" id="2_yn45r"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3cfvr"]
-size = Vector2(127.5, 26.5)
+size = Vector2(423.875, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]
-size = Vector2(84, 40)
+size = Vector2(120.333336, 40)
 
 [node name="BarCounter" type="StaticBody2D" unique_id=2047538336]
+scale = Vector2(0.75, 1)
 script = ExtResource("1_ovp2e")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1022926950]
 position = Vector2(-2, -17)
-scale = Vector2(1, 0.5)
-texture = ExtResource("1_xxs0u")
+texture = ExtResource("2_yn45r")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1599316197]
-position = Vector2(-2, -26)
+position = Vector2(-2.6666667, -22)
 scale = Vector2(1, 0.5)
 shape = SubResource("RectangleShape2D_3cfvr")
 
@@ -28,7 +28,7 @@ script = ExtResource("2_interact")
 display_name = "Bar Counter"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=95804760]
-position = Vector2(11, -21)
+position = Vector2(29.166668, -21)
 shape = SubResource("RectangleShape2D_mel2l")
 
 [node name="ServiceSlots" type="Node2D" parent="." unique_id=1206575542]
@@ -46,6 +46,12 @@ visible = false
 z_index = 5
 position = Vector2(0, -10)
 
+[node name="DepositPoint" type="Marker2D" parent="ServiceSlots/Slot0" unique_id=1905299008]
+position = Vector2(0, -30)
+
+[node name="CollectionPoint" type="Marker2D" parent="ServiceSlots/Slot0" unique_id=491489298]
+position = Vector2(0, 22)
+
 [node name="Slot1" type="Marker2D" parent="ServiceSlots" unique_id=627220756]
 position = Vector2(15, -21)
 
@@ -60,6 +66,12 @@ visible = false
 z_index = 5
 position = Vector2(0, -10)
 
+[node name="DepositPoint" type="Marker2D" parent="ServiceSlots/Slot1" unique_id=585181472]
+position = Vector2(0, -30)
+
+[node name="CollectionPoint" type="Marker2D" parent="ServiceSlots/Slot1" unique_id=283952255]
+position = Vector2(0, 22)
+
 [node name="Slot2" type="Marker2D" parent="ServiceSlots" unique_id=1766905297]
 position = Vector2(42, -21)
 
@@ -73,3 +85,29 @@ polygon = PackedVector2Array(-7, -10, 5, -10, 5, -1, -7, -1)
 visible = false
 z_index = 5
 position = Vector2(0, -10)
+
+[node name="DepositPoint" type="Marker2D" parent="ServiceSlots/Slot2" unique_id=852414186]
+position = Vector2(0, -30)
+
+[node name="CollectionPoint" type="Marker2D" parent="ServiceSlots/Slot2" unique_id=1746803165]
+position = Vector2(0, 22)
+
+[node name="Slot3" type="Marker2D" parent="ServiceSlots" unique_id=1370078625]
+position = Vector2(70.66667, -21)
+
+[node name="Highlight" type="Polygon2D" parent="ServiceSlots/Slot3" unique_id=2019394785]
+visible = false
+position = Vector2(1, -1)
+color = Color(1, 1, 1, 0.35000002)
+polygon = PackedVector2Array(-7, -10, 5, -10, 5, -1, -7, -1)
+
+[node name="ItemSprite" type="Sprite2D" parent="ServiceSlots/Slot3" unique_id=381670805]
+visible = false
+z_index = 5
+position = Vector2(0, -10)
+
+[node name="DepositPoint" type="Marker2D" parent="ServiceSlots/Slot3" unique_id=84796432]
+position = Vector2(0, -30)
+
+[node name="CollectionPoint" type="Marker2D" parent="ServiceSlots/Slot3" unique_id=568091482]
+position = Vector2(0, 22)

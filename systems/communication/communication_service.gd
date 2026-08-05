@@ -492,11 +492,40 @@ func count_active_alerts_from_speaker(
 ## nobody can speak, the caller posts the message unattributed rather than
 ## suppressing it - the player still needs to know the grog is low even with an
 ## empty payroll.
+## Any staff member willing to speak. The fallback when nothing more specific
+## is appropriate.
 func find_speaker() -> Node:
+	return find_speaker_for_capability(&"")
+
+
+## The most appropriate speaker for a message about [param capability].
+##
+## Preference order, and the order matters more than it looks:
+##
+## [codeblock]
+## 1. an enabled worker whose role covers the capability   the bartender, for
+##                                                         a stock message
+## 2. any enabled worker willing to speak                  better than silence
+## 3. null - the caller uses a neutral station voice       better than a lie
+## [/codeblock]
+##
+## Phase 3A.1 returned whichever staff member the group happened to yield
+## first, which is why every stock alert in the long test was attributed to
+## the Tavern Hand - a worker with no responsibility for, or ability to do
+## anything about, an empty barrel. Naming the wrong person is worse than
+## naming nobody, because it teaches the player to look in the wrong place.
+##
+## Passing an empty [param capability] skips step one and asks only for
+## somebody who can talk.
+func find_speaker_for_capability(
+	capability: StringName
+) -> Node:
 	var tree: SceneTree = get_tree()
 
 	if tree == null:
 		return null
+
+	var fallback: Node = null
 
 	for node: Node in tree.get_nodes_in_group(&"tavern_staff"):
 		if node == null or not is_instance_valid(node):
@@ -505,10 +534,31 @@ func find_speaker() -> Node:
 		if not node.has_method(&"can_speak_for_tavern"):
 			continue
 
-		if bool(node.call(&"can_speak_for_tavern")):
+		if not bool(node.call(&"can_speak_for_tavern")):
+			continue
+
+		# A paused or disabled worker should not be quoted as if it were
+		# standing there reporting the problem.
+		if "is_work_enabled" in node and not bool(node.get("is_work_enabled")):
+			continue
+
+		if capability.is_empty():
 			return node
 
-	return null
+		if fallback == null:
+			fallback = node
+
+		if not node.has_method(&"get_staff_capabilities"):
+			continue
+
+		var capabilities: Array[StringName] = node.call(
+			&"get_staff_capabilities"
+		)
+
+		if capabilities.has(capability):
+			return node
+
+	return fallback
 
 
 # -----------------------------------------------------------------------------

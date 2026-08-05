@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ServingFormatDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/serving_format_definition.gd" id="1_ws6os"]
+
+[resource]
+script = ExtResource("1_ws6os")
+format_id = &"bottle_serving"
+historical_name = "Bottle"
+required_container_id = &"bottle"
+measures_per_serving = 8
+maximum_group_size = 2
+service_time_modifier = 1.08
+price_modifier = 1.1
+valid_drink_tags = Array[StringName]([&"wine", &"spirit"])

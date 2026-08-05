@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BeverageContentDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/beverage_content_definition.gd" id="1_iyshk"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_drink_fast.tres" id="2_acgy8"]
+
+[resource]
+script = ExtResource("1_iyshk")
+content_id = &"prepared_bumbo"
+display_name = "Bumbo"
+tags = Array[StringName]([&"liquid", &"mixed_drink", &"rum"])
+base_value_per_measure = 4
+can_spoil = true
+spoilage_profile = ExtResource("2_acgy8")

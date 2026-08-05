@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://7j3jjris6ya6" path="res://systems/orders/order_catalogue_entry.gd" id="2_entry"]
 [ext_resource type="Resource" uid="uid://k3cuweoulpt" path="res://Data/items/stock/grog_barrel.tres" id="3_grog"]
 [ext_resource type="Resource" uid="uid://c5snnjp6ketnx" path="res://Data/items/stock/ale_keg.tres" id="4_ale"]
+[ext_resource type="Resource" uid="uid://bbnjiuf06jli0" path="res://Data/items/group_servings/ale_table_keg.tres" id="5_table_keg"]
 
 [sub_resource type="Resource" id="OrderEntry_grog"]
 script = ExtResource("2_entry")
@@ -15,9 +16,14 @@ script = ExtResource("2_entry")
 item = ExtResource("4_ale")
 maximum_order_quantity = 10
 
+[sub_resource type="Resource" id="OrderEntry_table_keg"]
+script = ExtResource("2_entry")
+item = ExtResource("5_table_keg")
+maximum_order_quantity = 10
+
 [resource]
 script = ExtResource("1_supplier")
 supplier_id = &"harbour_supplies"
 display_name = "Harbour Provisioners"
 description = "Reliable everyday supplies delivered from the harbour. Orders are recorded now and prepared for a future delivery system."
-entries = Array[ExtResource("2_entry")]([SubResource("OrderEntry_grog"), SubResource("OrderEntry_ale")])
+entries = Array[ExtResource("2_entry")]([SubResource("OrderEntry_grog"), SubResource("OrderEntry_ale"), SubResource("OrderEntry_table_keg")])

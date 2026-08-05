@@ -96,6 +96,9 @@ func _scenario_a_basic_service() -> void:
 
 	_pass("A", "Placed a %s on the bar, as the player would." % wanted.display_name)
 
+	# Identity, not occupancy: the Bartender may legitimately refill this slot.
+	var placed_stack: ItemStack = slot._stack
+
 	var task: TavernTask = await _wait_for_task_of_type(TavernTaskTypes.SERVE_DRINK)
 
 	if task == null:
@@ -140,11 +143,15 @@ func _scenario_a_basic_service() -> void:
 
 	_pass("A", "%s is now drinking." % customer.name)
 
-	if not slot.is_empty():
-		_fail("A", "The bar slot still holds a drink - one was duplicated.")
+	# Written before the Bartender existed, when an empty slot proved the
+	# drink had moved. A bartender now restocks the bar autonomously, so the
+	# slot being occupied is expected and the assertion has to be about the
+	# specific stack this test placed instead.
+	if slot._stack == placed_stack:
+		_fail("A", "The drink this test placed is still in the slot.")
 		return
 
-	_pass("A", "The bar slot is empty - exactly one drink moved.")
+	_pass("A", "The placed drink left the slot - exactly one drink moved.")
 
 	var completed: bool = await _wait_until(
 		func() -> bool: return task.state == TavernTask.State.COMPLETED
@@ -174,7 +181,7 @@ func _scenario_a_basic_service() -> void:
 # -----------------------------------------------------------------------------
 
 func _scenario_d_cleaning() -> void:
-	var chair: Chair = _find_clean_unoccupied_chair()
+	var chair: Chair = await _await_clean_unoccupied_chair()
 
 	if chair == null:
 		_fail("D", "No free chair was available to dirty.")
@@ -326,7 +333,7 @@ func _scenario_e_player_cleans_first() -> void:
 		_fail("E", "No Tavern Hand is present in the scene.")
 		return
 
-	var chair: Chair = _find_clean_unoccupied_chair()
+	var chair: Chair = await _await_clean_unoccupied_chair()
 
 	if chair == null:
 		_fail("E", "No free chair was available to dirty.")
@@ -714,6 +721,24 @@ func _wait_for_task_of_type(
 	)
 
 	return _found_task if ready else null
+
+
+## Waits for a free clean chair rather than giving up on the first look.
+##
+## With two tables and a fast arrival rate every seat is often taken at any
+## given instant. Failing immediately tested the tavern's occupancy, not the
+## cleaning system.
+func _await_clean_unoccupied_chair() -> Chair:
+	_found_node = null
+
+	var ready: bool = await _wait_until(
+		func() -> bool:
+			_found_node = _find_clean_unoccupied_chair()
+
+			return _found_node != null
+	)
+
+	return _found_node as Chair if ready else null
 
 
 func _find_clean_unoccupied_chair() -> Chair:

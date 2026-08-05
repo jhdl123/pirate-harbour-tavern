@@ -71,6 +71,10 @@ var _game_config: GameConfig = null
 
 
 func _ready() -> void:
+	# Discoverable by group, so the orphan sweep can find every chair without
+	# walking the scene tree or knowing the bar's layout.
+	add_to_group(&"chairs")
+
 	_create_occupied_obstacle()
 	connect_cleanable_signals()
 
@@ -245,6 +249,31 @@ func begin_use(
 ## has actually been used, prefer [method require_cleaning] instead - see its
 ## own doc comment for why a used chair still needs cleaning even when the
 ## customer eventually leaves without ordering again.
+## Who currently holds this chair, or null when free.
+func get_reservation_holder() -> Node:
+	return reservable.get_holder()
+
+
+## Frees this chair regardless of who holds it.
+##
+## Only for the orphan sweep, where the holder is already gone or invalid.
+## Normal releases must go through [method release_reservation] so a live
+## holder cannot have its seat taken out from under it.
+func force_release_reservation() -> void:
+	reservable.release()
+	set_occupied_zone_enabled(false)
+
+
+## Hands this chair's reservation to [param new_holder].
+##
+## Used when a group books a table and then gives each chair to a member: from
+## that point the member owns the seat and is the one who releases it.
+func transfer_reservation(
+	new_holder: Node
+) -> bool:
+	return reservable.transfer_to(new_holder)
+
+
 func release_reservation(
 	holder: Node = null
 ) -> void:

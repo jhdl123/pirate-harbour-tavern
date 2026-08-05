@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="DrinkRecipeDefinition" format=3 uid="uid://ddmanrcfpvl4t"]
+
+[ext_resource type="Script" uid="uid://df8vxk67ofe32" path="res://systems/beverage/recipe_ingredient.gd" id="1_jlpsk"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_punch.tres" id="2_bav8k"]
+[ext_resource type="Script" uid="uid://chkxoebsf80sy" path="res://systems/beverage/drink_recipe_definition.gd" id="3_k0loh"]
+
+[sub_resource type="Resource" id="Resource_m5u57"]
+script = ExtResource("1_jlpsk")
+source_kind = 1
+content_id = &"kill_devil"
+quantity = 12
+required_access_capability = &"draw_from_cask"
+
+[sub_resource type="Resource" id="Resource_onamm"]
+script = ExtResource("1_jlpsk")
+source_kind = 1
+content_id = &"water"
+quantity = 16
+required_access_capability = &"access_water"
+
+[sub_resource type="Resource" id="Resource_nprui"]
+script = ExtResource("1_jlpsk")
+item_id = &"citrus"
+quantity = 3
+required_access_capability = &"access_fresh_ingredients"
+
+[sub_resource type="Resource" id="Resource_d3nux"]
+script = ExtResource("1_jlpsk")
+item_id = &"sugar_loaf"
+quantity = 2
+required_access_capability = &"access_dry_ingredients"
+
+[sub_resource type="Resource" id="Resource_e5xc5"]
+script = ExtResource("1_jlpsk")
+item_id = &"spices"
+optional = true
+required_access_capability = &"access_dry_ingredients"
+
+[resource]
+script = ExtResource("3_k0loh")
+recipe_id = &"rum_punch_recipe"
+display_name = "Rum Punch"
+ingredients = Array[ExtResource("1_jlpsk")]([SubResource("Resource_m5u57"), SubResource("Resource_onamm"), SubResource("Resource_nprui"), SubResource("Resource_d3nux"), SubResource("Resource_e5xc5")])
+output_drink_id = &"rum_punch"
+output_content_id = &"prepared_rum_punch"
+output_serving_format_id = &"punch_bowl"
+output_measures = 36
+preparation_minutes = 8
+is_batch_preparation = true
+required_station_capabilities = Array[StringName]([&"prepare_batch", &"fill_shared_bowl"])
+required_vessel_container_id = &"punch_bowl"
+result_may_be_stored = true
+result_spoilage_profile = ExtResource("2_bav8k")

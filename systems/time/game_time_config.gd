@@ -35,7 +35,12 @@ var starting_day: int = 1
 
 ## Clock time a new game begins at.
 @export_range(0, 47, 1)
-var starting_hour: int = 8
+## Defaults to the start of the trading day's preparation period.
+##
+## Changed from 08:00 when the tavern lifecycle arrived: a new game beginning
+## nine hours before opening would sit in CLOSED with nothing happening, which
+## reads as a broken build rather than as a quiet morning.
+var starting_hour: int = 17
 
 @export_range(0, 239, 1)
 var starting_minute: int = 0

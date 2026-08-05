@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SpoilageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/spoilage_profile_definition.gd" id="1_kn33x"]
+
+[resource]
+script = ExtResource("1_kn33x")
+profile_id = &"never"
+display_name = "Does Not Spoil"
+description = "Placeholder balance values, not historical measurements."

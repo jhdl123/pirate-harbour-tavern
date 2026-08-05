@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="CustomerGroupDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/groups/customer_group_definition.gd" id="1_0cttu"]
+
+[resource]
+script = ExtResource("1_0cttu")
+group_id = &"pirate_crew"
+display_name = "Pirate Crew"
+description = "Placeholder balance values, not final tuning."
+minimum_size = 4
+maximum_size = 8
+spawn_weight = 2.5
+size_weights = {
+4: 2.0,
+5: 2.0,
+6: 2.0,
+7: 1.0,
+8: 1.0
+}
+leader_rule = 3
+place_preference = 1
+shared_order_chance = 0.9
+preferred_serving_tags = Array[StringName]([&"rum", &"shared", &"mixed_drink"])
+minimum_shared_portions = 6
+maximum_orders_per_visit = 4
+reorder_chance = 0.75
+patience_modifier = 1.3
+spending_modifier = 1.1
+social_tags = Array[StringName]([&"pirate"])
+captain_chance = 0.35
+captain_category = &"captain"

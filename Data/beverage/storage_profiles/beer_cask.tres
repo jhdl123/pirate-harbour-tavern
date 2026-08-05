@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="StorageProfileDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/storage_profile_definition.gd" id="1_ne4oe"]
+
+[resource]
+script = ExtResource("1_ne4oe")
+profile_id = &"beer_cask"
+display_name = "Beer or Ale Cask"
+content_tags = Array[StringName]([&"beer", &"ale", &"cider"])
+container_categories = Array[int]([0])
+behind_bar_compatible = true
+spoilage_modifier = 0.8
+theft_value = 10
+bulk_space_requirement = 3.0

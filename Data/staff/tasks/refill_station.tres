@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="TavernTaskDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/staff/tasks/tavern_task_definition.gd" id="1_taskdef"]
+
+[resource]
+script = ExtResource("1_taskdef")
+task_type = &"refill_station"
+display_name = "Refill Drink Station"
+description = "Move drink stock from storage to a low drink station."
+diagnostic_category = &"stock"
+base_priority = 68.0
+urgency_weight = 45.0
+age_weight = 1.0
+maximum_age_bonus = 20.0
+distance_weight = 10.0
+carried_item_bonus = 50.0
+failure_penalty = 20.0
+required_capabilities = Array[StringName]([&"refill_stations"])
+maximum_retries = 3
+maximum_failures = 5
+timeout_world_minutes = 60
+retry_cooldown_seconds = 4.0
+can_be_interrupted = false
+player_may_override = true
+notify_on_completion = false
+carried_item_rule = 0

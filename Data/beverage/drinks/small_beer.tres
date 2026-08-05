@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_4o7y0"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/poured_drink.tres" id="2_arpf5"]
+
+[resource]
+script = ExtResource("1_4o7y0")
+drink_category = &"small_beer"
+historical_availability = 0
+general_popularity = 1.0
+rarity = 0
+alcohol_strength = 0.3
+content_id = &"small_beer"
+serving_format_ids = Array[StringName]([&"mug", &"tankard", &"pitcher"])
+required_station_capabilities = Array[StringName]([&"draw_from_cask"])
+can_spoil_after_serving = true
+spoilage_profile = ExtResource("2_arpf5")
+item_id = &"small_beer"
+display_name = "Small Beer"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"beer", &"weak_alcohol", &"cheap", &"sailor_favourite"])
+preferred_destination = 1
+base_sell_price = 3

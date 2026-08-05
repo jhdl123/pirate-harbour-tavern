@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://b4commsuiphrb"]
+[gd_scene load_steps=3 format=3 uid="uid://b4commsuiphrb"]
 
 [ext_resource type="Script" path="res://systems/communication/ui/communication_ui.gd" id="1_commui"]
 [ext_resource type="Resource" path="res://Data/communication/communication_config.tres" id="2_commcfg"]

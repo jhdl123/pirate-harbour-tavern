@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_6jqct"]
+
+[resource]
+script = ExtResource("1_6jqct")
+drink_category = &"madeira"
+general_popularity = 0.8
+quality_tier = 3
+alcohol_strength = 1.5
+drink_duration_minutes = 12
+content_id = &"madeira"
+serving_format_ids = Array[StringName]([&"glass", &"bottle_serving"])
+service_method = 1
+required_station_capabilities = Array[StringName]([&"pour_from_bottle"])
+item_id = &"madeira"
+display_name = "Madeira Wine"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"wine", &"premium", &"imported", &"merchant_favourite", &"captain_favourite", &"officer_favourite"])
+preferred_destination = 1
+base_sell_price = 18

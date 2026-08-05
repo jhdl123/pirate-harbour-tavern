@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="SupplierDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/orders/order_catalogue_entry.gd" id="1_iwbej"]
+[ext_resource type="Script" path="res://systems/orders/supplier_definition.gd" id="2_5c5r0"]
+
+[sub_resource type="Resource" id="Resource_y7f2w"]
+script = ExtResource("1_iwbej")
+shape = 1
+container_id = &"kilderkin"
+content_id = &"ale"
+unit_price_override = 90
+maximum_order_quantity = 10
+rarity = 0
+delivery_minutes = 120
+destination_storage_tags = Array[StringName]([&"cellar_storage", &"bar_storage"])
+
+[sub_resource type="Resource" id="Resource_8evb4"]
+script = ExtResource("1_iwbej")
+shape = 1
+container_id = &"barrel"
+content_id = &"ale"
+unit_price_override = 160
+maximum_order_quantity = 8
+rarity = 0
+delivery_minutes = 150
+destination_storage_tags = Array[StringName]([&"cellar_storage"])
+
+[sub_resource type="Resource" id="Resource_urjab"]
+script = ExtResource("1_iwbej")
+shape = 1
+container_id = &"kilderkin"
+content_id = &"small_beer"
+unit_price_override = 60
+maximum_order_quantity = 12
+rarity = 0
+delivery_minutes = 120
+destination_storage_tags = Array[StringName]([&"cellar_storage", &"bar_storage"])
+
+[sub_resource type="Resource" id="Resource_lh0em"]
+script = ExtResource("1_iwbej")
+shape = 1
+container_id = &"barrel"
+content_id = &"cider"
+unit_price_override = 140
+maximum_order_quantity = 6
+rarity = 2
+delivery_minutes = 180
+destination_storage_tags = Array[StringName]([&"cellar_storage"])
+
+[resource]
+script = ExtResource("2_5c5r0")
+supplier_id = &"town_brewer"
+display_name = "Town Brewer"
+entries = Array[ExtResource("1_iwbej")]([SubResource("Resource_y7f2w"), SubResource("Resource_8evb4"), SubResource("Resource_urjab"), SubResource("Resource_lh0em")])

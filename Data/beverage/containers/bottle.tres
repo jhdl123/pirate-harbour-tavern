@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ContainerDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/container_definition.gd" id="1_jqpfj"]
+
+[resource]
+script = ExtResource("1_jqpfj")
+container_id = &"bottle"
+historical_name = "Bottle"
+description = "Capacity is a configurable game value, historically inspired rather than an exact period measure."
+category = 1
+maximum_capacity = 8
+customer_serving = true

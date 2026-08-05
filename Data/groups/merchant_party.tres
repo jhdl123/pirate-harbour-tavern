@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CustomerGroupDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/groups/customer_group_definition.gd" id="1_wiv6r"]
+
+[resource]
+script = ExtResource("1_wiv6r")
+group_id = &"merchant_party"
+display_name = "Merchant Party"
+description = "Placeholder balance values, not final tuning."
+spawn_weight = 2.0
+size_weights = {
+2: 2.0,
+3: 2.0,
+4: 1.0
+}
+leader_rule = 2
+standing_allowed = false
+shared_order_chance = 0.25
+preferred_serving_tags = Array[StringName]([&"wine", &"premium", &"imported"])
+maximum_shared_portions = 8
+maximum_orders_per_visit = 2
+reorder_chance = 0.4
+patience_modifier = 0.8
+spending_modifier = 2.0
+social_tags = Array[StringName]([&"merchant"])
+captain_chance = 0.2
+captain_category = &"captain"

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CustomerGroupDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/groups/customer_group_definition.gd" id="1_m50qg"]
+
+[resource]
+script = ExtResource("1_m50qg")
+group_id = &"captain_and_companions"
+display_name = "Captain and Companions"
+description = "Placeholder balance values, not final tuning."
+size_weights = {
+2: 1.0,
+3: 2.0,
+4: 1.0
+}
+leader_rule = 3
+standing_allowed = false
+preferred_serving_tags = Array[StringName]([&"premium", &"luxury", &"mixed_drink"])
+maximum_shared_portions = 12
+reorder_chance = 0.55
+patience_modifier = 0.9
+spending_modifier = 3.0
+social_tags = Array[StringName]([&"captain", &"high_value"])
+captain_chance = 1.0
+captain_category = &"captain"

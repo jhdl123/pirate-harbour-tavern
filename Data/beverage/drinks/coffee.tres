@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_x28bi"]
+[ext_resource type="Resource" path="res://Data/beverage/spoilage/prepared_drink_fast.tres" id="2_i0lcp"]
+
+[resource]
+script = ExtResource("1_x28bi")
+drink_category = &"brewed_coffee"
+historical_availability = 2
+general_popularity = 0.6
+rarity = 2
+quality_tier = 2
+alcohol_strength = 0.0
+drink_duration_minutes = 10
+content_id = &"brewed_coffee"
+serving_format_ids = Array[StringName]([&"cup", &"coffee_pot"])
+service_method = 2
+recipe_id = &"coffee_recipe"
+can_spoil_after_serving = true
+spoilage_profile = ExtResource("2_i0lcp")
+item_id = &"coffee"
+display_name = "Coffee"
+description = "Balance values are configurable placeholders, not historical measurements."
+tags = Array[StringName]([&"prepared_drink", &"service_item", &"hot_drink", &"non_alcoholic", &"imported", &"merchant_favourite", &"officer_favourite"])
+preferred_destination = 1
+base_sell_price = 14

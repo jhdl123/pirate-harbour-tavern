@@ -145,6 +145,36 @@ func reserve(
 	return true
 
 
+## Hands an existing reservation from its current holder to [param new_holder].
+##
+## Needed because a booking is not always made by whoever ends up using it. A
+## group reserves a whole table's chairs as the GROUP, then gives one chair to
+## each member - and from that moment the member is who releases it.
+##
+## Without a transfer the release silently fails: [method release] ignores a
+## holder mismatch by design, so the chair would stay reserved forever and the
+## tavern would lose a seat per group visit.
+##
+## Returns false when this is not reserved, or when [param new_holder] is null.
+func transfer_to(
+	new_holder: Node
+) -> bool:
+	if new_holder == null:
+		return false
+
+	if _state == State.FREE:
+		return false
+
+	if _holder == new_holder:
+		return true
+
+	_holder = new_holder
+
+	# Deliberately no reserved/released signals: nothing was freed and nothing
+	# newly taken, so listeners counting occupancy must not see a change.
+	return true
+
+
 ## Promotes a reservation to active use, now that [param actor] has arrived.
 ##
 ## Only the holder may occupy, so a second actor cannot arrive and take over a

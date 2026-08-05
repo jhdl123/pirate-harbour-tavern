@@ -87,7 +87,7 @@ func _on_world_day_changed(
 	stamp: GameTimeStamp
 ) -> void:
 	customers_served_today = 0
-	days_operated = stamp.day
+	days_operated = stamp.get_day()
 
 	statistic_changed.emit(
 		&"customers_served_today",

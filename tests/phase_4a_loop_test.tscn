@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/phase_4a_loop_test.gd" id="1_lp"]
+
+[node name="Phase4ALoopTest" type="Node"]
+script = ExtResource("1_lp")

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="CustomerType" format=3 uid="uid://cb4qxcbg88ukd"]
+
+[ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="1_2gva5"]
+[ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="1_fhm20"]
+[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="2_j2whw"]
+[ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="3_i7hx0"]
+[ext_resource type="Texture2D" uid="uid://cmlx2g5ncuvg8" path="res://assets/art/characters/32x32_sailor03.png" id="4_aqhne"]
+[ext_resource type="Resource" path="res://Data/customer_ai/personalities/captain.tres" id="4_personality"]
+
+[resource]
+script = ExtResource("1_fhm20")
+display_name = "Captain"
+customer_texture = ExtResource("4_aqhne")
+spawn_weight = 0.0
+patience_duration_minutes = 32
+available_drinks = Array[ExtResource("1_2gva5")]([ExtResource("2_j2whw"), ExtResource("3_i7hx0")])
+preferred_drink = ExtResource("2_j2whw")
+preferred_drink_chance = 0.8
+payment_multiplier = 1.6
+personality = ExtResource("4_personality")
+customer_category = &"captain"
+priority_level = 4
+importance_score = 3.0

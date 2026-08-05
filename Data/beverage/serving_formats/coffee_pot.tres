@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ServingFormatDefinition" format=3]
+
+[ext_resource type="Script" path="res://systems/beverage/serving_format_definition.gd" id="1_xrdx8"]
+
+[resource]
+script = ExtResource("1_xrdx8")
+format_id = &"coffee_pot"
+historical_name = "Pot"
+simplified_explanation = "shared coffee pot"
+required_container_id = &"coffee_pot"
+measures_per_serving = 12
+portion_count = 3
+is_shared = true
+minimum_group_size = 2
+maximum_group_size = 3
+requires_table = true
+creates_group_anchor = true
+service_time_modifier = 1.12
+price_modifier = 0.9
+valid_drink_tags = Array[StringName]([&"hot_drink"])
