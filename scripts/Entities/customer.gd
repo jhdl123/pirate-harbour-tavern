@@ -333,7 +333,9 @@ func configure(
 	activity_registry: ActivityRegistry = null,
 	balance_config: CustomerAIBalanceConfig = null,
 	diagnostics_config: CustomerAIDiagnosticsConfig = null,
-	report_manager: CustomerAIReportManager = null
+	report_manager: CustomerAIReportManager = null,
+	intent_registry: VisitIntentRegistry = null,
+	identity_seed: int = 0
 ) -> void:
 	if config == null:
 		push_error(
@@ -353,6 +355,9 @@ func configure(
 	_diagnostics_config = diagnostics_config
 	_report_manager = report_manager
 
+	_visit_intent_registry = intent_registry
+	_identity_seed = identity_seed
+
 	apply_game_config()
 	apply_customer_type()
 	_configure_ai(activity_registry)
@@ -362,14 +367,60 @@ func configure(
 ## site below that would otherwise use the brain checks for null first, so
 ## a customer configured without an ActivityRegistry behaves exactly as it
 ## did before this system existed.
+## This customer's identity for the visit - type, their own jittered
+## personality, and their visit intention. Null until configure() runs, and
+## on any customer configured without an ActivityRegistry.
+var identity: CustomerIdentity = null
+
+var _visit_intent_registry: VisitIntentRegistry = null
+
+## Non-zero makes this customer's traits and decisions reproducible - the
+## deterministic diagnostic mode passes the spawn index.
+var _identity_seed: int = 0
+
+
+## Applies the visit intention's shape to the freshly seeded needs.
+##
+## Deliberately after seed_from rather than inside it: seed_from is shared
+## with any future actor that has needs but no visit intention, and folding
+## intent handling into it would have made every caller carry an intent it
+## may not have.
+func _apply_intent_to_needs() -> void:
+	if identity == null or identity.visit_intent == null or needs == null:
+		return
+
+	var intent: VisitIntentConfig = identity.visit_intent
+
+	needs.visit_duration_minutes = maxf(
+		1.0,
+		needs.visit_duration_minutes * intent.visit_duration_multiplier
+	)
+
+	needs.remaining_visit_minutes = needs.visit_duration_minutes
+
+
 func _configure_ai(
 	activity_registry: ActivityRegistry
 ) -> void:
 	if activity_registry == null:
 		return
 
+	# Identity first: it owns this customer's private, jittered personality,
+	# and CustomerNeeds must seed from that rather than from the type's
+	# shared authored resource. Seeding from the shared one is what made
+	# every customer of a type behave identically.
+	identity = CustomerIdentity.new()
+	identity.initialise(
+		customer_type,
+		_visit_intent_registry,
+		runtime_customer_id,
+		_identity_seed
+	)
+
 	needs = CustomerNeeds.new()
-	needs.seed_from(customer_type, customer_type.personality, _balance_config)
+	needs.seed_from(customer_type, identity.personality, _balance_config)
+
+	_apply_intent_to_needs()
 
 	if _report_manager != null:
 		runtime_customer_id = _report_manager.allocate_customer_id()
@@ -400,7 +451,10 @@ func _configure_ai(
 
 	_brain.report_manager = _report_manager
 	_brain.runtime_customer_id = runtime_customer_id
+	_brain.identity = identity
 	_brain.configure(self, needs, activity_registry)
+
+	CustomerBehaviourEvents.emit_identity_initialised(identity)
 
 
 ## Phase 2B.2: the single place departure_reason is set for any *forced*

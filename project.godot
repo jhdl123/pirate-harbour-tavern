@@ -24,6 +24,7 @@ TaskBoard="*res://systems/staff/tasks/tavern_task_service.gd"
 Comms="*res://systems/communication/communication_service.gd"
 Modifiers="*res://systems/modifiers/modifier_service.gd"
 Tavern="*res://systems/tavern/tavern_lifecycle.gd"
+CustomerBehaviourEvents="*res://systems/customer_ai/identity/customer_behaviour_events.gd"
 
 [display]
 

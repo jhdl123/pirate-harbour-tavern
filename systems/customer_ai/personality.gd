@@ -116,3 +116,153 @@ var travel_willingness: float = 1.0
 ## the same StringName-tag pattern CustomerNeeds.favourite_activity_tags
 ## already uses.
 @export var future_trait_tags: Array[StringName] = []
+
+
+@export_category("Customer Identity Foundation - New Traits")
+
+## How readily this customer seeks out entertainment activities. Read via
+## [method CustomerIdentity.get_entertainment_interest], which layers the
+## visit intent's offset on top.
+@export_range(0.0, 1.0, 0.05)
+var entertainment_interest: float = 0.5
+
+## How much this customer wants to be left alone. Higher values should make
+## a customer avoid crowded areas and decline approaches - see
+## [SocialCompatibility].
+@export_range(0.0, 1.0, 0.05)
+var privacy_preference: float = 0.5
+
+## How strongly a group member stays with their group rather than wandering
+## off on their own.
+@export_range(0.0, 1.0, 0.05)
+var group_loyalty: float = 0.7
+
+## How readily this customer starts something with a stranger, as opposed
+## to only talking to people they arrived with.
+@export_range(0.0, 1.0, 0.05)
+var approaches_strangers: float = 0.4
+
+## How quickly this customer gets bored of the activity they are currently
+## doing. Higher values shorten activity durations - see
+## [method ActivityDefinition.roll_duration_minutes].
+@export_range(0.0, 1.0, 0.05)
+var restlessness: float = 0.5
+
+## How cautious this customer is about spending. Higher values bias them
+## toward cheaper drinks and fewer reorders.
+@export_range(0.0, 1.0, 0.05)
+var spending_caution: float = 0.5
+
+
+@export_category("Customer Identity Foundation - Variation")
+
+## How far each customer's own traits may drift from these authored values.
+##
+## [b]This is what stops customers of one type being clones.[/b] Every
+## spawned customer gets a private duplicate of this resource with each
+## variable trait nudged by up to this fraction of its own range - so one
+## authored "Sailor" personality produces a crowd of individually different
+## sailors rather than fifty identical ones. 0.0 restores the old exact-copy
+## behaviour.
+@export_range(0.0, 0.5, 0.01)
+var trait_variance: float = 0.15
+
+
+## Every trait [method create_visit_profile] is allowed to jitter.
+##
+## Traits are listed explicitly rather than discovered from the property
+## list, because the multiplier traits ([member wealth_multiplier] and
+## friends) have deliberately asymmetric ranges that a generic 0-1 walk
+## would corrupt - those are jittered proportionally instead, in
+## [method _jitter_multiplier].
+static func get_variable_trait_names() -> Array[StringName]:
+	return [
+		&"baseline_mood",
+		&"baseline_energy",
+		&"social_tendency",
+		&"generosity",
+		&"temperance",
+		&"curiosity",
+		&"courage",
+		&"entertainment_interest",
+		&"privacy_preference",
+		&"group_loyalty",
+		&"approaches_strangers",
+		&"restlessness",
+		&"spending_caution",
+	]
+
+
+## Multiplier traits, jittered proportionally rather than as 0-1 values.
+static func get_variable_multiplier_names() -> Array[StringName]:
+	return [
+		&"wealth_multiplier",
+		&"drink_appetite",
+		&"intoxication_tolerance",
+		&"visit_duration_multiplier",
+		&"preferred_drink_count_multiplier",
+		&"travel_willingness",
+	]
+
+
+## A private, individually varied copy of this personality for one customer.
+##
+## The returned resource is never shared: [method Resource.duplicate] gives
+## each customer their own instance, so a customer whose mood drops during a
+## bad visit cannot drag down every other customer of the same type - which
+## is exactly what would have happened if the authored resource were used
+## directly.
+##
+## [param rng] is supplied by the caller so determinism stays under
+## [CustomerIdentity]'s control rather than being decided here.
+func create_visit_profile(rng: RandomNumberGenerator) -> Personality:
+	var profile: Personality = duplicate() as Personality
+
+	if profile == null:
+		return Personality.new()
+
+	if trait_variance <= 0.0 or rng == null:
+		return profile
+
+	for trait_name: StringName in get_variable_trait_names():
+		var value: Variant = profile.get(trait_name)
+
+		if not (value is float or value is int):
+			continue
+
+		profile.set(
+			trait_name,
+			clampf(
+				float(value) + rng.randf_range(
+					-trait_variance, trait_variance
+				),
+				0.0,
+				1.0
+			)
+		)
+
+	for multiplier_name: StringName in get_variable_multiplier_names():
+		var value: Variant = profile.get(multiplier_name)
+
+		if not (value is float or value is int):
+			continue
+
+		profile.set(
+			multiplier_name,
+			_jitter_multiplier(float(value), rng)
+		)
+
+	return profile
+
+
+## Jitters a multiplier by a fraction of itself, then floors it at a small
+## positive number. Proportional rather than absolute so a 0.5 multiplier
+## and a 2.0 multiplier both vary by a sensible amount, and floored because
+## a multiplier of zero would silently disable whatever reads it.
+func _jitter_multiplier(
+	value: float,
+	rng: RandomNumberGenerator
+) -> float:
+	var spread: float = absf(value) * trait_variance
+
+	return maxf(0.05, value + rng.randf_range(-spread, spread))

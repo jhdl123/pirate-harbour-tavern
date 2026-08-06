@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="VisitIntentConfig" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/identity/visit_intent_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+intent_id = &"passing_time"
+display_name = "Passing Time"
+description = "Nowhere better to be."
+enabled = true
+visit_duration_multiplier = 1.2
+drink_count_multiplier = 0.9
+reorder_multiplier = 0.9
+sociability_offset = 0.05
+entertainment_offset = 0.15
+privacy_offset = 0.0
+group_cohesion_multiplier = 1.0
+activity_score_offsets = {"relax_at_seat": 6.0, "wander": 4.0}
+dissatisfaction_departure_multiplier = 1.0
+topic_tags = Array[StringName]([&"idle_talk"])

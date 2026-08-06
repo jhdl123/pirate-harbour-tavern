@@ -99,6 +99,43 @@ var state: State = State.THINKING
 var _current_activity: ActivityDefinition = null
 var _current_destination: Reservable = null
 
+## This customer's identity - type, personality, visit intention. Optional:
+## a null identity leaves every score exactly as it was before identities
+## existed, so an unconfigured test harness still behaves.
+var identity: CustomerIdentity = null
+
+## Score floor for weighted selection. An activity scoring below this is
+## never selected even if it is the only candidate above the others - the
+## brief's "low-scoring nonsensical actions must not be selected merely
+## because randomness exists". Falls back to Leave when nothing clears it.
+var minimum_selection_score: float = 0.0
+
+## How far below the top score an activity may sit and still be considered.
+## 0.0 restores exact argmax; the default keeps genuinely close calls in
+## the running without ever admitting a badly-scoring action.
+var selection_band: float = 0.25
+
+## True during deterministic diagnostics: selection takes the top score
+## rather than a weighted draw, so a run reproduces exactly.
+var deterministic_decisions: bool = false
+
+## Verbose per-candidate score logging for the developer menu.
+var verbose_scoring: bool = false
+
+## World minutes when the current activity was entered, for the commitment
+## floor.
+var _activity_entered_at_minutes: float = 0.0
+
+## Rolled duration of the current activity, 0.0 when the behaviour decides.
+var _activity_target_minutes: float = 0.0
+
+## activity_id -> world minutes at which its cooldown expires.
+var _cooldowns: Dictionary = {}
+
+## Selection RNG. Shared with the identity when there is one, so
+## deterministic mode covers decisions as well as traits.
+var _rng: RandomNumberGenerator = null
+
 
 func configure(
 	for_actor: Node,
@@ -207,7 +244,23 @@ func think() -> void:
 
 			continue
 
+		if is_on_cooldown(definition, context.world_minutes):
+			if record_rejections:
+				rejected_for_report.append({
+					"activity_id": String(definition.activity_id),
+					"reason": "cooling_down",
+				})
+
+			continue
+
 		var score: float = definition.get_utility(context)
+
+		# Visit intention bias. Applied here rather than as another
+		# ActivityCondition because it is per-customer runtime data, not
+		# authored per-activity - a condition would have needed one .tres
+		# per activity per intent.
+		if identity != null:
+			score += identity.get_activity_bias(definition.activity_id)
 
 		if is_nan(score) or is_inf(score):
 			_report_invalid_score(definition, score)
@@ -231,6 +284,24 @@ func think() -> void:
 			best_score = score
 			best = definition
 
+	# Weighted selection among the strongest candidates.
+	#
+	# This replaces the old `best` argmax result. Argmax was the single
+	# largest cause of customers looking scripted: identical inputs gave an
+	# identical activity every time, so every sailor in the room walked the
+	# same sequence in the same order. Selecting among near-equal candidates
+	# instead keeps the decision sensible while breaking the lockstep.
+	#
+	# Mandatory activities are exempt - when order_drink or leave wins on
+	# score, it is taken, not sampled. Service must not be left to chance.
+	if best != null and not best.is_mandatory:
+		var sampled: ActivityDefinition = _select_weighted(
+			eligible_for_report, best_score
+		)
+
+		if sampled != null:
+			best = sampled
+
 	if best == null:
 		state = State.WAITING
 
@@ -240,6 +311,10 @@ func think() -> void:
 				" has no available activity - WAITING"
 			)
 
+		CustomerBehaviourEvents.emit_decision_evaluated(
+			identity, eligible_for_report, rejected_for_report, &""
+		)
+
 		_report_decision(
 			previous_id, eligible_for_report, rejected_for_report,
 			&"", false, &"", contributions_for_report
@@ -247,8 +322,19 @@ func think() -> void:
 
 		return
 
-	if debug_enabled:
+	if debug_enabled or verbose_scoring:
 		_print_decision_block(eligible_for_report, best.activity_id)
+
+	# Behaviour events. Emitted here rather than inside _enter() so that a
+	# decision is reported even when the entry then fails to reserve a
+	# destination - the aggregate report needs to see the decision either
+	# way, or "decisions with no valid action" undercounts.
+	CustomerBehaviourEvents.emit_decision_evaluated(
+		identity, eligible_for_report, rejected_for_report, best.activity_id
+	)
+	CustomerBehaviourEvents.emit_action_selected(
+		identity, best.activity_id, best_score
+	)
 
 	_enter(best, context)
 
@@ -390,6 +476,10 @@ func _enter(
 
 		activity_changed.emit(null, definition)
 
+		CustomerBehaviourEvents.emit_activity_started(
+			identity, definition.activity_id
+		)
+
 		if definition.behaviour != null:
 			definition.behaviour.on_enter(context)
 
@@ -438,6 +528,23 @@ func _enter(
 	_current_destination = reserved
 	context.reserved_destination = reserved
 
+	# Pacing state for this entry. Rolled per entry, not per definition, so
+	# two customers starting the same activity together still finish apart.
+	_activity_entered_at_minutes = context.world_minutes
+	_activity_target_minutes = definition.roll_duration_minutes(
+		context, _get_rng()
+	)
+
+	if identity != null and identity.visit_intent != null:
+		# A celebrating crew lingers; a quick drink does not.
+		_activity_target_minutes *= (
+			identity.visit_intent.visit_duration_multiplier
+		)
+
+	CustomerBehaviourEvents.emit_activity_started(
+		identity, definition.activity_id
+	)
+
 	state = State.LEAVING if definition.is_terminal else State.PERFORMING_ACTIVITY
 
 	activity_changed.emit(null, definition)
@@ -460,6 +567,16 @@ func abandon_current_activity() -> void:
 func _exit_current(completed: bool) -> void:
 	if _current_activity == null:
 		return
+
+	# Cooldown starts when the activity ends, not when it began, so a long
+	# activity is not already re-selectable the moment it finishes.
+	begin_cooldown(_current_activity, WorldTime.get_total_minutes())
+
+	CustomerBehaviourEvents.emit_activity_ended(
+		identity,
+		_current_activity.activity_id,
+		completed
+	)
 
 	var finished: ActivityDefinition = _current_activity
 	var context: ActivityContext = _build_context()
@@ -496,6 +613,9 @@ func _build_context() -> ActivityContext:
 
 	if actor != null and actor.has_method("get_activity_flags"):
 		context.domain_flags = actor.get_activity_flags()
+
+	context.identity = identity
+	context.world_minutes = WorldTime.get_total_minutes()
 
 	return context
 
@@ -638,3 +758,149 @@ func _report_invalid_score(
 				definition.activity_id, score
 			]
 		)
+
+
+## Picks among the candidates within [member selection_band] of the top
+## score, weighted by how far each sits above [member minimum_selection_score].
+##
+## Weighting by score-above-floor rather than by raw score matters: raw
+## scores can be negative or clustered far from zero, and weighting by those
+## directly makes the draw either meaningless or degenerate. Distance above
+## the floor is always positive and always proportional to "how much better
+## than barely-acceptable this is".
+##
+## Returns null when nothing qualifies, leaving the caller's argmax result
+## in place.
+func _select_weighted(
+	eligible: Array[Dictionary],
+	best_score: float
+) -> ActivityDefinition:
+	if eligible.size() <= 1:
+		return null
+
+	if deterministic_decisions:
+		return null
+
+	if best_score < minimum_selection_score:
+		return null
+
+	var threshold: float = maxf(
+		minimum_selection_score,
+		best_score - (absf(best_score) * selection_band)
+	)
+
+	var candidates: Array[ActivityDefinition] = []
+	var weights: Array[float] = []
+	var total: float = 0.0
+
+	for entry: Dictionary in eligible:
+		var score: float = float(entry["score"])
+
+		if score < threshold:
+			continue
+
+		var definition: ActivityDefinition = registry.get_definition(
+			StringName(entry["activity_id"])
+		)
+
+		if definition == null or definition.is_mandatory:
+			continue
+
+		var weight: float = maxf(
+			0.01, score - minimum_selection_score
+		)
+
+		candidates.append(definition)
+		weights.append(weight)
+		total += weight
+
+	if candidates.size() <= 1 or total <= 0.0:
+		return null
+
+	var roll: float = _get_rng().randf() * total
+	var running: float = 0.0
+
+	for index: int in candidates.size():
+		running += weights[index]
+
+		if roll <= running:
+			return candidates[index]
+
+	return candidates[candidates.size() - 1]
+
+
+## True when [param definition] is still cooling down and may not be
+## re-selected. Mandatory activities are never on cooldown.
+func is_on_cooldown(
+	definition: ActivityDefinition,
+	world_minutes: float
+) -> bool:
+	if definition == null or definition.is_mandatory:
+		return false
+
+	if not _cooldowns.has(definition.activity_id):
+		return false
+
+	return world_minutes < float(_cooldowns[definition.activity_id])
+
+
+## True when the current activity has not yet run for its committed minimum
+## and should not be interrupted by an ordinary re-decision.
+##
+## Mandatory activities and an explicit [method force_activity] both bypass
+## this - a commitment floor must never be able to keep a customer in an
+## optional activity while the tavern is closing or their group is leaving.
+func is_committed(world_minutes: float) -> bool:
+	if _current_activity == null:
+		return false
+
+	if _current_activity.is_mandatory:
+		return false
+
+	if _current_activity.minimum_commitment_minutes <= 0.0:
+		return false
+
+	var elapsed: float = world_minutes - _activity_entered_at_minutes
+
+	return elapsed < _current_activity.minimum_commitment_minutes
+
+
+## True when the current activity has run past its rolled target duration
+## and should end. Callers poll this from their existing state handling
+## rather than a per-frame timer here.
+func has_exceeded_duration(world_minutes: float) -> bool:
+	if _current_activity == null or _activity_target_minutes <= 0.0:
+		return false
+
+	return (world_minutes - _activity_entered_at_minutes) >= _activity_target_minutes
+
+
+## Starts [param definition]'s cooldown from now.
+func begin_cooldown(
+	definition: ActivityDefinition,
+	world_minutes: float
+) -> void:
+	if definition == null or definition.cooldown_minutes <= 0.0:
+		return
+
+	_cooldowns[definition.activity_id] = (
+		world_minutes + definition.cooldown_minutes
+	)
+
+
+func get_cooldowns() -> Dictionary:
+	return _cooldowns.duplicate()
+
+
+## The RNG used for selection - the identity's when there is one, so
+## deterministic mode covers traits and decisions together, otherwise a
+## private randomized instance.
+func _get_rng() -> RandomNumberGenerator:
+	if identity != null and identity.rng != null:
+		return identity.rng
+
+	if _rng == null:
+		_rng = RandomNumberGenerator.new()
+		_rng.randomize()
+
+	return _rng

@@ -1,0 +1,56 @@
+[gd_resource type="Resource" script_class="CustomerType" format=3 uid="uid://f5pkaa831e0f"]
+
+[ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="2_drink"]
+[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="3_grog"]
+[ext_resource type="Texture2D" uid="uid://civ2du86r0qjc" path="res://assets/art/characters/32x32_staff_04.png" id="4_7sta1"]
+[ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="4_ale"]
+[ext_resource type="Resource" path="res://Data/customer_ai/personalities/merchant.tres" id="6_pers"]
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Merchant"
+customer_texture = ExtResource("4_7sta1")
+spawn_weight = 4.0
+available_drinks = Array[ExtResource("2_drink")]([ExtResource("3_grog"), ExtResource("4_ale")])
+preferred_drink = ExtResource("4_ale")
+personality = ExtResource("6_pers")
+type_id = &"merchant"
+tags = Array[StringName]([&"merchant", &"wealthy"])
+social_category = &"trade"
+starting_money_multiplier = 2.5
+spending_willingness = 0.85
+reorder_tendency = 0.7
+tipping_tendency = 1.2
+visit_intent_weights = {
+"quick_drink": 2.5,
+"quiet_meeting": 4.0,
+"social_visit": 1.0,
+"waiting_for_someone": 2.5
+}
+solo_arrival_chance = 0.75
+crowding_tolerance = 0.25
+waiting_tolerance_multiplier = 0.7
+dissatisfaction_departure_tendency = 1.8
+seating_preference = 0.9
+bar_standing_preference = 0.15
+wander_tendency = 0.15
+group_conformity = 0.5
+substitution_willingness = 0.35
+drink_speed_multiplier = 0.8
+desired_drink_count_multiplier = 0.8
+group_drink_affinity = 0.4
+base_sociability = 0.4
+compatible_tags = Array[StringName]([&"merchant", &"official"])
+disliked_tags = Array[StringName]([&"pirate", &"criminal"])
+stranger_approach_willingness = 0.3
+conversation_join_willingness = 0.35
+conversation_duration_multiplier = 1.2
+group_social_preference = 0.5
+information_domains = Array[StringName]([&"shipping", &"trade", &"prices"])
+knowledge_tags = Array[StringName]([&"cargo", &"contracts"])
+conversation_topics = Array[StringName]([&"business", &"prices"])
+discretion_tendency = 0.75
+credibility_tendency = 0.8
+observant_tendency = 0.6
+secrecy_tendency = 0.7

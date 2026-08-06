@@ -63,3 +63,16 @@ static func create(
 	context.actor_position = position
 
 	return context
+
+
+## This customer's identity for the visit - type, personality and visit
+## intention. Null on a customer configured without one (a bare test
+## harness), and every reader must tolerate that: a null identity means
+## "no bias", so scoring falls back to exactly the pre-identity behaviour.
+var identity: CustomerIdentity = null
+
+
+## World minutes now, used for cooldown and commitment arithmetic. Supplied
+## by CustomerBrain from the existing world clock rather than an independent
+## timer, per the single-authoritative-clock rule.
+var world_minutes: float = 0.0

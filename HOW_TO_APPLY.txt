@@ -1,0 +1,82 @@
+Pirate Harbour Tavern - Customer Identity & Behaviour Foundation
+Plus navigation diagnostic probes.
+
+Baseline: commit dded922 ("commit check"). If your working copy has moved
+on since then, check CHANGED_FILES.txt against your own changes before
+extracting - the 19 MODIFIED files are full replacements, not patches.
+
+
+HOW TO APPLY
+------------
+1. Back up your project folder (or commit what you have first).
+
+2. Extract this zip OVER your project root, keeping the folder
+   structure. Every path inside is relative to the folder containing
+   project.godot.
+
+   The archive contains 59 files: 40 new, 19 modified.
+   Nothing is deleted or renamed.
+
+3. Open the project in Godot once and let it import. The new scripts
+   declare class_names (CustomerIdentity, VisitIntentConfig,
+   SocialCompatibility and others) which will not resolve until Godot
+   has scanned them. Parser errors on the first open are expected to
+   disappear after the import completes.
+
+4. project.godot has a NEW AUTOLOAD:
+
+       CustomerBehaviourEvents="*res://systems/customer_ai/identity/customer_behaviour_events.gd"
+
+   If you would rather not overwrite your project.godot, skip that file
+   and add the autoload by hand in Project Settings > Autoload. It must
+   be present or the customer scripts will fail at runtime.
+
+
+WHAT TO WIRE IN THE EDITOR
+--------------------------
+Two things are code-complete but need an Inspector reference, because a
+scene file cannot be merged safely:
+
+  - GameManager: set "Visit Intent Registry" to
+    res://Data/customer_ai/visit_intent_registry.tres
+    Without it customers spawn with no visit intention - they behave
+    exactly as they did before, so this fails quietly rather than loudly.
+
+  - Add the three new CustomerTypes to the spawner's "Customer Types"
+    array in main.tscn:
+      res://resources/CustomerTypes/local_worker.tres
+      res://resources/CustomerTypes/merchant.tres
+      res://resources/CustomerTypes/pirate.tres
+    (sailor, sailor_impatient and captain are already there and have
+    been extended in place.)
+
+  - Optional: add systems/customer_ai/ui/customer_behaviour_panel.gd as
+    a Node in main.tscn for the F9 developer controls.
+
+
+VERIFYING
+---------
+  godot --headless --editor --quit
+  godot --headless res://tests/customer_identity_test.tscn
+
+Expect: 92 passed, 0 failed.
+
+The group suites should be unchanged from your baseline:
+  group_framework_test   47 passed,  2 failed  (both SEATED cases)
+  group_loop_test        38 passed,  0 failed
+  group_milestone_test   43 passed,  0 failed
+  group_parity_test      49 passed,  0 failed
+  group_keg_loop_test    27 passed,  5 failed  (same 5 as before)
+
+Those 7 failures are pre-existing and are tests asserting superseded
+behaviour, not regressions. See docs/CUSTOMER_IDENTITY_FOUNDATION.md.
+
+
+DIAGNOSTIC PROBES (not part of the feature)
+-------------------------------------------
+  tests/nav_probe.tscn           samples every static collider against
+                                 the live navmesh
+  tests/seated_group_probe.tscn  drives a seated group through main.tscn
+
+Neither is wired into anything. Delete them freely if you do not want
+them in the project.

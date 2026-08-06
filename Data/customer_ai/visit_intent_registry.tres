@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="VisitIntentRegistry" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/identity/visit_intent_registry.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/customer_ai/identity/visit_intent_config.gd" id="2_cfg"]
+[ext_resource type="Resource" path="res://Data/customer_ai/visit_intents/quick_drink.tres" id="3_i"]
+[ext_resource type="Resource" path="res://Data/customer_ai/visit_intents/social_visit.tres" id="4_i"]
+[ext_resource type="Resource" path="res://Data/customer_ai/visit_intents/group_drinking.tres" id="5_i"]
+[ext_resource type="Resource" path="res://Data/customer_ai/visit_intents/celebration.tres" id="6_i"]
+[ext_resource type="Resource" path="res://Data/customer_ai/visit_intents/quiet_meeting.tres" id="7_i"]
+[ext_resource type="Resource" path="res://Data/customer_ai/visit_intents/waiting_for_someone.tres" id="8_i"]
+[ext_resource type="Resource" path="res://Data/customer_ai/visit_intents/entertainment.tres" id="9_i"]
+[ext_resource type="Resource" path="res://Data/customer_ai/visit_intents/heavy_drinking.tres" id="10_i"]
+[ext_resource type="Resource" path="res://Data/customer_ai/visit_intents/passing_time.tres" id="11_i"]
+
+[resource]
+script = ExtResource("1_script")
+intents = Array[ExtResource("2_cfg")]([ExtResource("3_i"), ExtResource("4_i"), ExtResource("5_i"), ExtResource("6_i"), ExtResource("7_i"), ExtResource("8_i"), ExtResource("9_i"), ExtResource("10_i"), ExtResource("11_i")])

@@ -169,3 +169,85 @@ func validate_or_warn() -> bool:
 		)
 
 	return is_valid
+
+
+@export_category("Identity Foundation - Pacing")
+
+## World minutes this activity must run before the brain will reconsider.
+##
+## Without a commitment floor, weighted selection makes customers twitch:
+## a re-decision arriving a second after the last one can flip to a
+## near-equal-scoring activity, and the customer visibly dithers. Zero keeps
+## the old immediate-reconsideration behaviour.
+@export_range(0.0, 120.0, 0.5)
+var minimum_commitment_minutes: float = 0.0
+
+## Target duration before the activity ends of its own accord. Zero means
+## the behaviour decides, as it does today.
+@export_range(0.0, 240.0, 0.5)
+var target_duration_minutes: float = 0.0
+
+## Hard ceiling on the duration. Zero means no ceiling. Guards against the
+## endless actions the brief rules out.
+@export_range(0.0, 480.0, 0.5)
+var maximum_duration_minutes: float = 0.0
+
+## World minutes after this activity ends before it may be selected again.
+##
+## This is the hard version of what [RepeatDecayCondition] does softly. Decay
+## makes a repeat progressively less attractive; a cooldown makes it
+## impossible for a while. Both are useful: decay for "getting bored of
+## relaxing", a cooldown for "you cannot possibly want another darts match
+## thirty seconds later".
+@export_range(0.0, 240.0, 0.5)
+var cooldown_minutes: float = 0.0
+
+## When true, this activity is exempt from cooldown and commitment checks.
+##
+## [b]Mandatory lifecycle work sets this.[/b] Ordering, drinking, paying and
+## leaving must never be blocked because an optional-activity pacing rule
+## happened to be counting down - that would strand a customer mid-service.
+## Set on order_drink, drink and leave.
+@export var is_mandatory: bool = false
+
+
+## How long this activity should run for one customer, in world minutes.
+##
+## Rolled per entry rather than fixed, so a room full of customers does not
+## complete the same activity on the same tick - which is what made the old
+## behaviour look scripted. Restless customers finish sooner; the intent's
+## own pacing is applied by the caller.
+##
+## Returns 0.0 when no target is authored, meaning "the behaviour decides",
+## which is the pre-existing path for every activity that ends on its own
+## condition rather than a clock.
+func roll_duration_minutes(
+	context: ActivityContext,
+	rng: RandomNumberGenerator
+) -> float:
+	if target_duration_minutes <= 0.0:
+		return 0.0
+
+	var duration: float = target_duration_minutes
+
+	if rng != null:
+		# +/-25% spread around the authored target.
+		duration *= rng.randf_range(0.75, 1.25)
+
+	if context != null and context.needs != null:
+		var restlessness: float = 0.5
+		var identity: Variant = context.get(&"identity")
+
+		if identity != null and identity.personality != null:
+			restlessness = identity.personality.restlessness
+
+		# Restless customers cut it short, patient ones stretch it:
+		# 0.0 restlessness -> x1.25, 1.0 -> x0.75.
+		duration *= 1.25 - (restlessness * 0.5)
+
+	duration = maxf(duration, minimum_commitment_minutes)
+
+	if maximum_duration_minutes > 0.0:
+		duration = minf(duration, maximum_duration_minutes)
+
+	return maxf(0.0, duration)

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="VisitIntentConfig" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/identity/visit_intent_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+intent_id = &"entertainment"
+display_name = "Entertainment"
+description = "Here for the games and songs."
+enabled = true
+visit_duration_multiplier = 1.25
+drink_count_multiplier = 1.1
+reorder_multiplier = 1.1
+sociability_offset = 0.15
+entertainment_offset = 0.45
+privacy_offset = -0.2
+group_cohesion_multiplier = 1.0
+activity_score_offsets = {"visit_tavern_activity": 12.0, "relax_at_seat": -3.0}
+dissatisfaction_departure_multiplier = 0.9
+topic_tags = Array[StringName]([&"games"])

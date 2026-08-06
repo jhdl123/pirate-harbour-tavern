@@ -57,6 +57,22 @@ signal arrival_rejected(reason: StringName)
 ## existed - see Customer._configure_ai().
 @export var activity_registry: ActivityRegistry
 
+## Visit intentions available to spawned customers. Optional: a null
+## registry leaves every customer without an intent, which is exactly the
+## pre-identity behaviour rather than an error.
+@export var visit_intent_registry: VisitIntentRegistry
+
+## When non-zero, every spawned customer's identity seed is derived from
+## this plus their spawn index, making a whole run reproducible. Driven by
+## the developer menu's deterministic mode; 0 is normal random play.
+var deterministic_identity_seed: int = 0
+
+## Forces the next spawn to use this type, bypassing spawn weighting. Set
+## by the developer menu's force-spawn control and cleared after one use.
+var forced_customer_type: CustomerType = null
+
+var _identity_spawn_index: int = 0
+
 ## Phase 2B: starting-money/thirst/satisfaction/visit-duration ranges and
 ## satisfaction/thirst/intoxication change amounts. Optional, like
 ## activity_registry above - a null value here leaves CustomerNeeds.seed_from()
@@ -213,6 +229,12 @@ func spawn_customer() -> void:
 		choose_customer_type()
 	)
 
+	if forced_customer_type != null:
+		# Developer force-spawn. Consumed immediately so one press spawns
+		# one customer of that type rather than pinning every later spawn.
+		selected_customer_type = forced_customer_type
+		forced_customer_type = null
+
 	if selected_customer_type == null:
 		push_error(
 			"No valid CustomerType is available."
@@ -228,13 +250,24 @@ func spawn_customer() -> void:
 	)
 
 	if customer.has_method("configure"):
+		_identity_spawn_index += 1
+
+		var identity_seed: int = 0
+
+		if deterministic_identity_seed != 0:
+			identity_seed = (
+				deterministic_identity_seed + _identity_spawn_index
+			)
+
 		customer.configure(
 			game_config,
 			selected_customer_type,
 			activity_registry,
 			customer_ai_balance,
 			customer_ai_diagnostics,
-			customer_ai_report_manager
+			customer_ai_report_manager,
+			visit_intent_registry,
+			identity_seed
 		)
 	else:
 		push_error(

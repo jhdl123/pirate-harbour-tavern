@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="VisitIntentConfig" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/identity/visit_intent_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+intent_id = &"group_drinking"
+display_name = "Group Drinking"
+description = "Drinking with the crew."
+enabled = true
+visit_duration_multiplier = 1.3
+drink_count_multiplier = 1.5
+reorder_multiplier = 1.4
+sociability_offset = 0.25
+entertainment_offset = 0.1
+privacy_offset = -0.25
+group_cohesion_multiplier = 1.5
+activity_score_offsets = {"socialise_at_seat": 8.0, "order_drink": 4.0, "wander": -4.0}
+dissatisfaction_departure_multiplier = 0.8
+topic_tags = Array[StringName]([&"crew", &"voyages"])
