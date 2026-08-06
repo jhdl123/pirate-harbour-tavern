@@ -366,6 +366,9 @@ texture = ExtResource("11_obdhw")
 [node name="DartsPoint" parent="Environment" unique_id=1461719098 instance=ExtResource("38_darts_point")]
 position = Vector2(82, 452)
 
+[node name="DartsPoint2" parent="Environment" unique_id=1461719099 instance=ExtResource("38_darts_point")]
+position = Vector2(190, 452)
+
 [node name="Grog_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
 position = Vector2(396, 35)
 

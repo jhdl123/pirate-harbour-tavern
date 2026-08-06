@@ -7,6 +7,6 @@ script = ExtResource("1_script")
 contribution_label = &"visit_time_contribution"
 need_id = &"remaining_visit_minutes"
 comparison = 0
-threshold = 10.0
+threshold = 8.0
 gates = true
 score_weight = 0.0

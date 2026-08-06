@@ -252,6 +252,16 @@ func _apply_definition() -> void:
 	if actor_navigation != null and definition.navigation_profile != null:
 		actor_navigation.set_profile(definition.navigation_profile)
 
+		# Staff get individual walking character too. Without this they walk
+		# the exact centreline at exactly uniform speed while customers do
+		# not, which reads as the staff being the robotic ones - and it
+		# leaves them without a preferred passing side, so two staff meeting
+		# head-on still mirror each other.
+		#
+		# Restlessness is deliberately low: staff have somewhere to be and
+		# should look purposeful rather than fidgety.
+		actor_navigation.seed_personal_movement(0, 0.35)
+
 	if speech_bubble != null:
 		speech_bubble.display_seconds = definition.speech_bubble_seconds
 

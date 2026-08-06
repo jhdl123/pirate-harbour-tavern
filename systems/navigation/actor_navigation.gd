@@ -275,6 +275,8 @@ func move_to(
 	_destination = destination
 	_state = NavigationState.TRAVELLING
 
+	_record_journey_start(destination.position)
+
 	_recovery_attempts = 0
 	_stuck_checks = 0
 	_stuck_elapsed = 0.0
@@ -493,11 +495,15 @@ func _process_travel(
 
 	agent.velocity = desired_velocity * _agent_velocity_scale
 
-	movement.request_velocity(
-		_resolve_applied_velocity(desired_velocity, delta)
+	var applied_velocity: Vector2 = _resolve_applied_velocity(
+		desired_velocity, delta
 	)
 
+	movement.request_velocity(applied_velocity)
+
 	movement.apply(delta)
+
+	_record_telemetry(delta, desired_velocity, applied_velocity)
 
 	_update_stuck_detection(delta)
 
@@ -839,6 +845,9 @@ func force_repath() -> void:
 # -----------------------------------------------------------------------------
 
 func _arrive() -> void:
+	telemetry_completed_journeys += 1
+	_record_journey_end(true)
+
 	var reached: NavigationDestination = _destination
 
 	_destination = null
@@ -862,6 +871,9 @@ func _arrive() -> void:
 func _fail(
 	reason: StringName
 ) -> void:
+	telemetry_failed_journeys += 1
+	_record_journey_end(false)
+
 	var failed: NavigationDestination = _destination
 
 	_destination = null
@@ -963,9 +975,13 @@ func _begin_recovery() -> void:
 	# Odd attempts sidestep, even attempts re-plan. Alternating means a jam
 	# that a sidestep cannot fix still reaches a repath, and a bad path that a
 	# repath cannot fix still gets shaken loose by a sidestep.
+	telemetry_recoveries += 1
+
 	if _recovery_attempts % 2 == 1:
+		telemetry_sidesteps += 1
 		_begin_sidestep()
 	else:
+		telemetry_recovery_repaths += 1
 		force_repath()
 
 
@@ -1259,3 +1275,219 @@ func set_working(working: bool) -> void:
 	agent.avoidance_priority = (
 		profile.working_priority if working else _travel_avoidance_priority
 	)
+
+
+# -----------------------------------------------------------------------------
+# Navigation telemetry
+# -----------------------------------------------------------------------------
+#
+# Lifetime counters for one actor, collected by [NavigationReport].
+#
+# The reports so far have carried `navigation_failures: 0` and treated that as
+# "navigation is fine". It is not the same thing: a failure means the actor
+# gave up, and an actor can grind against a doorway for six seconds, recover
+# three times and walk twice as far as it needed to without ever failing. The
+# numbers below are the ones that distinguish "got there" from "got there
+# well".
+#
+# All of this is plain arithmetic on values the navigation loop already
+# computes, so it costs nothing worth measuring. It is always on, because a
+# jam that only happens when diagnostics are off is the one you never catch.
+
+## Recoveries (sidestep or repath) triggered on this actor.
+var telemetry_recoveries: int = 0
+
+## Sidesteps specifically - the cheap half of recovery.
+var telemetry_sidesteps: int = 0
+
+## Full repaths forced by recovery, the expensive half.
+var telemetry_recovery_repaths: int = 0
+
+## Journeys that ended in [method _fail] rather than arrival.
+var telemetry_failed_journeys: int = 0
+
+var telemetry_completed_journeys: int = 0
+
+## Seconds spent wanting to move but not moving, across the actor's life.
+## This is the number that reads as "stuck" to a player.
+var telemetry_stalled_seconds: float = 0.0
+
+## Seconds the avoidance solver spent deflecting this actor away from where
+## it wanted to go. High values mean crowding, not a bug.
+var telemetry_deflected_seconds: float = 0.0
+
+## Actual pixels walked.
+var telemetry_distance_travelled: float = 0.0
+
+## Sum of straight-line distances of every journey undertaken.
+##
+## Distance walked during completed journeys only - the numerator of path
+## efficiency. Distinct from telemetry_distance_travelled, which includes
+## wandering during abandoned journeys and is the right number for "how far
+## does this actor walk in a shift".
+var telemetry_distance_travelled_on_journeys: float = 0.0
+
+## travelled / direct is path efficiency: 1.0 is a perfect straight line,
+## 1.2 is a sensible route round furniture, and 2.0 means the actor walked
+## twice as far as it needed to. This is the single most useful navigation
+## number there is, and nothing was recording it.
+var telemetry_direct_distance: float = 0.0
+
+## Longest single stall, in seconds. An average hides the one actor that
+## froze for ten seconds in a doorway.
+var telemetry_longest_stall: float = 0.0
+
+var _telemetry_current_stall: float = 0.0
+var _telemetry_last_position: Vector2 = Vector2.ZERO
+var _telemetry_has_last_position: bool = false
+
+## Distance walked and straight-line distance for the journey in progress.
+##
+## Kept separate and only folded into the totals on arrival. Adding direct
+## distance at journey start and travelled distance continuously made the
+## two describe different sets of journeys - an in-flight journey
+## contributed its full direct distance but only part of its travelled
+## distance, which produced efficiency below 1.0. That is arithmetically
+## impossible for a real path and was the first thing this report caught.
+var _journey_travelled: float = 0.0
+var _journey_direct: float = 0.0
+var _journey_active: bool = false
+
+
+## Accumulates this frame's telemetry. Called from the travel loop.
+func _record_telemetry(
+	delta: float,
+	desired_velocity: Vector2,
+	applied_velocity: Vector2
+) -> void:
+	if body == null:
+		return
+
+	if _telemetry_has_last_position:
+		var step: float = _telemetry_last_position.distance_to(
+			body.global_position
+		)
+
+		telemetry_distance_travelled += step
+
+		if _journey_active:
+			_journey_travelled += step
+
+	_telemetry_last_position = body.global_position
+	_telemetry_has_last_position = true
+
+	var settle: float = 1.0
+
+	if movement != null and movement.profile != null:
+		settle = movement.profile.settle_speed
+
+	var wants_to_move: bool = desired_velocity.length() >= settle
+	var is_moving: bool = body.velocity.length() >= settle
+
+	if wants_to_move and not is_moving:
+		_telemetry_current_stall += delta
+		telemetry_stalled_seconds += delta
+		telemetry_longest_stall = maxf(
+			telemetry_longest_stall, _telemetry_current_stall
+		)
+	else:
+		_telemetry_current_stall = 0.0
+
+	# Deflection: the solver is sending the actor somewhere other than where
+	# it asked to go. Measured against the same threshold the passing bias
+	# uses, so the two numbers describe the same event.
+	if (
+		wants_to_move
+		and applied_velocity.length() > 0.0
+		and profile != null
+	):
+		var alignment: float = applied_velocity.normalized().dot(
+			desired_velocity.normalized()
+		)
+
+		if alignment < profile.side_bias_engage_dot:
+			telemetry_deflected_seconds += delta
+
+
+## Records the straight-line length of a journey as it begins.
+func _record_journey_start(destination_position: Vector2) -> void:
+	if body == null:
+		return
+
+	_journey_travelled = 0.0
+	_journey_direct = body.global_position.distance_to(destination_position)
+	_journey_active = true
+
+
+## Folds a finished journey into the efficiency totals.
+##
+## Only completed journeys count. An abandoned or re-targeted journey has a
+## travelled distance that belongs to a destination it never reached, and
+## including it would blame the pathing for a decision the gameplay made.
+func _record_journey_end(completed: bool) -> void:
+	if not _journey_active:
+		return
+
+	_journey_active = false
+
+	if not completed:
+		return
+
+	# Sub-pixel journeys make the ratio meaningless.
+	if _journey_direct < 8.0:
+		return
+
+	telemetry_distance_travelled_on_journeys += _journey_travelled
+	telemetry_direct_distance += _journey_direct
+
+
+## Everything known about this actor's navigation, for [NavigationReport].
+func get_telemetry() -> Dictionary:
+	var efficiency: float = 0.0
+
+	if telemetry_direct_distance > 0.0:
+		efficiency = (
+			telemetry_distance_travelled_on_journeys
+			/ telemetry_direct_distance
+		)
+
+	return {
+		"actor": String(body.name) if body != null else "",
+		"profile": (
+			profile.resource_path.get_file() if profile != null else ""
+		),
+		"recoveries": telemetry_recoveries,
+		"sidesteps": telemetry_sidesteps,
+		"recovery_repaths": telemetry_recovery_repaths,
+		"completed_journeys": telemetry_completed_journeys,
+		"failed_journeys": telemetry_failed_journeys,
+		"stalled_seconds": telemetry_stalled_seconds,
+		"longest_stall_seconds": telemetry_longest_stall,
+		"deflected_seconds": telemetry_deflected_seconds,
+		"distance_travelled": telemetry_distance_travelled,
+		"distance_on_completed_journeys": (
+			telemetry_distance_travelled_on_journeys
+		),
+		"direct_distance": telemetry_direct_distance,
+		"path_efficiency": efficiency,
+		"passing_side": _passing_side,
+		"lateral_offset": _lateral_offset,
+		"speed_multiplier": _speed_multiplier,
+		"personal_movement_seeded": _personal_movement_seeded,
+		"state": _state_name(),
+		"is_parked": is_parked(),
+	}
+
+
+func _state_name() -> String:
+	match _state:
+		NavigationState.IDLE:
+			return "IDLE"
+		NavigationState.TRAVELLING:
+			return "TRAVELLING"
+		NavigationState.SIDESTEPPING:
+			return "SIDESTEPPING"
+		NavigationState.PARKED:
+			return "PARKED"
+
+	return "UNKNOWN"

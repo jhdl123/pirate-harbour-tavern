@@ -36,8 +36,15 @@ extends Node
 @export var export_report_key: Key = KEY_O
 @export var stress_test_key: Key = KEY_U
 
+## Exports the navigation quality report - path efficiency, stalls,
+## recoveries and whether organic movement actually reached each actor.
+@export var export_navigation_key: Key = KEY_N
+
 ## Where the behaviour report is written.
 @export var report_path: String = "user://customer_behaviour_report.json"
+
+## Where the navigation report is written.
+@export var navigation_report_path: String = "user://navigation_report.json"
 
 ## How many customers a stress run spawns, cycling through every type.
 @export var stress_test_customers: int = 24
@@ -103,6 +110,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_export_report()
 		stress_test_key:
 			_run_stress_test()
+		export_navigation_key:
+			_export_navigation_report()
 		_:
 			return
 
@@ -115,7 +124,7 @@ func _print_help() -> void:
 
 	print("  F11 cycle type   F12 force spawn   K deterministic")
 	print("  L verbose scores  P print profile   O export report")
-	print("  U mixed-type stress test")
+	print("  U mixed-type stress test   N navigation report")
 
 
 func _cycle_type() -> void:
@@ -307,3 +316,20 @@ func _run_stress_test() -> void:
 
 func get_report() -> CustomerBehaviourReport:
 	return _report
+
+
+## Prints and writes the navigation quality report.
+##
+## Separate from the behaviour report because it answers a different
+## question: the behaviour report says what customers chose to do, this says
+## whether they could physically get there without grinding.
+func _export_navigation_report() -> void:
+	var report: Dictionary = NavigationReport.build(get_tree())
+
+	print("\n" + NavigationReport.format_summary(report))
+
+	if NavigationReport.export_json(get_tree(), navigation_report_path):
+		print(
+			"[CustomerBehaviour] navigation report written to %s"
+			% ProjectSettings.globalize_path(navigation_report_path)
+		)

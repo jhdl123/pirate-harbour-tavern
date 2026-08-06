@@ -18,4 +18,4 @@ script = ExtResource("2_reservable_script")
 reservation_tags = Array[StringName]([&"darts"])
 
 [node name="UsePosition" type="Marker2D" parent="." unique_id=1913066976]
-position = Vector2(0, -18)
+position = Vector2(0, 6)

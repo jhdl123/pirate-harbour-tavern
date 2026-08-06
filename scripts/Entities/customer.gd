@@ -1286,12 +1286,32 @@ func _on_relax_finished() -> void:
 ## waiting for service" (WAITING_TO_ORDER counts as "waiting for service"
 ## too, so it is excluded here as well, not just DRINKING/LEAVING_TO_DOOR).
 func is_available_for_social() -> bool:
+	# Anyone settled and not mid-transaction is approachable.
+	#
+	# This previously required the PARTNER to already be RELAXING. Relaxing
+	# occupies about 1% of customer time, so the odds of two seated
+	# neighbours both being free at the same instant were tiny - which is
+	# why socialising happened twice across fifty-one visits. Real people
+	# talk while they drink; requiring both parties to be idle first is what
+	# made conversation an edge case instead of the norm.
 	if has_group():
-		# A group member standing at its slot is exactly as interruptible as
-		# a solo customer relaxing in a chair.
-		return current_state == State.IN_GROUP or current_state == State.RELAXING
+		return (
+			current_state == State.IN_GROUP
+			or current_state == State.RELAXING
+			or current_state == State.SOCIALISING
+			or current_state == State.DRINKING
+		)
 
-	return current_state == State.RELAXING
+	# Seated and settled. DRINKING is deliberately included - talking over a
+	# drink is the single most believable thing a tavern customer does.
+	# WAITING_TO_ORDER and ORDERING are excluded because those customers are
+	# mid-transaction at the bar.
+	return (
+		current_state == State.RELAXING
+		or current_state == State.SOCIALISING
+		or current_state == State.DRINKING
+		or current_state == State.WAITING_TO_ORDER
+	)
 
 
 ## Phase 2C: the nearest other seated, available customer within
@@ -2245,6 +2265,25 @@ func get_activity_flags() -> Dictionary:
 			if _balance_config != null else 220.0
 		) != null,
 		&"is_at_chair": reserved_chair != null and not away_from_chair,
+
+		# Precise ordering flags.
+		#
+		# has_ordered_drink above stays true from the moment a customer
+		# orders until the drink is finished, which is most of a visit. Using
+		# it as the "is this customer busy" gate blocked socialising and
+		# darts almost permanently - the direct cause of 0 tavern activities
+		# and 2 socialise actions across 51 visits. These split that one
+		# blunt flag into the three genuinely different situations:
+		&"is_transacting_at_bar": current_state == State.ORDERING,
+		&"is_awaiting_service": (
+			ordered_drink != null and not _has_drink_to_consume
+		),
+		&"is_free_to_leave_seat": (
+			ordered_drink == null
+			and not _has_drink_to_consume
+			and current_state != State.WAITING_TO_ORDER
+			and current_state != State.ORDERING
+		),
 	}
 
 
