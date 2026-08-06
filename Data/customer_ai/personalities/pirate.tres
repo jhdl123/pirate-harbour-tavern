@@ -1,11 +1,10 @@
-[gd_resource type="Resource" script_class="Personality" format=3]
+[gd_resource type="Resource" script_class="Personality" format=3 uid="uid://c6pqko56vdtap"]
 
-[ext_resource type="Script" path="res://systems/customer_ai/personality.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://dt6hbob0c6bbd" path="res://systems/customer_ai/personality.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")
 baseline_mood = 0.75
-baseline_energy = 1.0
 social_tendency = 0.8
 generosity = 0.7
 temperance = 0.25

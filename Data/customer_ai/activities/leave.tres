@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ActivityDefinition" format=3]
+[gd_resource type="Resource" script_class="ActivityDefinition" format=3 uid="uid://c1r66xucm5uqx"]
 
-[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
-[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
+[ext_resource type="Script" uid="uid://cs48yy71d2h1v" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://gpped54gxq3u" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/not_currently_ordering.tres" id="3_not_ordering"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/leave_mood_scoring.tres" id="4_mood_scoring"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/at_drink_limit_scoring.tres" id="5_at_limit"]
@@ -21,11 +21,6 @@ activity_id = &"leave"
 display_name = "Leave"
 base_utility = 5.0
 conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_not_ordering"), ExtResource("4_mood_scoring"), ExtResource("5_at_limit"), ExtResource("6_visit_time"), ExtResource("7_money"), ExtResource("8_intoxication"), ExtResource("9_thirst"), ExtResource("10_drinks"), ExtResource("11_engagement"), ExtResource("12_end_of_visit"), ExtResource("13_variance")])
-destination_tag = &""
 is_terminal = true
 behaviour = ExtResource("14_behaviour")
-minimum_commitment_minutes = 0
-target_duration_minutes = 0
-maximum_duration_minutes = 0
-cooldown_minutes = 0
 is_mandatory = true

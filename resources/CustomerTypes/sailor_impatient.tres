@@ -18,33 +18,29 @@ available_drinks = Array[ExtResource("1_4p4sa")]([ExtResource("2_wd86o"), ExtRes
 preferred_drink = ExtResource("3_ru5tl")
 personality = ExtResource("4_personality")
 type_id = &"sailor_impatient"
-enabled = true
 tags = Array[StringName]([&"sailor", &"seafarer"])
 social_category = &"crew"
 starting_money_multiplier = 0.9
-spending_willingness = 0.5
 reorder_tendency = 1.2
 tipping_tendency = 0.4
-visit_intent_weights = {"quick_drink": 4.0, "heavy_drinking": 2.0, "group_drinking": 2.0, "passing_time": 1.0}
-solo_arrival_chance = 0.5
+visit_intent_weights = {
+"group_drinking": 2.0,
+"heavy_drinking": 2.0,
+"passing_time": 1.0,
+"quick_drink": 4.0
+}
 crowding_tolerance = 0.4
 waiting_tolerance_multiplier = 0.6
 dissatisfaction_departure_tendency = 1.8
 seating_preference = 0.5
 bar_standing_preference = 0.6
-wander_tendency = 0.4
 group_conformity = 0.6
-substitution_willingness = 0.6
 drink_speed_multiplier = 1.5
 desired_drink_count_multiplier = 1.1
 group_drink_affinity = 1.2
-base_sociability = 0.5
 compatible_tags = Array[StringName]([&"sailor", &"seafarer"])
-disliked_tags = Array[StringName]([])
-stranger_approach_willingness = 0.4
 conversation_join_willingness = 0.4
 conversation_duration_multiplier = 0.7
-group_social_preference = 0.6
 information_domains = Array[StringName]([&"voyages"])
 knowledge_tags = Array[StringName]([&"crews"])
 conversation_topics = Array[StringName]([&"complaints"])

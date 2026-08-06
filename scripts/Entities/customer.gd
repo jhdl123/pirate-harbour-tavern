@@ -422,6 +422,20 @@ func _configure_ai(
 
 	_apply_intent_to_needs()
 
+	# Individual walking character: which side this customer passes on, how
+	# far off the path centreline they walk, how fast. Seeded from the same
+	# identity seed as their personality, so a deterministic run reproduces
+	# how they move as well as how they behave.
+	if actor_navigation != null:
+		var restlessness: float = 0.5
+
+		if identity.personality != null:
+			restlessness = identity.personality.restlessness
+
+		actor_navigation.seed_personal_movement(
+			_identity_seed, restlessness
+		)
+
 	if _report_manager != null:
 		runtime_customer_id = _report_manager.allocate_customer_id()
 

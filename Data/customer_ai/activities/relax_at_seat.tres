@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="ActivityDefinition" format=3]
+[gd_resource type="Resource" script_class="ActivityDefinition" format=3 uid="uid://bs7iphekvm5ri"]
 
-[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
-[ext_resource type="Script" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
+[ext_resource type="Script" uid="uid://cs48yy71d2h1v" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://gpped54gxq3u" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/is_seated.tres" id="3_seated"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/not_currently_ordering.tres" id="4_not_ordering"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/relax_visit_time_scoring.tres" id="5_visit_time"]
@@ -19,11 +19,8 @@ activity_id = &"relax_at_seat"
 display_name = "Relax at Seat"
 base_utility = 6.0
 conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_seated"), ExtResource("4_not_ordering"), ExtResource("5_visit_time"), ExtResource("6_satisfaction"), ExtResource("7_thirst"), ExtResource("8_intoxication"), ExtResource("9_repeat_decay"), ExtResource("10_engagement"), ExtResource("11_variance")])
-destination_tag = &""
-is_terminal = false
 behaviour = ExtResource("12_behaviour")
 minimum_commitment_minutes = 3.0
 target_duration_minutes = 8.0
 maximum_duration_minutes = 20.0
 cooldown_minutes = 6.0
-is_mandatory = false

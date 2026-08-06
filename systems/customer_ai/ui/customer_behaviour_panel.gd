@@ -198,7 +198,7 @@ func _toggle_verbose() -> void:
 
 	var count: int = 0
 
-	for customer: Node in get_tree().get_nodes_in_group(&"customer"):
+	for customer: Node in get_tree().get_nodes_in_group(&"navigation_customers"):
 		var brain: Variant = customer.get(&"_brain")
 
 		if brain == null:
@@ -218,7 +218,7 @@ func _toggle_verbose() -> void:
 ## intent, current action and cooldowns. The first customer found, because
 ## selecting one would need click handling this panel deliberately avoids.
 func _print_selected_profile() -> void:
-	var customers: Array[Node] = get_tree().get_nodes_in_group(&"customer")
+	var customers: Array[Node] = get_tree().get_nodes_in_group(&"navigation_customers")
 
 	if customers.is_empty():
 		print("[CustomerBehaviour] no customers in the tavern.")

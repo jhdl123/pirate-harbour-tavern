@@ -49,13 +49,19 @@
 [ext_resource type="Script" uid="uid://cyaud0jeg8ygl" path="res://systems/communication/stock_alert_coordinator.gd" id="42_stock_alerts"]
 [ext_resource type="Script" uid="uid://dvdslntfmm3xa" path="res://systems/staff/diagnostics/staff_report_manager.gd" id="43_staff_report"]
 [ext_resource type="PackedScene" uid="uid://dmecv26e4ygey" path="res://scenes/staff/bartender.tscn" id="44_bartender"]
+[ext_resource type="Script" uid="uid://bqjflnscjloo7" path="res://systems/customer_ai/identity/visit_intent_config.gd" id="60_7hhev"]
+[ext_resource type="Script" uid="uid://um7xjbue1v5x" path="res://systems/customer_ai/identity/visit_intent_registry.gd" id="61_ia3vs"]
 [ext_resource type="Texture2D" uid="uid://bda32rhn0psgx" path="res://assets/art/furniture/64x64_extra_large_barrel_01.png" id="63_1k25q"]
+[ext_resource type="Resource" uid="uid://cfo167rq6i6et" path="res://resources/CustomerTypes/local_worker.tres" id="64_5biqi"]
 [ext_resource type="Texture2D" uid="uid://cvpwr3f6lrwii" path="res://assets/art/furniture/96x64_self_03.png" id="64_sstbq"]
+[ext_resource type="Resource" uid="uid://irpuork1hfsx" path="res://resources/CustomerTypes/pirate.tres" id="65_23bmo"]
 [ext_resource type="Texture2D" uid="uid://c2lkjv0ex473r" path="res://assets/art/furniture/32x48_tall_barrel.png" id="65_h4pvl"]
+[ext_resource type="Resource" uid="uid://c20iwromspqo7" path="res://resources/CustomerTypes/merchant.tres" id="66_1p6ov"]
 [ext_resource type="Texture2D" uid="uid://b46wkjsa78qle" path="res://assets/art/furniture/32x48_large_barrel_02.png" id="66_tkyn8"]
 [ext_resource type="Texture2D" uid="uid://b6fsb3oos8le1" path="res://assets/art/furniture/32x48_large_barrel_01.png" id="67_6ft7t"]
 [ext_resource type="Texture2D" uid="uid://c3pebfcaim567" path="res://assets/art/furniture/32x32_medium_barrel.png" id="68_h325i"]
 [ext_resource type="Texture2D" uid="uid://tnkp4axmaw2b" path="res://assets/art/furniture/32x32_small_barrel.png" id="69_umklk"]
+[ext_resource type="Script" uid="uid://cc6myafsysx1f" path="res://systems/customer_ai/ui/customer_behaviour_panel.gd" id="87_23bmo"]
 [ext_resource type="PackedScene" path="res://scenes/groups/group_standing_area.tscn" id="90_area"]
 [ext_resource type="Script" uid="uid://cb4tn6r2p0d4q" path="res://systems/beverage/ui/beverage_diagnostics_panel.gd" id="90_bevpanel"]
 [ext_resource type="Resource" path="res://Data/beverage/beverage_registry.tres" id="90_bevreg"]
@@ -315,6 +321,10 @@ texture = ExtResource("2_ae8n2")
 [sub_resource type="TileSet" id="TileSet_budmp"]
 physics_layer_0/collision_layer = 1
 sources/0 = SubResource("TileSetAtlasSource_h4pvl")
+
+[sub_resource type="Resource" id="Resource_6lsm7"]
+script = ExtResource("61_ia3vs")
+metadata/_custom_type_script = "uid://um7xjbue1v5x"
 
 [node name="Main" type="Node2D" unique_id=846792139]
 
@@ -645,10 +655,11 @@ statistics_tracker = NodePath("../StatisticsTracker")
 game_config = ExtResource("15_hxu8e")
 item_registry = ExtResource("33_item_registry")
 activity_registry = ExtResource("34_activity_registry")
+visit_intent_registry = SubResource("Resource_6lsm7")
 customer_ai_balance = ExtResource("35_balance_config")
 customer_ai_diagnostics = ExtResource("36_diagnostics_config")
 customer_ai_report_manager = NodePath("../CustomerAIReportManager")
-customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtResource("18_r4lks"), ExtResource("18_captain")])
+customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtResource("18_r4lks"), ExtResource("18_captain"), ExtResource("64_5biqi"), ExtResource("65_23bmo"), ExtResource("66_1p6ov")])
 group_spawner = NodePath("../GroupSpawner")
 
 [node name="TavernDemandController" type="Node" parent="Managers" unique_id=513549767]
@@ -730,6 +741,9 @@ script = ExtResource("92_eod")
 
 [node name="DailyControlBar" type="CanvasLayer" parent="." unique_id=1836382527]
 script = ExtResource("93_bar")
+
+[node name="CustomerBehaviourPanel" type="Node" parent="." unique_id=365676011]
+script = ExtResource("87_23bmo")
 
 [editable path="Environment/Grog_station"]
 [editable path="Environment/Ale_station"]

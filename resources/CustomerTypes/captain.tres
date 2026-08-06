@@ -22,14 +22,18 @@ customer_category = &"captain"
 priority_level = 4
 importance_score = 3.0
 type_id = &"captain"
-enabled = true
 tags = Array[StringName]([&"captain", &"seafarer", &"leader"])
 social_category = &"crew"
 starting_money_multiplier = 1.8
 spending_willingness = 0.8
 reorder_tendency = 1.3
 tipping_tendency = 1.1
-visit_intent_weights = {"group_drinking": 4.0, "celebration": 2.5, "quiet_meeting": 2.0, "social_visit": 2.0}
+visit_intent_weights = {
+"celebration": 2.5,
+"group_drinking": 4.0,
+"quiet_meeting": 2.0,
+"social_visit": 2.0
+}
 solo_arrival_chance = 0.2
 crowding_tolerance = 0.7
 waiting_tolerance_multiplier = 1.1
@@ -38,13 +42,10 @@ seating_preference = 0.7
 bar_standing_preference = 0.4
 wander_tendency = 0.3
 group_conformity = 0.5
-substitution_willingness = 0.6
-drink_speed_multiplier = 1.0
 desired_drink_count_multiplier = 1.3
 group_drink_affinity = 1.7
 base_sociability = 0.7
 compatible_tags = Array[StringName]([&"sailor", &"seafarer", &"pirate", &"merchant"])
-disliked_tags = Array[StringName]([])
 stranger_approach_willingness = 0.6
 conversation_join_willingness = 0.6
 conversation_duration_multiplier = 1.2
@@ -55,4 +56,3 @@ conversation_topics = Array[StringName]([&"voyages", &"business"])
 discretion_tendency = 0.6
 credibility_tendency = 0.8
 observant_tendency = 0.7
-secrecy_tendency = 0.5

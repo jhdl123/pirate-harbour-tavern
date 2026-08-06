@@ -80,3 +80,35 @@ DIAGNOSTIC PROBES (not part of the feature)
 
 Neither is wired into anything. Delete them freely if you do not want
 them in the project.
+
+
+================================================================
+NAVIGATION UPDATE (added in this build)
+================================================================
+
+Additional editor wiring: NONE. The navigation changes are entirely
+in scripts and .tres files - nothing new to drag into a scene.
+
+One scene IS modified: scenes/furniture/table.tscn. chairRight's
+SeatPoint moves 4px outward (-1,1) -> (3,1) so the seat lands on the
+navmesh. All eight seats now measure 0.0px off. If you have edited
+that scene yourself, make the same nudge by hand rather than
+overwriting.
+
+Both navigation profiles are REPLACED:
+  Data/navigation/customer_navigation.tres
+  Data/navigation/staff_navigation.tres
+They were empty files (all code defaults) and are now fully authored
+and differentiated. Staff hold a tighter line and outrank customers.
+
+Verify with:
+  godot --headless res://tests/navigation_stress_test.tscn
+Expect: 25 passed, 0 failed.
+
+See docs/NAVIGATION_AVOIDANCE.md for what was measured, what was
+disproved, and a tuning table.
+
+NOTE on group_keg_loop_test: this suite is flaky on main.tscn and
+alternates between 27/5 and 29/3 across runs of the SAME build. The
+29/3 failures are a subset of the 27/5 set - compare the failure set,
+never the count.

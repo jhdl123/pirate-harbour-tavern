@@ -72,7 +72,7 @@ position = Vector2(5, 0)
 flip_h = true
 
 [node name="SeatPoint" parent="Chairs/chairRight" index="1" unique_id=345260681]
-position = Vector2(-1, 1)
+position = Vector2(3, 1)
 
 [node name="DrinkPoint" parent="Chairs/chairRight" index="2" unique_id=108340923]
 position = Vector2(-30, -10)

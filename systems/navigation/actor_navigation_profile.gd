@@ -131,3 +131,74 @@ var sidestep_duration: float = 0.45
 ## treat it as something to go around.
 @export_range(0.0, 1.0, 0.05)
 var parked_avoidance_priority: float = 1.0
+
+
+@export_category("Organic Movement")
+
+## How far an actor may drift sideways from the exact path centreline.
+##
+## [b]This is what stops actors walking in single file.[/b] Godot's path is a
+## line, and every actor following it walks that identical line, which is a
+## large part of why traffic looks mechanical. Each actor is given a stable
+## offset within this range, so two customers crossing the same room take
+## visibly different routes through it.
+##
+## Kept well below the avoidance radius: this is a wobble, not a detour, and
+## an offset large enough to push an actor into furniture would be worse
+## than the problem it solves. 0.0 restores exact centreline following.
+@export_range(0.0, 24.0, 0.5)
+var lateral_path_offset: float = 7.0
+
+## How strongly an actor commits to one side when it meets someone head-on.
+##
+## [b]This is the fix for the mirror dance.[/b] Godot's RVO avoidance is
+## symmetric: two actors approaching each other compute mirror-image
+## evasions, both step the same way, and they shuffle. Giving each actor a
+## stable preferred side and nudging perpendicular when avoidance is
+## actively deflecting them breaks that symmetry the way two people passing
+## in a corridor do.
+##
+## Applied only while the solver is genuinely deflecting the actor, so it
+## costs nothing in open space. 0.0 disables it.
+@export_range(0.0, 1.0, 0.05)
+var passing_side_bias: float = 0.45
+
+## How much the safe velocity must deviate from the desired direction before
+## the side bias engages, as a dot product.
+##
+## Below this the actor is walking freely and needs no help. Around 0.8 is
+## roughly a 35 degree deflection - enough to mean "something is in my way",
+## not so much that a normal corner triggers it.
+@export_range(0.0, 1.0, 0.01)
+var side_bias_engage_dot: float = 0.82
+
+## Per-actor speed variation, as a fraction of maximum speed.
+##
+## A crowd where everyone walks at exactly 120px/s reads as mechanical no
+## matter how good the pathing is. Each actor gets a stable multiplier
+## within this range. For customers this is layered on top of the
+## personality's own restlessness. 0.0 makes every actor identical.
+@export_range(0.0, 0.5, 0.01)
+var speed_variation: float = 0.18
+
+
+@export_category("Yielding")
+
+## Avoidance priority for an actor that is parked (seated, or standing in a
+## formation slot).
+##
+## [b]Higher is NOT better here.[/b] In Godot's solver a higher priority
+## actor expects others to move around it. Setting a parked actor to maximum
+## made seated customers actively shove approaching actors out of the way -
+## which is how staff carrying kegs got pushed off their delivery approach.
+## A parked actor should hold its ground but yield the last few pixels, so
+## this sits BELOW the travelling priority rather than above it.
+@export_range(0.0, 1.0, 0.05)
+var parked_yield_priority: float = 0.35
+
+## Avoidance priority for an actor that is actively performing a job.
+##
+## Staff on a task have somewhere to be and a customer standing in the way
+## does not. Left at the profile's normal avoidance_priority when unset.
+@export_range(0.0, 1.0, 0.05)
+var working_priority: float = 0.75

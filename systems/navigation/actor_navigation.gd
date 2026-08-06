@@ -353,7 +353,16 @@ func park() -> void:
 
 	if agent != null:
 		agent.velocity = Vector2.ZERO
-		agent.avoidance_priority = profile.parked_avoidance_priority
+
+		# Parked actors YIELD rather than shove.
+		#
+		# parked_avoidance_priority defaulted to 1.0, which in Godot's solver
+		# means "everyone else moves around me". A seated customer therefore
+		# pushed approaching actors away - that is how staff carrying kegs
+		# got shunted off their delivery approach on 4 August. A parked actor
+		# holds its position through the physics body; it does not need
+		# avoidance priority to do that, and having it actively hurts.
+		agent.avoidance_priority = profile.parked_yield_priority
 
 
 ## Returns a parked actor to normal traffic.
@@ -446,6 +455,12 @@ func _process_travel(
 		_update_stuck_detection(delta)
 		return
 
+	# Personal drift off the centreline, applied before smoothing so the
+	# result is a gentle curve rather than a step sideways.
+	desired_direction = _apply_lateral_offset(
+		desired_direction, distance_to_destination
+	)
+
 	_steering_direction = _smooth_direction(
 		desired_direction,
 		delta
@@ -459,6 +474,7 @@ func _process_travel(
 		_steering_direction
 		* movement.get_maximum_speed()
 		* speed_ratio
+		* _speed_multiplier
 	)
 
 	_desired_velocity = desired_velocity
@@ -612,7 +628,14 @@ func _resolve_applied_velocity(
 
 	if not solver_is_stalling:
 		_solver_stall_elapsed = 0.0
-		return _safe_velocity
+
+		# Lean into this actor's preferred side while the solver is
+		# deflecting it. Applied to the safe velocity rather than the
+		# desired one so avoidance still owns the manoeuvre - this only
+		# decides which way round the obstruction it goes.
+		return _apply_passing_bias(
+			_safe_velocity, desired_velocity.normalized()
+		)
 
 	_solver_stall_elapsed += delta
 
@@ -1063,4 +1086,176 @@ func can_reach(
 		agent.get_navigation_map(),
 		body.global_position,
 		world_position
+	)
+
+
+# -----------------------------------------------------------------------------
+# Organic movement
+# -----------------------------------------------------------------------------
+#
+# Three small, stable per-actor values turn uniform traffic into a crowd:
+#
+#   _passing_side     which way this actor steps when someone blocks it
+#   _lateral_offset   how far off the path centreline it walks
+#   _speed_multiplier how fast it walks relative to everyone else
+#
+# All three are set once in seed_personal_movement() and never change during
+# the actor's life. Varying them per frame would produce noise, not character -
+# an actor that picks a new side every frame is exactly the mirror dance this
+# is meant to fix.
+
+## +1 or -1. Which side this actor prefers to pass on.
+var _passing_side: float = 1.0
+
+## Stable signed offset from the path centreline, in pixels.
+var _lateral_offset: float = 0.0
+
+## Stable speed multiplier, around 1.0.
+var _speed_multiplier: float = 1.0
+
+## True once seed_personal_movement() has run.
+var _personal_movement_seeded: bool = false
+
+
+## Gives this actor its individual walking character.
+##
+## [param seed_value] makes the result reproducible - pass a customer's
+## identity seed and the same customer walks the same way every run, which
+## deterministic diagnostics depend on. Pass 0 for a random draw.
+##
+## [param restlessness] (0-1) nudges the speed multiplier: restless actors
+## walk a little faster. Customers pass their personality trait; staff and
+## anything else can leave it at the neutral default.
+func seed_personal_movement(
+	seed_value: int = 0,
+	restlessness: float = 0.5
+) -> void:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+
+	if seed_value != 0:
+		rng.seed = seed_value
+	else:
+		rng.randomize()
+
+	_passing_side = 1.0 if rng.randf() < 0.5 else -1.0
+
+	if profile != null:
+		_lateral_offset = rng.randf_range(
+			-profile.lateral_path_offset, profile.lateral_path_offset
+		)
+
+		var spread: float = profile.speed_variation
+
+		# Centred on restlessness rather than on 1.0, so a restless customer
+		# sits in the upper half of the range and a placid one in the lower.
+		var centre: float = 1.0 + ((restlessness - 0.5) * spread)
+
+		_speed_multiplier = maxf(
+			0.4, rng.randf_range(centre - spread, centre + spread)
+		)
+
+	_personal_movement_seeded = true
+
+
+## This actor's stable speed multiplier, for the movement layer to apply.
+func get_speed_multiplier() -> float:
+	return _speed_multiplier
+
+
+func get_passing_side() -> float:
+	return _passing_side
+
+
+## Shifts an aim point sideways so this actor does not walk the exact
+## centreline everyone else walks.
+##
+## Suppressed during final approach: the whole point of the last few pixels
+## is to land precisely on a seat or a service slot, and a lateral offset
+## there would fight the arrival tolerance rather than look natural.
+func _apply_lateral_offset(
+	direction: Vector2,
+	distance_to_destination: float
+) -> Vector2:
+	if _lateral_offset == 0.0 or direction == Vector2.ZERO:
+		return direction
+
+	if _is_in_final_approach:
+		return direction
+
+	# Fade the offset out as the destination nears, so the actor converges on
+	# the real target instead of arriving permanently beside it.
+	var fade: float = clampf(distance_to_destination / 96.0, 0.0, 1.0)
+
+	if is_zero_approx(fade):
+		return direction
+
+	var perpendicular: Vector2 = Vector2(-direction.y, direction.x)
+
+	# Offset is a distance, direction is a unit vector: divide by a nominal
+	# look-ahead so the resulting angle stays sane at any speed.
+	return (
+		direction + (perpendicular * (_lateral_offset / 48.0) * fade)
+	).normalized()
+
+
+## Breaks RVO's symmetry when the solver is actively deflecting this actor.
+##
+## Two actors meeting head-on both compute the same evasion and shuffle. Each
+## actor having a stable preferred side, and leaning into it only while
+## genuinely obstructed, resolves the standoff the way two people in a
+## corridor do - one goes left, one goes right, and neither stops.
+##
+## Returns [param safe_velocity] unchanged when nothing is in the way, so
+## this is free in open space.
+func _apply_passing_bias(
+	safe_velocity: Vector2,
+	desired_direction: Vector2
+) -> Vector2:
+	if profile == null or profile.passing_side_bias <= 0.0:
+		return safe_velocity
+
+	if safe_velocity == Vector2.ZERO or desired_direction == Vector2.ZERO:
+		return safe_velocity
+
+	var deflection: float = safe_velocity.normalized().dot(desired_direction)
+
+	# Walking freely - the solver is not fighting anything.
+	if deflection >= profile.side_bias_engage_dot:
+		return safe_velocity
+
+	# Scale with how badly deflected the actor is, so a glancing avoidance
+	# gets a nudge and a head-on standoff gets a real push.
+	var engagement: float = clampf(
+		(profile.side_bias_engage_dot - deflection)
+		/ maxf(0.01, profile.side_bias_engage_dot + 1.0),
+		0.0,
+		1.0
+	)
+
+	var perpendicular: Vector2 = Vector2(
+		-desired_direction.y, desired_direction.x
+	) * _passing_side
+
+	var speed: float = safe_velocity.length()
+
+	return (
+		safe_velocity.normalized()
+		+ (perpendicular * profile.passing_side_bias * engagement)
+	).normalized() * speed
+
+
+## Sets avoidance priority for an actor that is busy with a job.
+##
+## Staff on a task have somewhere specific to be; a customer milling about
+## does not. Without this every actor competes equally and a bartender
+## carrying a keg loses to whoever happens to be closer.
+func set_working(working: bool) -> void:
+	if agent == null or profile == null:
+		return
+
+	if is_parked():
+		return
+
+	agent.avoidance_priority = (
+		profile.working_priority if working else _travel_avoidance_priority
 	)

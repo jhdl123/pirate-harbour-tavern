@@ -1,16 +1,16 @@
-[gd_resource type="Resource" script_class="CustomerType" format=3 uid="uid://f5pkaa831e0f"]
+[gd_resource type="Resource" script_class="CustomerType" format=3 uid="uid://c20iwromspqo7"]
 
 [ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="2_drink"]
 [ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="3_grog"]
-[ext_resource type="Texture2D" uid="uid://civ2du86r0qjc" path="res://assets/art/characters/32x32_staff_04.png" id="4_7sta1"]
 [ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="4_ale"]
-[ext_resource type="Resource" path="res://Data/customer_ai/personalities/merchant.tres" id="6_pers"]
+[ext_resource type="Texture2D" uid="uid://3ule03eh4xmk" path="res://assets/art/characters/32x32_sailor02.png" id="5_tex"]
+[ext_resource type="Resource" uid="uid://b1vocu248gpo4" path="res://Data/customer_ai/personalities/merchant.tres" id="6_pers"]
 
 [resource]
 script = ExtResource("1_script")
 display_name = "Merchant"
-customer_texture = ExtResource("4_7sta1")
+customer_texture = ExtResource("5_tex")
 spawn_weight = 4.0
 available_drinks = Array[ExtResource("2_drink")]([ExtResource("3_grog"), ExtResource("4_ale")])
 preferred_drink = ExtResource("4_ale")

@@ -4,5 +4,21 @@
 
 [resource]
 script = ExtResource("1_navigation")
+avoidance_radius = 11.0
 avoidance_priority = 0.75
+neighbour_distance = 88.0
+time_horizon_obstacles = 0.35
+target_desired_distance = 7.0
+steering_smoothing = 0.5
 minimum_repath_interval = 0.4
+destination_move_repath_distance = 20.0
+stuck_check_interval = 0.4
+maximum_recovery_attempts = 4
+sidestep_distance = 34.0
+sidestep_duration = 0.4
+lateral_path_offset = 4.0
+passing_side_bias = 0.55
+side_bias_engage_dot = 0.85
+speed_variation = 0.08
+parked_yield_priority = 0.45
+working_priority = 0.9
