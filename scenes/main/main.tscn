@@ -23,8 +23,6 @@
 [ext_resource type="Resource" uid="uid://cb4qxcbg88ukd" path="res://resources/CustomerTypes/captain.tres" id="18_captain"]
 [ext_resource type="Resource" uid="uid://vy3njv4nqfn" path="res://resources/CustomerTypes/sailor.tres" id="18_r4lks"]
 [ext_resource type="Texture2D" uid="uid://d1htw3uklncsi" path="res://assets/art/environment/96x96_stairs.png" id="19_umklk"]
-[ext_resource type="Texture2D" uid="uid://bmmlqgm5vgx35" path="res://assets/art/furniture/64x64_barrel_table.png" id="20_6ft7t"]
-[ext_resource type="Texture2D" uid="uid://35t6pqhshrt4" path="res://assets/art/furniture/64x64_round_table_02.png" id="21_h325i"]
 [ext_resource type="Texture2D" uid="uid://dq8exxe0d0owk" path="res://assets/art/furniture/64x64_square_table_05.png" id="22_umklk"]
 [ext_resource type="Texture2D" uid="uid://cktyodi1ctkc4" path="res://assets/art/furniture/96x64_game_table_01.png" id="23_5deua"]
 [ext_resource type="Script" uid="uid://diwvfmlu4wwu7" path="res://systems/interaction/interaction_prompt_ui.gd" id="25_prompt"]
@@ -51,16 +49,12 @@
 [ext_resource type="PackedScene" uid="uid://dmecv26e4ygey" path="res://scenes/staff/bartender.tscn" id="44_bartender"]
 [ext_resource type="Script" uid="uid://bqjflnscjloo7" path="res://systems/customer_ai/identity/visit_intent_config.gd" id="60_7hhev"]
 [ext_resource type="Script" uid="uid://um7xjbue1v5x" path="res://systems/customer_ai/identity/visit_intent_registry.gd" id="61_ia3vs"]
-[ext_resource type="Texture2D" uid="uid://bda32rhn0psgx" path="res://assets/art/furniture/64x64_extra_large_barrel_01.png" id="63_1k25q"]
 [ext_resource type="Resource" uid="uid://cfo167rq6i6et" path="res://resources/CustomerTypes/local_worker.tres" id="64_5biqi"]
 [ext_resource type="Resource" uid="uid://irpuork1hfsx" path="res://resources/CustomerTypes/pirate.tres" id="65_23bmo"]
-[ext_resource type="Texture2D" uid="uid://c2lkjv0ex473r" path="res://assets/art/furniture/32x48_tall_barrel.png" id="65_h4pvl"]
 [ext_resource type="Resource" uid="uid://c20iwromspqo7" path="res://resources/CustomerTypes/merchant.tres" id="66_1p6ov"]
-[ext_resource type="Texture2D" uid="uid://b46wkjsa78qle" path="res://assets/art/furniture/32x48_large_barrel_02.png" id="66_tkyn8"]
-[ext_resource type="Texture2D" uid="uid://b6fsb3oos8le1" path="res://assets/art/furniture/32x48_large_barrel_01.png" id="67_6ft7t"]
-[ext_resource type="Texture2D" uid="uid://c3pebfcaim567" path="res://assets/art/furniture/32x32_medium_barrel.png" id="68_h325i"]
 [ext_resource type="Texture2D" uid="uid://tnkp4axmaw2b" path="res://assets/art/furniture/32x32_small_barrel.png" id="69_umklk"]
 [ext_resource type="Texture2D" uid="uid://hjarw28qc5m2" path="res://assets/art/furniture/96x64_self_02.png" id="83_2conb"]
+[ext_resource type="Texture2D" uid="uid://0oppepl715f2" path="res://assets/art/furniture/32x40_wine_crate.png" id="86_5biqi"]
 [ext_resource type="Script" uid="uid://cc6myafsysx1f" path="res://systems/customer_ai/ui/customer_behaviour_panel.gd" id="87_23bmo"]
 [ext_resource type="Texture2D" uid="uid://bj2rpo1cbqjlw" path="res://assets/art/items/drinks/8x16_bottle_02.png" id="89_flbmi"]
 [ext_resource type="PackedScene" path="res://scenes/groups/group_standing_area.tscn" id="90_area"]
@@ -372,7 +366,7 @@ texture = ExtResource("11_obdhw")
 position = Vector2(82, 452)
 
 [node name="DartsPoint2" parent="Environment" unique_id=1461719099 instance=ExtResource("38_darts_point")]
-position = Vector2(190, 452)
+position = Vector2(156, 452)
 
 [node name="Grog_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
 position = Vector2(396, 50)
@@ -431,10 +425,6 @@ area_id = &"back_corner"
 display_name = "Back Corner"
 minimum_group_size = 3
 
-[node name="64x64BarrelTable" type="Sprite2D" parent="Environment" unique_id=606918737]
-position = Vector2(716, 154)
-texture = ExtResource("20_6ft7t")
-
 [node name="64x64SquareTable06" type="Sprite2D" parent="Environment" unique_id=1892168311]
 position = Vector2(141, 286)
 texture = ExtResource("22_umklk")
@@ -445,14 +435,6 @@ texture = ExtResource("17_h325i")
 
 [node name="OrderLedger" parent="Environment/96x64LongDeskTable02" unique_id=1856338895 instance=ExtResource("28_order_ledger")]
 position = Vector2(70, -134)
-
-[node name="64x64RoundTable02" type="Sprite2D" parent="Environment" unique_id=371336074]
-position = Vector2(572, 199)
-texture = ExtResource("21_h325i")
-
-[node name="64x64SquareTable05" type="Sprite2D" parent="Environment" unique_id=1714388983]
-position = Vector2(382, 202)
-texture = ExtResource("22_umklk")
 
 [node name="96x64GameTable01" type="Sprite2D" parent="Environment" unique_id=989272223]
 position = Vector2(143, 527)
@@ -711,26 +693,6 @@ stock_storage = NodePath("../../Environment/StockStorage")
 [node name="StaffReportManager" type="Node" parent="Managers" unique_id=1939219445]
 script = ExtResource("43_staff_report")
 
-[node name="64x64ExtraLargeBarrel01" type="Sprite2D" parent="Managers" unique_id=1976309881]
-position = Vector2(803, 58)
-texture = ExtResource("63_1k25q")
-
-[node name="32x48TallBarrel" type="Sprite2D" parent="Managers" unique_id=703727985]
-position = Vector2(757, 63)
-texture = ExtResource("65_h4pvl")
-
-[node name="32x48LargeBarrel02" type="Sprite2D" parent="Managers" unique_id=1284607006]
-position = Vector2(723, 65)
-texture = ExtResource("66_tkyn8")
-
-[node name="32x48LargeBarrel01" type="Sprite2D" parent="Managers" unique_id=2075159583]
-position = Vector2(688, 68)
-texture = ExtResource("67_6ft7t")
-
-[node name="32x32MediumBarrel" type="Sprite2D" parent="Managers" unique_id=63237814]
-position = Vector2(705, 88)
-texture = ExtResource("68_h325i")
-
 [node name="Node" type="Node" parent="Managers" unique_id=2052429320]
 
 [node name="32x32SmallBarrel" type="Sprite2D" parent="Managers/Node" unique_id=1783441889]
@@ -967,6 +929,30 @@ texture = ExtResource("92_g0u4x")
 [node name="8x16Bottle21" type="Sprite2D" parent="." unique_id=130619824]
 position = Vector2(643, 53)
 texture = ExtResource("92_g0u4x")
+
+[node name="32x40WineCrate" type="Sprite2D" parent="." unique_id=1363432217]
+position = Vector2(868, 163)
+texture = ExtResource("86_5biqi")
+
+[node name="32x40WineCrate2" type="Sprite2D" parent="." unique_id=1441545237]
+position = Vector2(900, 164)
+texture = ExtResource("86_5biqi")
+
+[node name="32x40WineCrate3" type="Sprite2D" parent="." unique_id=1274143852]
+position = Vector2(933, 164)
+texture = ExtResource("86_5biqi")
+
+[node name="32x40WineCrate4" type="Sprite2D" parent="." unique_id=303845216]
+position = Vector2(868, 192)
+texture = ExtResource("86_5biqi")
+
+[node name="32x40WineCrate5" type="Sprite2D" parent="." unique_id=1101713089]
+position = Vector2(900, 193)
+texture = ExtResource("86_5biqi")
+
+[node name="32x40WineCrate6" type="Sprite2D" parent="." unique_id=957123647]
+position = Vector2(933, 193)
+texture = ExtResource("86_5biqi")
 
 [editable path="Environment/Grog_station"]
 [editable path="Environment/Grog_station2"]
