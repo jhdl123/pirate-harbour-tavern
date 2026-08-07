@@ -68,6 +68,20 @@ func _sample() -> void:
 		tally[label] = int(tally.get(label, 0)) + 1
 		samples += 1
 
+	# Background conversation is layered over state, so it is counted
+	# separately rather than as a state bucket - a customer can be both
+	# DRINKING and talking, and reporting them as one or the other would
+	# hide exactly the thing this pass is about.
+	for customer: Node in get_tree().get_nodes_in_group(
+		&"navigation_customers"
+	):
+		if customer.has_method(&"is_in_conversation") and customer.call(
+			&"is_in_conversation"
+		):
+			tally["IN CONVERSATION (overlaid)"] = int(
+				tally.get("IN CONVERSATION (overlaid)", 0)
+			) + 1
+
 	for node: Node in get_tree().get_nodes_in_group(&"reservable_tag_darts"):
 		if node.has_method("is_reserved") and node.call("is_reserved"):
 			var board: String = String(node.get_parent().name)
@@ -110,6 +124,18 @@ func _report() -> void:
 		print("  %-28s %6.1f%%  (%d)" % [
 			row[0], (float(row[1]) / maxf(1.0, float(samples))) * 100.0, row[1]
 		])
+
+	var service: Node = get_tree().get_first_node_in_group(
+		&"social_presence_service"
+	)
+
+	if service != null:
+		print("\n=== conversation ===")
+
+		var diagnostics: Dictionary = service.call(&"get_diagnostics")
+
+		for key: String in diagnostics:
+			print("  %-32s %s" % [key, str(diagnostics[key])])
 
 	print("\n=== dartboard usage ===")
 

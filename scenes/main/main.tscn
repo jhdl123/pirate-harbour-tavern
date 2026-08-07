@@ -1,5 +1,6 @@
 [gd_scene format=4 uid="uid://dp8kiers0ypek"]
 
+[ext_resource type="Script" path="res://systems/customer_ai/social/social_presence_service.gd" id="99_social"]
 [ext_resource type="PackedScene" uid="uid://cx2278ifr1e0u" path="res://scenes/player/player.tscn" id="1_hyk8p"]
 [ext_resource type="Script" uid="uid://bh1fgbg33b33p" path="res://scenes/main/navigation_region_2d.gd" id="1_yyfjg"]
 [ext_resource type="Texture2D" uid="uid://1uw2mqfo3oft" path="res://assets/art/tilemaps/32x32_MasterRoom-Sheet.png" id="2_ae8n2"]
@@ -582,6 +583,10 @@ theme_override_font_sizes/font_size = 11
 text = "[F1] panel"
 
 [node name="Managers" type="Node2D" parent="." unique_id=1546168761]
+
+
+[node name="SocialPresenceService" type="Node" parent="Managers"]
+script = ExtResource("99_social")
 
 [node name="EconomyManager" type="Node" parent="Managers" unique_id=272770657]
 script = ExtResource("17_s17dp")

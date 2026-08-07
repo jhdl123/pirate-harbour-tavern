@@ -14,7 +14,7 @@ world_texture = ExtResource("1_ctd18")
 carried_texture = ExtResource("1_ctd18")
 maximum_stack_size = 4
 base_buy_price = 20
-base_sell_price = 30
+base_sell_price = 40
 default_metadata = {
 "drink_id": &"ale",
 "serving_format_id": &"table_cask"

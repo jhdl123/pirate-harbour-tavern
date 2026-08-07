@@ -409,6 +409,22 @@ func _configure_ai(
 	# and CustomerNeeds must seed from that rather than from the type's
 	# shared authored resource. Seeding from the shared one is what made
 	# every customer of a type behave identically.
+	# The runtime id must be allocated BEFORE the identity is built.
+	#
+	# It used to be allocated further down, so every identity was created
+	# with the -1 default and every customer shared the same customer_id.
+	# SocialCompatibility.score() returns 0.0 when both ids match - it reads
+	# that as "comparing someone with themselves" - so every pair in the
+	# tavern scored exactly zero and nobody ever qualified to talk. That one
+	# ordering mistake was invisible everywhere except conversation.
+	if _report_manager != null and runtime_customer_id < 0:
+		runtime_customer_id = _report_manager.allocate_customer_id()
+
+	if runtime_customer_id < 0:
+		# No report manager (a bare test harness). Instance id is unique and
+		# stable, which is all compatibility needs.
+		runtime_customer_id = int(get_instance_id())
+
 	identity = CustomerIdentity.new()
 	identity.initialise(
 		customer_type,
@@ -416,6 +432,12 @@ func _configure_ai(
 		runtime_customer_id,
 		_identity_seed
 	)
+
+	# Carry group membership into the identity so compatibility can see it.
+	# join_group() may run before or after configure() depending on whether
+	# this is a solo spawn or a group member, so both paths set it.
+	if not group_id.is_empty():
+		identity.group_id = group_id
 
 	needs = CustomerNeeds.new()
 	needs.seed_from(customer_type, identity.personality, _balance_config)
@@ -437,8 +459,6 @@ func _configure_ai(
 		)
 
 	if _report_manager != null:
-		runtime_customer_id = _report_manager.allocate_customer_id()
-
 		var personality_name: String = (
 			customer_type.personality.resource_path.get_file()
 			if customer_type.personality != null else ""
@@ -2266,6 +2286,18 @@ func get_activity_flags() -> Dictionary:
 		) != null,
 		&"is_at_chair": reserved_chair != null and not away_from_chair,
 
+		# Group context, exposed to the SAME conditions solo customers use.
+		#
+		# This is what removes the separation. Group members no longer have
+		# their leisure chosen for them by GroupManager - they run the
+		# ordinary CustomerBrain, and cohesion arrives as scoring input
+		# rather than as a different code path. A group member and a solo
+		# customer now compete for the dartboard through identical logic.
+		&"is_group_member": not group_id.is_empty(),
+		&"group_has_away_capacity": _group_has_away_capacity(),
+		&"group_is_drinking": _group_is_drinking(),
+		&"is_in_conversation": is_in_conversation(),
+
 		# Precise ordering flags.
 		#
 		# has_ordered_drink above stays true from the moment a customer
@@ -2463,6 +2495,13 @@ func has_group() -> bool:
 ## property directly, which worked but left the report with no group column.
 func join_group(new_group_id: StringName, controller: Node) -> void:
 	group_id = new_group_id
+
+	# Compatibility leans heavily on shared group membership, and the
+	# background conversation layer gives group members a wider talking
+	# range. Neither works if the identity never learns the customer joined
+	# a group.
+	if identity != null:
+		identity.group_id = new_group_id
 	group_controller = controller
 
 	if _report_manager != null:
@@ -2474,6 +2513,9 @@ func join_group(new_group_id: StringName, controller: Node) -> void:
 ## Clears this customer's group membership. Idempotent.
 func leave_group() -> void:
 	group_id = &""
+
+	if identity != null:
+		identity.group_id = &""
 	group_controller = null
 	group_slot_position = Vector2.ZERO
 	group_centre_position = Vector2.ZERO
@@ -3065,3 +3107,146 @@ func report_position_to(manager: Node, door_position: Vector2) -> void:
 		target,
 		label
 	)
+
+
+# -----------------------------------------------------------------------------
+# Background conversation
+# -----------------------------------------------------------------------------
+#
+# Conversation is layered over whatever this customer is already doing rather
+# than being a state they switch into. See [SocialPresenceService] for why.
+#
+# Nothing here changes current_state, cancels an activity, or delays service.
+# A customer chatting while they wait for a drink is still WAITING_TO_ORDER,
+# and the tavern hand serving them neither knows nor cares.
+
+## Who this customer is currently talking to, or null. Distinct from
+## [member social_partner], which belongs to the older discrete socialise
+## activity and drives that activity's own state.
+var conversation_partner: Customer = null
+
+## World minutes this customer has spent in background conversation, for the
+## behaviour report's time-distribution figures.
+var conversation_minutes_total: float = 0.0
+
+var _conversation_started_at_minutes: float = 0.0
+
+
+## True when this customer is settled enough to hold a conversation.
+##
+## The included states are the point: DRINKING and WAITING_TO_ORDER are the
+## two commonest states a customer occupies, and treating them as "busy" is
+## what kept socialising at 0.3% of tavern time. People talk over a drink and
+## while waiting to be served - that is most of what a tavern sounds like.
+##
+## Excluded: anyone walking, ordering at the bar, or leaving. Those customers
+## would either drag a conversation around the room or drop it immediately.
+func is_socially_present() -> bool:
+	if is_queued_for_deletion():
+		return false
+
+	match current_state:
+		State.DRINKING, \
+		State.RELAXING, \
+		State.SOCIALISING, \
+		State.WAITING_TO_ORDER, \
+		State.IN_GROUP, \
+		State.USING_ACTIVITY:
+			return true
+
+	return false
+
+
+## Called by [SocialPresenceService] when a conversation begins.
+func on_conversation_started(partner: Customer) -> void:
+	conversation_partner = partner
+	_conversation_started_at_minutes = WorldTime.get_total_minutes()
+
+	# No visual yet. The order icon is deliberately NOT reused: it means
+	# "this customer is waiting for a drink" and overloading it with
+	# "this customer is chatting" would make the one signal the player
+	# actually needs to read ambiguous.
+
+
+## Called by [SocialPresenceService] when it ends. [param mood_gain] is
+## already scaled by how well it went.
+func on_conversation_ended(_partner: Customer, mood_gain: float) -> void:
+	conversation_partner = null
+
+	conversation_minutes_total += maxf(
+		0.0,
+		WorldTime.get_total_minutes() - _conversation_started_at_minutes
+	)
+
+	if needs != null:
+		needs.adjust(&"mood", mood_gain)
+
+		# Counts toward the existing socialise tally and engagement, so a
+		# customer who spent the evening talking reads as fulfilled rather
+		# than as someone who did nothing. Uses the need ids CustomerNeeds
+		# already knows - inventing a new one would silently clamp to 0-1
+		# and never surface anywhere.
+		needs.adjust(&"socialise_count", 1.0)
+		needs.adjust(&"engagement", mood_gain)
+
+
+func is_in_conversation() -> bool:
+	return conversation_partner != null and is_instance_valid(
+		conversation_partner
+	)
+
+
+## Whether this member's group can spare another member right now.
+##
+## Mirrors CustomerGroup.get_maximum_away(): a group that all wandered off
+## at once would stop reading as a group and leave its formation empty. As a
+## domain flag rather than a group-side veto, so the member's own brain
+## weighs it alongside everything else instead of being overruled after the
+## fact.
+func _group_has_away_capacity() -> bool:
+	if group_id.is_empty():
+		return true
+
+	if group_controller == null or not is_instance_valid(group_controller):
+		return true
+
+	if not group_controller.has_method(&"get_away_members"):
+		return true
+
+	if not group_controller.has_method(&"get_maximum_away"):
+		return true
+
+	var away: int = group_controller.call(&"get_away_members").size()
+
+	# Already away: capacity is not the question, staying put is.
+	if (
+		current_state == State.USING_ACTIVITY
+		or current_state == State.MOVING_TO_ACTIVITY
+	):
+		# Already away: capacity is not the question, staying put is.
+		return true
+
+	return away < int(group_controller.call(&"get_maximum_away"))
+
+
+## Whether this member's group still has drink in its shared serving.
+##
+## Wandering off mid-keg is the behaviour groups were criticised for, so this
+## lets an activity score itself down while there is still drinking to do
+## without being hard-gated out of existing.
+func _group_is_drinking() -> bool:
+	if group_id.is_empty():
+		return false
+
+	if group_controller == null or not is_instance_valid(group_controller):
+		return false
+
+	var serving: Variant = group_controller.get(&"shared_serving")
+
+	if serving == null or not is_instance_valid(serving):
+		return false
+
+	if not serving.has_method(&"is_empty"):
+		return false
+
+	return not bool(serving.call(&"is_empty"))

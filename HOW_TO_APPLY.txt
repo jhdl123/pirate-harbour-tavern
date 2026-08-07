@@ -1,122 +1,122 @@
-Activity balancing + navigation telemetry
-Baseline: your commit ec5b8b1 ("customer-identity-and-navigation")
+Unified group/solo activity selection + continuous background socialising
+Baseline: your commit 60dd8c3 ("activity-balancing-and-nav-telemetry")
 
-19 files: 9 modified, 10 new. Nothing deleted.
+6 files: 4 modified, 2 new. Nothing deleted.
 Extract over your project root. Open in Godot once to import.
 
-NO editor wiring needed. main.tscn IS modified - see below.
+main.tscn IS modified - it gains one node. See "If you skip main.tscn".
 
 
 =================================================================
-WHAT WORKS NOW
+THE HEADLINE
 =================================================================
 
-DARTS - fixed, verified.
-  Went from 0 selections across 51 visits to ~3.4% of customer
-  time (including travel to and from the board).
+Conversation went from 0.3% to ~31-36% of customer time.
 
-  Two causes, both confirmed against a running tavern:
+It is no longer a discrete activity. SocialPresenceService runs its
+own slow tick (2s), pairs nearby compatible customers, and NEVER
+touches their state, activity or reservations. A customer chatting
+while waiting for a drink is still WAITING_TO_ORDER - service is
+never delayed and no activity is ever interrupted.
 
-  1. The darts UsePosition was 14px OFF THE NAVMESH. It sat at
-     (0,-18) - inside the board rather than in front of it. Now
-     (0,6), measuring 0.0px off. This is exactly the fault
-     NavigationValidator was written to catch, and it is STILL
-     not called from anywhere. Wiring it up would have found
-     this weeks ago.
+That design is not a stylistic choice. CustomerBrain.think() is
+called from exactly six lifecycle points and never during
+WAITING_TO_ORDER, which is ~22% of all customer time and the single
+most obvious moment to strike up a conversation. Every previous
+attempt to raise socialising failed against that, no matter how the
+gates or scores were tuned. Making conversation a background layer
+sidesteps the cadence problem entirely rather than fighting it.
 
-  2. not_currently_ordering gated it. That condition reads
-     has_ordered_drink, which stays TRUE from the moment a
-     customer orders until the drink is FINISHED - most of a
-     visit. A seated Pirate with 34.7 minutes left scored a
-     utility of 10.15 and was rejected purely by that gate. It
-     was never losing on score; it never reached the draw.
+Per-type rates come from the existing personality system, not from
+hard-coded numbers. A representative run:
 
-SECOND DARTBOARD - added at (190, 452) in main.tscn.
-  Both boards are discovered and reserved independently with NO
-  code change: they register under the shared group
-  reservable_tag_darts and DestinationBroker already picks the
-  nearest free one. A customer takes whichever is available and
-  does not queue for an occupied board.
+  captain 34   sailor_impatient 10   pirate 8
+  local_worker 5   merchant 2   sailor 1
 
-  If you have already added your own second board, skip
-  scenes/main/main.tscn and keep yours - just apply the
-  darts_point.tscn fix, which both boards inherit.
-
-NAVIGATION TELEMETRY - new report, exported with N from the F9
-  panel, written to user://navigation_report.json.
-
-  Measures what the existing reports do not: path efficiency
-  (distance walked / straight line), stall seconds, longest
-  single stall, avoidance deflection, recoveries split into
-  sidesteps vs repaths, and whether organic movement actually
-  reached each actor.
-
-  It caught two real bugs on its first run:
-   - Staff were never seeded with organic movement.
-     seed_personal_movement() was only called from
-     Customer.configure(), so staff walked the exact centreline
-     at uniform speed with no preferred passing side. Now seeded
-     in StaffMember.
-   - Path efficiency was computed from unpaired totals, giving
-     an impossible sub-1.0 figure. Now paired per journey.
+Merchants barely talk because of their privacy preference. That is
+the identity system driving social behaviour, which is what the
+brief asked for.
 
 
 =================================================================
-WHAT IS NOT FIXED - READ THIS
+A LATENT BUG THIS EXPOSED - WORTH READING
 =================================================================
 
-SOCIALISING IS STILL BROKEN. It sits at 0.3-0.6% of customer
-time. I found and fixed two real causes and it still did not
-move, because there is a third, structural one:
+identity.customer_id was assigned from runtime_customer_id BEFORE
+runtime_customer_id was allocated. Every customer in the tavern
+therefore shared the id -1.
 
-  CustomerBrain.think() is called from exactly SIX lifecycle
-  points in customer.gd and there is no periodic re-evaluation -
-  the brain is deliberately event-driven with no _process.
+SocialCompatibility.score() returns 0.0 when both ids match - it
+reads that as "comparing someone with themselves". So every pair in
+the room scored exactly 0.00 and nobody could ever qualify to talk,
+regardless of tags, personality or group.
 
-  Customers spend ~22% of their time in WAITING_TO_ORDER, which
-  is the ideal conversation window, but nothing ever asks them
-  to reconsider during it. Socialising cannot be selected no
-  matter how well it scores.
+identity.group_id was never populated either, so the same-group
+affinity bonus never applied to anyone.
 
-  The fix is a scheduled re-decision cadence while a customer is
-  settled. That is an architectural addition, not a tuning
-  change, and it is the next thing to do.
-
-The two socialising causes I DID fix are still worth having:
-  - socialise_at_seat was behind the same not_currently_ordering
-    gate as darts.
-  - is_available_for_social() required the PARTNER to already be
-    RELAXING. Relaxing is ~1% of customer time, so two seated
-    neighbours were almost never simultaneously free - a
-    chicken-and-egg. Now includes drinking, socialising and
-    waiting for service.
-
-Also untouched from the review: bartender prepare-drink churn
-(45.8% no_longer_required), group slot recovery hysteresis
-(29 recoveries), group payment metadata gaps, and the
-never_entered / reached_inside_at_minutes diagnostics bug.
+Both fixed. This would have silently broken ANY future system built
+on SocialCompatibility - approach behaviour, seating preference,
+rumour spread - and it produced no error of any kind.
 
 
 =================================================================
-MEASURED BEHAVIOUR
+GROUP UNIFICATION
 =================================================================
 
-From tests/behaviour_mix_probe.tscn - samples every customer's
-state twice a second and converts to percentage of customer-time.
+Group leisure previously shuffled a list and rolled a die in
+GroupManager, then called begin_* on the member. That was a second
+behaviour system answering the same question as CustomerBrain, with
+the member's personality, visit intention, cooldowns and
+satisfaction all invisible to it.
 
-  in group                40.8%
-  other (moving etc)      31.9%
-  ordering                21.9%
-  drinking                 3.9%
-  darts + travel           3.2%
-  relaxing                 0.3%
-  socialising              0.3%
+Now GroupManager asks the member's own brain first. The group
+decides WHETHER a member may wander (away capacity, cohesion,
+whether there is still keg to drink); the member decides WHAT to do,
+through the identical scoring path a solo customer uses.
 
-TREAT THESE AS INDICATIVE, NOT CONCLUSIVE. Run-to-run variance
-is high - darts read 0.9% then 0.3% on the SAME build. The probe
-also uses solo spawns with no player, so "in group" is inflated
-relative to a real session. Run it a few times, and run your own
-session with F9 -> O and F9 -> N for the real picture.
+Group context reaches that scoring as domain flags on Customer:
+  is_group_member, group_has_away_capacity, group_is_drinking,
+  is_in_conversation
+
+The old list-and-dice path is KEPT as a fallback for any member
+configured without an ActivityRegistry (test harnesses, or a group
+spawned before the AI is wired). Silently doing nothing there would
+have looked like the group system breaking.
+
+
+=================================================================
+IF YOU SKIP main.tscn
+=================================================================
+
+The only change is one added node. If you'd rather not overwrite
+your scene, add it by hand:
+
+  Managers -> new Node named "SocialPresenceService"
+  script: res://systems/customer_ai/social/social_presence_service.gd
+
+Without it, conversation simply never happens - no error.
+
+
+=================================================================
+TUNING
+=================================================================
+
+All exported on SocialPresenceService:
+
+  tick_seconds 2.0          how often pairing is attempted
+  pairing_chance 0.55       how eagerly pairs form
+  conversation_range 150    how far apart two customers may talk
+  same_group_bonus_range 60 extra range within a group
+  base_conversation_minutes 9.0
+  same_partner_cooldown_minutes 6.0
+  mood_gain 0.08
+
+  debug_pairing (not exported, set from a probe) prints every
+  candidate pair with distance and score. This is what found the
+  customer_id bug - leave it available.
+
+Too much chatter: lower pairing_chance or conversation_range.
+Too little: raise pairing_chance first.
 
 
 =================================================================
@@ -124,18 +124,38 @@ VERIFYING
 =================================================================
 
   godot --headless res://tests/behaviour_mix_probe.tscn
-      time distribution + per-dartboard usage
 
-  godot --headless res://tests/navigation_report_probe.tscn
-      path efficiency, stalls, recoveries
+Reports the time distribution plus a conversation section. Note that
+conversation is counted as an OVERLAY, not a state bucket - a
+customer can be both DRINKING and talking, and reporting them as one
+or the other would hide the entire point.
 
-  godot --headless res://tests/navigation_stress_test.tscn   25/0
-  godot --headless res://tests/customer_identity_test.tscn   92/0
+  godot --headless res://tests/customer_identity_test.tscn    92/0
+  godot --headless res://tests/navigation_stress_test.tscn     25/0
 
-Group suites should be unchanged at baseline:
-  group_framework  47/2   group_loop      38/0
-  group_parity     49/0   group_keg_loop  27/5
+Group suites, all at baseline:
+  group_loop      38/0    group_parity    49/0
+  group_framework 47/2    group_milestone 0 failed
+  group_keg_loop  27/5
 
-group_keg_loop is flaky and alternates between 27/5 and 29/3 on
-the same build. The 29/3 failures are a SUBSET of the 27/5 set -
-compare the failure set, never the count.
+ONE HONEST CAVEAT on group_keg_loop: it returned 24/8 once during
+this work, then 27/5 with the exact baseline failure set on three
+consecutive runs afterwards. I could not reproduce the 24/8. It is
+most likely the known flakiness of this suite under load, but it is
+worse than anything previously recorded (27/5, 28/4, 29/3), so it is
+worth watching rather than assuming.
+
+
+=================================================================
+STILL OUTSTANDING
+=================================================================
+
+- NavigationValidator exists and is tested but is still not called
+  from anywhere. It would have caught the 14px off-navmesh darts
+  point weeks earlier.
+- Bartender prepare-drink churn (45.8% no_longer_required).
+- Group slot recovery hysteresis (~29 recoveries per session).
+- Group payment metadata gaps.
+- never_entered / reached_inside_at_minutes diagnostics bug.
+- Relaxing sits at 0.4%. Conversation now occupies the niche it was
+  competing for, so this may be fine - but it has not been examined.

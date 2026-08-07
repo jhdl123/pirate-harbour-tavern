@@ -1494,17 +1494,37 @@ func _offer_leisure_activity(group: CustomerGroup) -> void:
 		return
 
 	var member: Node = idle[_rng.randi_range(0, idle.size() - 1)]
-	var last: StringName = StringName(String(member.get(&"last_group_activity_id")))
 
-	# Tried in an order that varies each time, so a group does not always
-	# fall back to the same pastime just because it is listed first.
+	# Ask the member's OWN brain first.
+	#
+	# This is the unification. A group member used to have its pastime
+	# chosen here - shuffle a list, roll a die, call a begin_* method -
+	# which is a second behaviour system running in parallel with
+	# CustomerBrain and answering the same question differently. A member's
+	# personality, visit intention, cooldowns and satisfaction were all
+	# invisible to it, so two crews of pirates behaved identically while two
+	# solo pirates did not.
+	#
+	# Now the group only decides WHETHER someone may wander (cohesion, away
+	# capacity, whether there is still keg to drink) and the member decides
+	# WHAT to do, through the same scoring path a solo customer uses. Group
+	# context reaches that scoring as domain flags - see
+	# Customer.get_activity_flags().
+	if _ask_member_brain(member):
+		return
+
+	# Fall back to the old list-driven path.
+	#
+	# Kept because a member configured without an ActivityRegistry has no
+	# brain to ask - a test harness, or a group spawned before the AI is
+	# wired. Silently doing nothing there would look like the group system
+	# had broken rather than the member being unconfigured.
+	var last: StringName = StringName(String(member.get(&"last_group_activity_id")))
 	var options: Array[StringName] = group.leisure_activities.duplicate()
 
 	options.shuffle()
 
 	for option: StringName in options:
-		# No immediate repeats: doing the same thing twice running reads as
-		# a stuck member rather than a choice.
 		if option == last and options.size() > 1:
 			continue
 
@@ -1512,6 +1532,27 @@ func _offer_leisure_activity(group: CustomerGroup) -> void:
 			return
 
 	# Nothing available. Standing with the group is a perfectly good answer.
+
+
+## Lets a group member choose its own leisure through CustomerBrain.
+##
+## Returns true when the brain took a decision, false when the member has no
+## brain to ask so the caller should use the legacy path.
+func _ask_member_brain(member: Node) -> bool:
+	var brain: Variant = member.get(&"_brain")
+
+	if brain == null:
+		return false
+
+	if not brain.has_method(&"think"):
+		return false
+
+	if member.get(&"needs") == null:
+		return false
+
+	brain.call(&"think")
+
+	return true
 
 
 func _start_leisure_activity(
