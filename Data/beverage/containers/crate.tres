@@ -13,3 +13,4 @@ maximum_capacity = 96
 bulk_storage = true
 can_be_transfer_destination = false
 storage_space_usage = 0.96
+typical_storage_tags = Array[StringName]([&"cellar_storage"])

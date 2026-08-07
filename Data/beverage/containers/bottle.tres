@@ -10,3 +10,4 @@ description = "Capacity is a configurable game value, historically inspired rath
 category = 1
 maximum_capacity = 8
 customer_serving = true
+typical_storage_tags = Array[StringName]([&"bar_storage", &"locked_storage"])

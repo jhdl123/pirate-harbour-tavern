@@ -1,0 +1,70 @@
+[gd_resource type="Resource" script_class="CustomerType" format=3 uid="uid://deeyys5ppyuw"]
+
+[ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="3_drink"]
+[ext_resource type="Texture2D" uid="uid://le2atqwwan06" path="res://assets/art/characters/32x32_sailor04.png" id="4_tex"]
+[ext_resource type="Resource" path="res://Data/customer_ai/personalities/plantation_owner.tres" id="5_pers"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/rum_punch.tres" id="8_rum_punch"]
+[ext_resource type="Script" uid="uid://pq058dsu2503" path="res://systems/customer_ai/drink_preference.gd" id="18_prefscript"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/madeira.tres" id="19_madeira"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/brandy.tres" id="20_brandy"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/canary_wine.tres" id="21_canary_wine"]
+
+[sub_resource type="Resource" id="DrinkPreference_madeira"]
+script = ExtResource("18_prefscript")
+drink = ExtResource("19_madeira")
+weight = 4.0
+preferred_format_ids = Array[StringName]([&"bottle_serving", &"glass"])
+typical_servings = 2
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[sub_resource type="Resource" id="DrinkPreference_brandy"]
+script = ExtResource("18_prefscript")
+drink = ExtResource("20_brandy")
+weight = 3.0
+preferred_format_ids = Array[StringName]([&"bottle_serving", &"glass"])
+typical_servings = 2
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[sub_resource type="Resource" id="DrinkPreference_canary_wine"]
+script = ExtResource("18_prefscript")
+drink = ExtResource("21_canary_wine")
+weight = 2.0
+preferred_format_ids = Array[StringName]([&"bottle_serving", &"glass"])
+typical_servings = 2
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Plantation Owner"
+customer_texture = ExtResource("4_tex")
+spawn_weight = 1.5
+patience_duration_minutes = 26
+available_drinks = Array[ExtResource("3_drink")]([ExtResource("19_madeira"), ExtResource("20_brandy"), ExtResource("8_rum_punch")])
+preferred_drink = ExtResource("19_madeira")
+preferred_drink_chance = 0.6
+drink_preferences = Array[ExtResource("18_prefscript")]([SubResource("DrinkPreference_madeira"), SubResource("DrinkPreference_brandy"), SubResource("DrinkPreference_canary_wine")])
+payment_multiplier = 1.9
+personality = ExtResource("5_pers")
+customer_category = &"wealthy"
+priority_level = 5
+importance_score = 4.0
+type_id = &"plantation_owner"
+tags = Array[StringName]([&"planter", &"wealthy", &"landowner"])
+social_category = &"gentry"
+starting_money_multiplier = 2.4
+spending_willingness = 0.9
+reorder_tendency = 1.4
+tipping_tendency = 1.3
+visit_intent_weights = {
+"celebration": 3.0,
+"quiet_meeting": 2.0,
+"social_visit": 2.5
+}
+solo_arrival_chance = 0.35
+crowding_tolerance = 0.45
+waiting_tolerance_multiplier = 0.9
+compatible_tags = Array[StringName]([&"merchant", &"official", &"wealthy"])
+disliked_tags = Array[StringName]([&"criminal"])
+knowledge_tags = Array[StringName]([&"cargo", &"harvests"])
+metadata/_custom_type_script = "res://scripts/data/customer_type.gd"

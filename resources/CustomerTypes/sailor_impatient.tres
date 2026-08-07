@@ -2,10 +2,33 @@
 
 [ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="1_4p4sa"]
 [ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="2_nggds"]
-[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="2_wd86o"]
-[ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="3_ru5tl"]
 [ext_resource type="Texture2D" uid="uid://3ule03eh4xmk" path="res://assets/art/characters/32x32_sailor02.png" id="3_wd86o"]
 [ext_resource type="Resource" path="res://Data/customer_ai/personalities/sailor_impatient.tres" id="4_personality"]
+[ext_resource type="Script" uid="uid://pq058dsu2503" path="res://systems/customer_ai/drink_preference.gd" id="27_prefscript"]
+[ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="28_ale"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/small_beer.tres" id="29_small_beer"]
+[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="30_grog"]
+
+[sub_resource type="Resource" id="DrinkPreference_ale"]
+script = ExtResource("27_prefscript")
+drink = ExtResource("28_ale")
+weight = 5.0
+preferred_format_ids = Array[StringName]([&"tankard", &"mug"])
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[sub_resource type="Resource" id="DrinkPreference_small_beer"]
+script = ExtResource("27_prefscript")
+drink = ExtResource("29_small_beer")
+weight = 2.0
+preferred_format_ids = Array[StringName]([&"tankard"])
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[sub_resource type="Resource" id="DrinkPreference_grog"]
+script = ExtResource("27_prefscript")
+drink = ExtResource("30_grog")
+weight = 2.0
+preferred_format_ids = Array[StringName]([&"dram"])
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
 [resource]
 script = ExtResource("2_nggds")
@@ -14,8 +37,9 @@ customer_texture = ExtResource("3_wd86o")
 spawn_weight = 2.0
 movement_speed = 135.0
 seat_movement_speed = 50.0
-available_drinks = Array[ExtResource("1_4p4sa")]([ExtResource("2_wd86o"), ExtResource("3_ru5tl")])
-preferred_drink = ExtResource("3_ru5tl")
+available_drinks = Array[ExtResource("1_4p4sa")]([ExtResource("30_grog"), ExtResource("28_ale")])
+preferred_drink = ExtResource("28_ale")
+drink_preferences = Array[ExtResource("27_prefscript")]([SubResource("DrinkPreference_ale"), SubResource("DrinkPreference_small_beer"), SubResource("DrinkPreference_grog")])
 personality = ExtResource("4_personality")
 type_id = &"sailor_impatient"
 tags = Array[StringName]([&"sailor", &"seafarer"])

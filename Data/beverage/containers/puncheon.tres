@@ -12,3 +12,4 @@ maximum_capacity = 600
 portable = false
 bulk_storage = true
 storage_space_usage = 6.0
+typical_storage_tags = Array[StringName]([&"cellar_storage"])

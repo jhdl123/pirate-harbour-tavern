@@ -116,6 +116,15 @@ var storage_space_usage: float = 1.0
 ## Leave empty when emptying it produces nothing worth keeping.
 @export var empty_container_item_id: StringName = &""
 
+## Where a container of this size normally lives - see [BeverageTags].
+##
+## Descriptive, not enforced: a [StorageProfileDefinition] still decides what a
+## location will ACCEPT, because that is a property of the liquid rather than
+## the vessel. This is the hint used to route a delivery to the right room
+## when the content itself has no opinion, and to explain to the player why a
+## puncheon belongs in the cellar and a kilderkin behind the bar.
+@export var typical_storage_tags: Array[StringName] = []
+
 
 @export_category("Visuals")
 

@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="SpoilageProfileDefinition" format=3]
+[gd_resource type="Resource" script_class="SpoilageProfileDefinition" format=3 uid="uid://3ysjh2inscsf"]
 
-[ext_resource type="Script" path="res://systems/beverage/spoilage_profile_definition.gd" id="1_5i7vi"]
+[ext_resource type="Script" uid="uid://dht5x2ojn8whr" path="res://systems/beverage/spoilage_profile_definition.gd" id="1_5i7vi"]
 
 [resource]
 script = ExtResource("1_5i7vi")

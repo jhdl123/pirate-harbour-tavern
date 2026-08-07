@@ -36,6 +36,21 @@ signal contents_changed
 @export_range(0, 999, 1)
 var capacity: int = 0
 
+## Contents this location will take. Empty means anything.
+##
+## The grog casks in the storeroom must not end up holding Madeira just
+## because they had room. Empty is the default so the general-purpose Cellar
+## keeps behaving as the catch-all it has always been.
+@export var accepted_content_ids: Array[StringName] = []
+
+## Preference when more than one location could take a delivery.
+##
+## Higher wins. A specific store - the ale stack, the wine crates - outranks
+## the general Cellar so stock lands where the player can see it, and only
+## overflows to the Cellar once the visible store is full.
+@export_range(-100, 100, 1)
+var storage_priority: int = 0
+
 
 @export_category("Conditions")
 
@@ -112,6 +127,12 @@ func accepts(batch: FilledContainer) -> bool:
 		return false
 
 	if is_full():
+		return false
+
+	if (
+		not accepted_content_ids.is_empty()
+		and not accepted_content_ids.has(batch.content_id)
+	):
 		return false
 
 	var profile: StorageProfileDefinition = _get_storage_profile(batch)

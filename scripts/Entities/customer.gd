@@ -183,6 +183,12 @@ var ordered_drink: DrinkDefinition
 var customer_type: CustomerType
 var payment_multiplier: float = 1.0
 
+## Serving format of the active order - see choose_serving_format_for().
+##
+## Empty for any customer type still on the legacy drink model, which is what
+## keeps their pricing and service identical to before.
+var ordered_serving_format_id: StringName = &""
+
 var _profiles_are_private: bool = false
 
 ## The customer AI foundation - see systems/customer_ai/ and
@@ -790,6 +796,10 @@ func choose_order() -> void:
 		choose_drink_from_customer_type()
 	)
 
+	ordered_serving_format_id = (
+		choose_serving_format_for(ordered_drink)
+	)
+
 	if ordered_drink == null:
 		push_error(
 			name
@@ -815,8 +825,11 @@ func choose_drink_from_customer_type() -> DrinkDefinition:
 
 	var valid_drinks: Array[DrinkDefinition] = []
 
+	# get_orderable_drinks() returns the weighted list when the type has one
+	# and available_drinks otherwise, so a converted type no longer has to
+	# repeat its menu in two places.
 	for drink: DrinkDefinition in (
-		customer_type.available_drinks
+		customer_type.get_orderable_drinks()
 	):
 		if drink == null:
 			continue
@@ -834,7 +847,9 @@ func choose_drink_from_customer_type() -> DrinkDefinition:
 
 		for drink: DrinkDefinition in valid_drinks:
 			var price: int = roundi(
-				float(drink.base_sell_price) * payment_multiplier
+				float(drink.base_sell_price)
+				* payment_multiplier
+				* _preview_format_price_modifier(drink)
 			)
 
 			if price <= needs.wealth:
@@ -850,6 +865,15 @@ func choose_drink_from_customer_type() -> DrinkDefinition:
 		)
 
 		return null
+
+	# Weighted list first. A type that has been converted picks here and never
+	# reaches the favourite-plus-chance code below; a type that has not is
+	# completely unaffected.
+	if customer_type.uses_weighted_preferences():
+		var weighted: DrinkDefinition = _draw_weighted_drink(valid_drinks)
+
+		if weighted != null:
+			return weighted
 
 	var preferred: DrinkDefinition = (
 		customer_type.preferred_drink
@@ -882,6 +906,125 @@ func choose_drink_from_customer_type() -> DrinkDefinition:
 		return preferred
 
 	return valid_drinks.pick_random()
+
+
+## Price modifier the format for [param drink] WOULD apply, before it is chosen.
+##
+## Affordability is checked against the full price including the format, so a
+## Captain never picks a bottle of Madeira he cannot pay for and then leaves
+## without ordering.
+func _preview_format_price_modifier(
+	drink: DrinkDefinition
+) -> float:
+	var format_id: StringName = choose_serving_format_for(drink)
+
+	if format_id.is_empty():
+		return 1.0
+
+	var registry: BeverageRegistry = _find_beverage_registry()
+
+	if registry == null:
+		return 1.0
+
+	var format: ServingFormatDefinition = registry.get_serving_format(format_id)
+
+	return 1.0 if format == null else format.price_modifier
+
+
+## Picks one of [param candidates] by CustomerType preference weight.
+##
+## [param candidates] has already been filtered for affordability, so the draw
+## normalises across what is actually orderable rather than the authored list.
+## Returns null when none of the candidates carry a preference, which sends the
+## caller back to the legacy path instead of failing the order.
+func _draw_weighted_drink(
+	candidates: Array[DrinkDefinition]
+) -> DrinkDefinition:
+	var entries: Array[DrinkPreference] = []
+	var total_weight: float = 0.0
+
+	for drink: DrinkDefinition in candidates:
+		var preference: DrinkPreference = (
+			customer_type.find_preference_for(drink)
+		)
+
+		if preference == null:
+			continue
+
+		entries.append(preference)
+		total_weight += preference.weight
+
+	if entries.is_empty() or total_weight <= 0.0:
+		return null
+
+	var roll: float = randf() * total_weight
+	var running: float = 0.0
+
+	for preference: DrinkPreference in entries:
+		running += preference.weight
+
+		if roll <= running:
+			return preference.drink
+
+	# Float drift only; the last entry is the correct answer.
+	return entries[entries.size() - 1].drink
+
+
+## The serving format this customer takes [param drink] in.
+##
+## Empty means "whatever the drink normally comes in", which is what every
+## customer did before preferences existed.
+func choose_serving_format_for(
+	drink: DrinkDefinition
+) -> StringName:
+	if drink == null or customer_type == null:
+		return &""
+
+	var preference: DrinkPreference = (
+		customer_type.find_preference_for(drink)
+	)
+
+	if preference == null:
+		return &""
+
+	return preference.resolve_format_id(
+		_find_beverage_registry(),
+		has_group()
+	)
+
+
+## Price multiplier from the chosen serving format.
+##
+## A bottle costs more than a tankard of the same wine. Falls back to 1.0
+## when no format was chosen or the registry cannot resolve it, so an
+## unconverted customer type pays exactly what it always did.
+func get_serving_format_price_modifier() -> float:
+	if ordered_serving_format_id.is_empty():
+		return 1.0
+
+	var registry: BeverageRegistry = _find_beverage_registry()
+
+	if registry == null:
+		return 1.0
+
+	var format: ServingFormatDefinition = registry.get_serving_format(
+		ordered_serving_format_id
+	)
+
+	if format == null:
+		return 1.0
+
+	return format.price_modifier
+
+
+func _find_beverage_registry() -> BeverageRegistry:
+	for node in get_tree().get_nodes_in_group(&"beverage_storage"):
+		var storage := node as BeverageStorage
+
+		if storage != null and storage.registry != null:
+			return storage.registry
+
+	return null
 
 
 func set_chair_target(
@@ -2095,6 +2238,7 @@ func _on_drink_finished() -> void:
 			ordered_drink.base_sell_price
 		)
 		* payment_multiplier
+		* get_serving_format_price_modifier()
 	)
 
 	if should_show_debug_messages():

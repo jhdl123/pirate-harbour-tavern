@@ -94,13 +94,14 @@ func _configure_station(station: DrinksStation) -> bool:
 
 	station.beverage_registry = registry
 
-	var capabilities: Array[StringName] = (
-		setup.capabilities.duplicate()
-		if setup != null and not setup.capabilities.is_empty()
-		else default_cask_capabilities.duplicate()
-	)
-
-	station.station_capabilities = capabilities
+	# A named setup wins; otherwise anything the scene author already put on
+	# the station is respected, exactly as service_container is below. Without
+	# this a bottle station authored with pour_from_bottle was silently
+	# overwritten with cask capabilities and could serve nothing.
+	if setup != null and not setup.capabilities.is_empty():
+		station.station_capabilities = setup.capabilities.duplicate()
+	elif station.station_capabilities.is_empty():
+		station.station_capabilities = default_cask_capabilities.duplicate()
 
 	var container_id: StringName = (
 		setup.service_container_id if setup != null
@@ -123,6 +124,16 @@ func _configure_station(station: DrinksStation) -> bool:
 			if setup != null and setup.starting_measures > 0
 			else starting_measures
 		)
+
+		# Never pour in more than the station says it holds. The blanket 96 is
+		# right for a cask but would put twelve bottles on a shelf with room
+		# for five, leaving current_servings above maximum_servings.
+		var station_limit: int = (
+			station.maximum_servings * station.get_measures_per_serving()
+		)
+
+		if station_limit > 0:
+			measures = mini(measures, station_limit)
 
 		station.grant_service_stock(measures)
 

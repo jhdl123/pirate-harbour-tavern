@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="CustomerType" format=3 uid="uid://crbhtea3q4yyp"]
+
+[ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="3_drink"]
+[ext_resource type="Texture2D" uid="uid://3ule03eh4xmk" path="res://assets/art/characters/32x32_sailor02.png" id="4_tex"]
+[ext_resource type="Resource" path="res://Data/customer_ai/personalities/naval_officer.tres" id="5_pers"]
+[ext_resource type="Script" uid="uid://pq058dsu2503" path="res://systems/customer_ai/drink_preference.gd" id="18_prefscript"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/madeira.tres" id="19_madeira"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/port_wine.tres" id="20_port_wine"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/brandy.tres" id="21_brandy"]
+
+[sub_resource type="Resource" id="DrinkPreference_madeira"]
+script = ExtResource("18_prefscript")
+drink = ExtResource("19_madeira")
+weight = 4.0
+preferred_format_ids = Array[StringName]([&"glass", &"bottle_serving"])
+typical_servings = 2
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[sub_resource type="Resource" id="DrinkPreference_port_wine"]
+script = ExtResource("18_prefscript")
+drink = ExtResource("20_port_wine")
+weight = 3.0
+preferred_format_ids = Array[StringName]([&"glass", &"bottle_serving"])
+typical_servings = 2
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[sub_resource type="Resource" id="DrinkPreference_brandy"]
+script = ExtResource("18_prefscript")
+drink = ExtResource("21_brandy")
+weight = 2.0
+preferred_format_ids = Array[StringName]([&"glass", &"dram"])
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Naval Officer"
+customer_texture = ExtResource("4_tex")
+spawn_weight = 2.0
+patience_duration_minutes = 28
+available_drinks = Array[ExtResource("3_drink")]([ExtResource("19_madeira"), ExtResource("20_port_wine"), ExtResource("21_brandy")])
+preferred_drink = ExtResource("19_madeira")
+preferred_drink_chance = 0.6
+drink_preferences = Array[ExtResource("18_prefscript")]([SubResource("DrinkPreference_madeira"), SubResource("DrinkPreference_port_wine"), SubResource("DrinkPreference_brandy")])
+payment_multiplier = 1.5
+personality = ExtResource("5_pers")
+customer_category = &"official"
+priority_level = 5
+importance_score = 3.5
+type_id = &"naval_officer"
+tags = Array[StringName]([&"official", &"naval", &"seafarer", &"wealthy"])
+social_category = &"officers"
+starting_money_multiplier = 1.7
+spending_willingness = 0.7
+tipping_tendency = 1.0
+visit_intent_weights = {
+"group_drinking": 2.0,
+"quiet_meeting": 3.0,
+"social_visit": 2.5
+}
+solo_arrival_chance = 0.4
+waiting_tolerance_multiplier = 1.2
+compatible_tags = Array[StringName]([&"official", &"merchant", &"captain"])
+disliked_tags = Array[StringName]([&"pirate", &"criminal"])
+knowledge_tags = Array[StringName]([&"navy_orders", &"routes"])
+metadata/_custom_type_script = "res://scripts/data/customer_type.gd"

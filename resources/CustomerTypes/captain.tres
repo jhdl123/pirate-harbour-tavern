@@ -6,6 +6,25 @@
 [ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="3_i7hx0"]
 [ext_resource type="Texture2D" uid="uid://cmlx2g5ncuvg8" path="res://assets/art/characters/32x32_sailor03.png" id="4_aqhne"]
 [ext_resource type="Resource" path="res://Data/customer_ai/personalities/captain.tres" id="4_personality"]
+[ext_resource type="Script" uid="uid://pq058dsu2503" path="res://systems/customer_ai/drink_preference.gd" id="27_prefscript"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/madeira.tres" id="28_madeira"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/brandy.tres" id="29_brandy"]
+
+[sub_resource type="Resource" id="DrinkPreference_madeira"]
+script = ExtResource("27_prefscript")
+drink = ExtResource("28_madeira")
+weight = 4.0
+preferred_format_ids = Array[StringName]([&"bottle_serving", &"glass"])
+typical_servings = 2
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[sub_resource type="Resource" id="DrinkPreference_brandy"]
+script = ExtResource("27_prefscript")
+drink = ExtResource("29_brandy")
+weight = 3.5
+preferred_format_ids = Array[StringName]([&"bottle_serving", &"glass", &"dram"])
+typical_servings = 2
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
 [resource]
 script = ExtResource("1_fhm20")
@@ -16,6 +35,7 @@ patience_duration_minutes = 32
 available_drinks = Array[ExtResource("1_2gva5")]([ExtResource("2_j2whw"), ExtResource("3_i7hx0")])
 preferred_drink = ExtResource("2_j2whw")
 preferred_drink_chance = 0.8
+drink_preferences = Array[ExtResource("27_prefscript")]([SubResource("DrinkPreference_madeira"), SubResource("DrinkPreference_brandy")])
 payment_multiplier = 1.6
 personality = ExtResource("4_personality")
 customer_category = &"captain"

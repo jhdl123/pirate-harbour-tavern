@@ -11,6 +11,8 @@
 [ext_resource type="Resource" path="res://Data/items/stock/ale_keg.tres" id="9_ale_keg"]
 [ext_resource type="Resource" path="res://Data/beverage/drinks/arrack.tres" id="10_1w11s"]
 [ext_resource type="Resource" path="res://Data/items/stock/grog_barrel.tres" id="10_grog_barrel"]
+[ext_resource type="Resource" path="res://Data/items/stock/cider_cask.tres" id="10_cider_cask"]
+[ext_resource type="Resource" path="res://Data/items/stock/small_beer_cask.tres" id="10_sb_cask"]
 [ext_resource type="Resource" path="res://Data/beverage/drinks/brandy.tres" id="11_war7n"]
 [ext_resource type="Resource" path="res://Data/beverage/drinks/bumbo.tres" id="12_xhbnj"]
 [ext_resource type="Resource" path="res://Data/beverage/drinks/canary_wine.tres" id="13_kluil"]
@@ -31,4 +33,4 @@
 
 [resource]
 script = ExtResource("1_registry")
-definitions = Array[ExtResource("2_itemdef")]([ExtResource("3_grog"), ExtResource("4_ale"), ExtResource("5_clean_tankard"), ExtResource("6_dirty_tankard"), ExtResource("7_broken_glass"), ExtResource("8_cleaning_rag"), ExtResource("9_ale_keg"), ExtResource("10_grog_barrel"), ExtResource("10_1w11s"), ExtResource("11_war7n"), ExtResource("12_xhbnj"), ExtResource("13_kluil"), ExtResource("14_80oye"), ExtResource("15_cgjns"), ExtResource("16_h325d"), ExtResource("17_6pg3i"), ExtResource("18_x0f8t"), ExtResource("19_c4v1b"), ExtResource("20_2d700"), ExtResource("21_jpmic"), ExtResource("22_8ee2n"), ExtResource("23_yshi8"), ExtResource("24_r8oog"), ExtResource("25_dknej"), ExtResource("26_2xv64"), ExtResource("27_uveto")])
+definitions = Array[ExtResource("2_itemdef")]([ExtResource("3_grog"), ExtResource("4_ale"), ExtResource("5_clean_tankard"), ExtResource("6_dirty_tankard"), ExtResource("7_broken_glass"), ExtResource("8_cleaning_rag"), ExtResource("9_ale_keg"), ExtResource("10_grog_barrel"), ExtResource("10_cider_cask"), ExtResource("10_sb_cask"), ExtResource("10_1w11s"), ExtResource("11_war7n"), ExtResource("12_xhbnj"), ExtResource("13_kluil"), ExtResource("14_80oye"), ExtResource("15_cgjns"), ExtResource("16_h325d"), ExtResource("17_6pg3i"), ExtResource("18_x0f8t"), ExtResource("19_c4v1b"), ExtResource("20_2d700"), ExtResource("21_jpmic"), ExtResource("22_8ee2n"), ExtResource("23_yshi8"), ExtResource("24_r8oog"), ExtResource("25_dknej"), ExtResource("26_2xv64"), ExtResource("27_uveto")])

@@ -43,6 +43,63 @@ var patience_duration_minutes: int = 15
 @export_range(0.0, 1.0, 0.05)
 var preferred_drink_chance: float = 0.75
 
+## Weighted drink list with serving formats - the current model.
+##
+## When this is non-empty it REPLACES available_drinks/preferred_drink for
+## order selection. Both older fields are kept so a type that has not been
+## converted yet still orders exactly as it did; see
+## Customer.choose_drink_from_customer_type().
+@export var drink_preferences: Array[DrinkPreference] = []
+
+
+## Every preference on this type that has a drink and a usable weight.
+func get_valid_drink_preferences() -> Array[DrinkPreference]:
+	var valid: Array[DrinkPreference] = []
+
+	for preference: DrinkPreference in drink_preferences:
+		if preference != null and preference.is_valid():
+			valid.append(preference)
+
+	return valid
+
+
+## Whether this type uses the weighted list rather than the legacy fields.
+func uses_weighted_preferences() -> bool:
+	return not get_valid_drink_preferences().is_empty()
+
+
+## The preference entry covering [param drink], or null.
+func find_preference_for(drink_definition: DrinkDefinition) -> DrinkPreference:
+	if drink_definition == null:
+		return null
+
+	for preference: DrinkPreference in get_valid_drink_preferences():
+		if preference.drink == drink_definition:
+			return preference
+
+	return null
+
+
+## Every drink this type might order, whichever model it uses.
+##
+## Used by anything that needs the menu rather than a single choice - stock
+## forecasting and the behaviour report both want this.
+func get_orderable_drinks() -> Array[DrinkDefinition]:
+	var drinks: Array[DrinkDefinition] = []
+
+	for preference: DrinkPreference in get_valid_drink_preferences():
+		if not drinks.has(preference.drink):
+			drinks.append(preference.drink)
+
+	if not drinks.is_empty():
+		return drinks
+
+	for drink_definition: DrinkDefinition in available_drinks:
+		if drink_definition != null and not drinks.has(drink_definition):
+			drinks.append(drink_definition)
+
+	return drinks
+
 
 @export_category("Economy")
 

@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://c1winecrate01"]
+
+[ext_resource type="Script" path="res://scripts/Interactables/stocked_display.gd" id="1_crate"]
+[ext_resource type="Texture2D" uid="uid://0oppepl715f2" path="res://assets/art/furniture/32x40_wine_crate.png" id="2_crate_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_crate"]
+size = Vector2(28, 26)
+
+[node name="WineCrate" type="StaticBody2D"]
+script = ExtResource("1_crate")
+display_name = "Wine Crate"
+unit_texture = ExtResource("2_crate_tex")
+unit_offsets = Array[Vector2]([Vector2(0, 0)])
+collision_offset = Vector2(0, 7)
+container_id = &"crate"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_crate")

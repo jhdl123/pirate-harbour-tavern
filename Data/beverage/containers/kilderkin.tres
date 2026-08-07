@@ -12,3 +12,4 @@ maximum_capacity = 144
 portable = false
 bulk_storage = true
 storage_space_usage = 1.44
+typical_storage_tags = Array[StringName]([&"bar_storage"])

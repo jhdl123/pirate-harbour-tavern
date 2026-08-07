@@ -166,12 +166,24 @@ func _find_storage_for(
 ) -> BeverageStorage:
 	var fallback: BeverageStorage = null
 
+	# Highest priority first, so a specific visible store (the ale cask stack,
+	# the wine crates) is offered the batch before the general Cellar and the
+	# Cellar only takes what nothing else will hold. Group order is arbitrary,
+	# so without this sort the winner depends on scene-tree ordering.
+	var candidates: Array[BeverageStorage] = []
+
 	for node in get_tree().get_nodes_in_group(&"beverage_storage"):
 		var storage := node as BeverageStorage
 
-		if storage == null or not storage.accepts(batch):
-			continue
+		if storage != null and storage.accepts(batch):
+			candidates.append(storage)
 
+	candidates.sort_custom(
+		func(a: BeverageStorage, b: BeverageStorage) -> bool:
+			return a.storage_priority > b.storage_priority
+	)
+
+	for storage: BeverageStorage in candidates:
 		if entry.destination_storage_tags.is_empty():
 			return storage
 

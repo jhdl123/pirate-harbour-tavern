@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://c1bottleshelf01"]
+
+[ext_resource type="Script" path="res://scripts/Interactables/stocked_display.gd" id="1_shelf"]
+[ext_resource type="Texture2D" uid="uid://hjarw28qc5m2" path="res://assets/art/furniture/96x64_self_02.png" id="2_shelf_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_shelf"]
+size = Vector2(62, 32)
+
+[node name="BottleShelf" type="StaticBody2D"]
+script = ExtResource("1_shelf")
+display_name = "Bottle Shelf"
+unit_z_index = 1
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.656, 0.5)
+texture = ExtResource("2_shelf_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_shelf")

@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://c1caskstack01"]
+
+[ext_resource type="Script" path="res://scripts/Interactables/stocked_display.gd" id="1_stack"]
+[ext_resource type="Texture2D" uid="uid://tnkp4axmaw2b" path="res://assets/art/furniture/32x32_small_barrel.png" id="2_cask_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_stack"]
+size = Vector2(64, 48)
+
+[node name="CaskStack" type="StaticBody2D"]
+script = ExtResource("1_stack")
+display_name = "Cask Stack"
+unit_texture = ExtResource("2_cask_tex")
+container_id = &"firkin"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_stack")

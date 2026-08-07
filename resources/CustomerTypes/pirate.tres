@@ -2,10 +2,35 @@
 
 [ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="2_drink"]
-[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="3_grog"]
-[ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="4_ale"]
 [ext_resource type="Texture2D" uid="uid://cmlx2g5ncuvg8" path="res://assets/art/characters/32x32_sailor03.png" id="5_tex"]
 [ext_resource type="Resource" uid="uid://c6pqko56vdtap" path="res://Data/customer_ai/personalities/pirate.tres" id="6_pers"]
+[ext_resource type="Script" uid="uid://pq058dsu2503" path="res://systems/customer_ai/drink_preference.gd" id="29_prefscript"]
+[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="30_grog"]
+[ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="31_ale"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/cider.tres" id="32_cider"]
+
+[sub_resource type="Resource" id="DrinkPreference_grog"]
+script = ExtResource("29_prefscript")
+drink = ExtResource("30_grog")
+weight = 5.0
+preferred_format_ids = Array[StringName]([&"mug", &"cup", &"dram"])
+typical_servings = 3
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[sub_resource type="Resource" id="DrinkPreference_ale"]
+script = ExtResource("29_prefscript")
+drink = ExtResource("31_ale")
+weight = 3.0
+preferred_format_ids = Array[StringName]([&"tankard", &"mug"])
+typical_servings = 2
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
+
+[sub_resource type="Resource" id="DrinkPreference_cider"]
+script = ExtResource("29_prefscript")
+drink = ExtResource("32_cider")
+weight = 1.5
+preferred_format_ids = Array[StringName]([&"tankard", &"mug"])
+metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
 [resource]
 script = ExtResource("1_script")
@@ -13,8 +38,9 @@ display_name = "Pirate"
 customer_texture = ExtResource("5_tex")
 spawn_weight = 5.0
 patience_duration_minutes = 30
-available_drinks = Array[ExtResource("2_drink")]([ExtResource("3_grog"), ExtResource("4_ale")])
-preferred_drink = ExtResource("4_ale")
+available_drinks = Array[ExtResource("2_drink")]([ExtResource("30_grog"), ExtResource("31_ale")])
+preferred_drink = ExtResource("31_ale")
+drink_preferences = Array[ExtResource("29_prefscript")]([SubResource("DrinkPreference_grog"), SubResource("DrinkPreference_ale"), SubResource("DrinkPreference_cider")])
 personality = ExtResource("6_pers")
 type_id = &"pirate"
 tags = Array[StringName]([&"pirate", &"seafarer", &"criminal"])

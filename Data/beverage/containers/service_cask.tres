@@ -9,3 +9,4 @@ historical_name = "Service Cask"
 simplified_explanation = "tapped bar cask"
 description = "Capacity is a configurable game value, historically inspired rather than an exact period measure."
 maximum_capacity = 96
+typical_storage_tags = Array[StringName]([&"bar_storage"])

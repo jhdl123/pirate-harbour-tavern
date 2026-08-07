@@ -9,11 +9,11 @@
 [ext_resource type="PackedScene" uid="uid://dnd6om8dg26fm" path="res://scenes/furniture/drinks_station.tscn" id="3_l3cfh"]
 [ext_resource type="Script" uid="uid://bowoxvrqsdjw6" path="res://scripts/Managers/game_manager.gd" id="7_hujxm"]
 [ext_resource type="Script" uid="uid://cduu6wuftbtkl" path="res://scripts/UI/hud.gd" id="7_yyfjg"]
+[ext_resource type="Texture2D" uid="uid://c3pebfcaim567" path="res://assets/art/furniture/32x32_medium_barrel.png" id="8_6g21x"]
 [ext_resource type="Script" uid="uid://b5wcssexr0e0" path="res://scripts/Debug/navigation_debugger.gd" id="9_b1x3f"]
 [ext_resource type="Texture2D" uid="uid://cmym75xo6n2ua" path="res://assets/art/furniture/448x32_bar.png" id="11_obdhw"]
 [ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="12_37hlw"]
 [ext_resource type="PackedScene" uid="uid://djtgijinluyir" path="res://scenes/environment/CustomerDoor.tscn" id="12_nvumn"]
-[ext_resource type="Texture2D" uid="uid://drq6sfj4t3g13" path="res://assets/art/furniture/32x32_drinks_staion_02.png" id="12_p8abn"]
 [ext_resource type="Resource" uid="uid://8h83yo3jwte" path="res://resources/config/default_game_config.tres" id="15_hxu8e"]
 [ext_resource type="Script" uid="uid://bc5lnr8hbl0hj" path="res://systems/time/time_display.gd" id="16_p8abn"]
 [ext_resource type="Texture2D" uid="uid://dj6a43xl8rxms" path="res://assets/art/furniture/96x64_long_desk_table_01.png" id="17_h325i"]
@@ -52,14 +52,20 @@
 [ext_resource type="Resource" uid="uid://cfo167rq6i6et" path="res://resources/CustomerTypes/local_worker.tres" id="64_5biqi"]
 [ext_resource type="Resource" uid="uid://irpuork1hfsx" path="res://resources/CustomerTypes/pirate.tres" id="65_23bmo"]
 [ext_resource type="Resource" uid="uid://c20iwromspqo7" path="res://resources/CustomerTypes/merchant.tres" id="66_1p6ov"]
-[ext_resource type="Texture2D" uid="uid://tnkp4axmaw2b" path="res://assets/art/furniture/32x32_small_barrel.png" id="69_umklk"]
-[ext_resource type="Texture2D" uid="uid://hjarw28qc5m2" path="res://assets/art/furniture/96x64_self_02.png" id="83_2conb"]
-[ext_resource type="Texture2D" uid="uid://0oppepl715f2" path="res://assets/art/furniture/32x40_wine_crate.png" id="86_5biqi"]
+[ext_resource type="Resource" uid="uid://crbhtea3q4yyp" path="res://resources/CustomerTypes/naval_officer.tres" id="67_navofc"]
+[ext_resource type="Resource" uid="uid://deeyys5ppyuw" path="res://resources/CustomerTypes/plantation_owner.tres" id="68_planter"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/brandy.tres" id="70_brandy"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/canary_wine.tres" id="70_canary_wine"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/madeira.tres" id="70_madeira"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/port_wine.tres" id="70_port_wine"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/small_beer.tres" id="70_small_beer"]
+[ext_resource type="Resource" uid="uid://bxdagkfl8ugjk" path="res://Data/items/stock/small_beer_cask.tres" id="71_sb_cask"]
+[ext_resource type="Resource" path="res://Data/beverage/containers/crate.tres" id="72_crate"]
 [ext_resource type="Script" uid="uid://cc6myafsysx1f" path="res://systems/customer_ai/ui/customer_behaviour_panel.gd" id="87_23bmo"]
 [ext_resource type="Texture2D" uid="uid://bj2rpo1cbqjlw" path="res://assets/art/items/drinks/8x16_bottle_02.png" id="89_flbmi"]
 [ext_resource type="PackedScene" path="res://scenes/groups/group_standing_area.tscn" id="90_area"]
 [ext_resource type="Script" uid="uid://cb4tn6r2p0d4q" path="res://systems/beverage/ui/beverage_diagnostics_panel.gd" id="90_bevpanel"]
-[ext_resource type="Resource" path="res://Data/beverage/beverage_registry.tres" id="90_bevreg"]
+[ext_resource type="Resource" uid="uid://dil80ps5xcvau" path="res://Data/beverage/beverage_registry.tres" id="90_bevreg"]
 [ext_resource type="Script" uid="uid://bawb27y0qbxbb" path="res://systems/beverage/beverage_scene_setup.gd" id="90_bevsetup"]
 [ext_resource type="Script" uid="uid://csad54ioejqho" path="res://systems/beverage/beverage_storage.gd" id="90_bevstore"]
 [ext_resource type="Script" uid="uid://bnxeva8h86oe8" path="res://systems/tavern/tavern_demand_controller.gd" id="90_demand"]
@@ -82,9 +88,14 @@
 [ext_resource type="Script" uid="uid://dlvfx1rdivqii" path="res://scripts/UI/end_of_day_summary.gd" id="92_eod"]
 [ext_resource type="Texture2D" uid="uid://bwmy2sjaggmtl" path="res://assets/art/items/drinks/8x16_bottle_01.png" id="92_g0u4x"]
 [ext_resource type="Script" uid="uid://b5n13d0lukoom" path="res://scripts/UI/daily_control_bar.gd" id="93_bar"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/cider.tres" id="94_cider"]
+[ext_resource type="Resource" uid="uid://cwm737csa6emi" path="res://Data/items/stock/cider_cask.tres" id="95_cider_cask"]
+[ext_resource type="PackedScene" uid="uid://beg3qpm5cdmcm" path="res://scenes/furniture/bottle_shelf.tscn" id="96_shelf"]
 [ext_resource type="PackedScene" uid="uid://peasf5t87kia" path="res://scenes/TavernUpstairs/TavernUpstairs.tscn" id="96_upstairs"]
+[ext_resource type="PackedScene" uid="uid://c1caskstack01" path="res://scenes/furniture/cask_stack.tscn" id="97_cask_stack"]
 [ext_resource type="PackedScene" path="res://scenes/transitions/floor_transition.tscn" id="97_floor_transition"]
 [ext_resource type="Script" uid="uid://dj1rrniwkcx8n" path="res://scripts/World/floor_controller.gd" id="98_floor_controller"]
+[ext_resource type="PackedScene" uid="uid://c1winecrate01" path="res://scenes/furniture/wine_crate.tscn" id="98_wine_crate"]
 [ext_resource type="Script" uid="uid://22vnn6tjckh1" path="res://systems/customer_ai/social/social_presence_service.gd" id="99_social"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_mel2l"]
@@ -369,34 +380,37 @@ position = Vector2(82, 452)
 position = Vector2(156, 452)
 
 [node name="Grog_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
-position = Vector2(396, 50)
+position = Vector2(356, 80)
+
+[node name="Sprite2D" parent="Environment/Grog_station" index="0" unique_id=1803792753]
+texture = ExtResource("8_6g21x")
 
 [node name="CollisionShape2D" parent="Environment/Grog_station/InteractionArea" parent_id_path=PackedInt32Array(1053921962, 258262445) index="0" unique_id=422318540]
 position = Vector2(0, 1)
-scale = Vector2(0.75, 1)
+scale = Vector2(1.0249863, 0.88660073)
 
-[node name="Grog_station2" parent="Environment" unique_id=1794778572 instance=ExtResource("3_l3cfh")]
-position = Vector2(433, 50)
+[node name="Cider_station" parent="Environment" unique_id=1794778572 instance=ExtResource("3_l3cfh")]
+position = Vector2(461, 49)
+served_drink = ExtResource("94_cider")
+refill_item = ExtResource("95_cider_cask")
 
-[node name="CollisionShape2D" parent="Environment/Grog_station2/InteractionArea" parent_id_path=PackedInt32Array(1794778572, 258262445) index="0" unique_id=422318540]
-position = Vector2(0, 1)
-scale = Vector2(0.75, 1)
-
-[node name="Grog_station3" parent="Environment" unique_id=1224028502 instance=ExtResource("3_l3cfh")]
-position = Vector2(470, 50)
-
-[node name="CollisionShape2D" parent="Environment/Grog_station3/InteractionArea" parent_id_path=PackedInt32Array(1224028502, 258262445) index="0" unique_id=422318540]
+[node name="CollisionShape2D" parent="Environment/Cider_station/InteractionArea" parent_id_path=PackedInt32Array(1794778572, 258262445) index="0" unique_id=422318540]
 position = Vector2(0, 1)
 scale = Vector2(0.75, 1)
 
 [node name="Ale_station" parent="Environment" unique_id=1835805780 instance=ExtResource("3_l3cfh")]
-position = Vector2(353, 76)
+position = Vector2(403, 49)
 rotation = -6.2831855
 served_drink = ExtResource("12_37hlw")
 refill_item = ExtResource("32_ale_keg")
 
 [node name="Sprite2D" parent="Environment/Ale_station" index="0" unique_id=1803792753]
-texture = ExtResource("12_p8abn")
+texture = null
+
+[node name="SmallBeer_tap" parent="Environment/Ale_station" unique_id=950489246 instance=ExtResource("3_l3cfh")]
+position = Vector2(16, 0)
+served_drink = ExtResource("70_small_beer")
+refill_item = ExtResource("71_sb_cask")
 
 [node name="StockStorage" parent="Environment" unique_id=567700205 instance=ExtResource("30_stock_storage")]
 position = Vector2(281, 60)
@@ -440,6 +454,149 @@ position = Vector2(70, -134)
 position = Vector2(143, 527)
 texture = ExtResource("23_5deua")
 
+[node name="BackBar" type="Node2D" parent="Environment" unique_id=1510257240]
+
+[node name="MadeiraShelf" parent="Environment/BackBar" unique_id=1131675824 instance=ExtResource("96_shelf")]
+position = Vector2(568, 50)
+content_id = &"madeira"
+display_name = "Madeira Shelf"
+unit_texture = ExtResource("90_yv2hd")
+unit_offsets = Array[Vector2]([Vector2(-18, 3), Vector2(-9, 3), Vector2(0, 2), Vector2(9, 3), Vector2(18, 3)])
+storage_location_id = &"back_bar_madeira"
+storage_tags = Array[StringName]([&"bar_storage"])
+container_id = &"bottle"
+mirror_station = NodePath("MadeiraService")
+
+[node name="MadeiraService" parent="Environment/BackBar/MadeiraShelf" unique_id=1201131285 instance=ExtResource("3_l3cfh")]
+served_drink = ExtResource("70_madeira")
+maximum_servings = 5
+starting_servings = 5
+station_capabilities = Array[StringName]([&"pour_from_bottle"])
+service_container = ExtResource("72_crate")
+service_content_id = &"madeira"
+serve_verb = "Take a bottle of"
+
+[node name="CanaryWineShelf" parent="Environment/BackBar" unique_id=1589320964 instance=ExtResource("96_shelf")]
+position = Vector2(624, 50)
+content_id = &"canary_wine"
+display_name = "Canary Wine Shelf"
+unit_texture = ExtResource("92_g0u4x")
+unit_offsets = Array[Vector2]([Vector2(-17, 3), Vector2(-9, 3), Vector2(0, 3), Vector2(9, 3), Vector2(19, 3)])
+storage_location_id = &"back_bar_canary_wine"
+storage_tags = Array[StringName]([&"bar_storage"])
+container_id = &"bottle"
+mirror_station = NodePath("CanaryWineService")
+
+[node name="CanaryWineService" parent="Environment/BackBar/CanaryWineShelf" unique_id=1258463600 instance=ExtResource("3_l3cfh")]
+served_drink = ExtResource("70_canary_wine")
+maximum_servings = 5
+starting_servings = 5
+station_capabilities = Array[StringName]([&"pour_from_bottle"])
+service_container = ExtResource("72_crate")
+service_content_id = &"canary_wine"
+serve_verb = "Take a bottle of"
+
+[node name="Sprite2D" parent="Environment/BackBar/CanaryWineShelf/CanaryWineService" index="0" unique_id=1803792753]
+visible = false
+
+[node name="BrandyShelf" parent="Environment/BackBar" unique_id=965369023 instance=ExtResource("96_shelf")]
+position = Vector2(568, 28)
+content_id = &"brandy"
+display_name = "Brandy Shelf"
+unit_texture = ExtResource("89_flbmi")
+unit_offsets = Array[Vector2]([Vector2(-18, 3), Vector2(-11, 3), Vector2(-3, 3), Vector2(4, 3), Vector2(11, 3), Vector2(18, 3)])
+storage_location_id = &"back_bar_brandy"
+storage_tags = Array[StringName]([&"bar_storage"])
+container_id = &"bottle"
+mirror_station = NodePath("BrandyService")
+
+[node name="BrandyService" parent="Environment/BackBar/BrandyShelf" unique_id=90071470 instance=ExtResource("3_l3cfh")]
+served_drink = ExtResource("70_brandy")
+maximum_servings = 6
+starting_servings = 6
+station_capabilities = Array[StringName]([&"pour_from_bottle", &"access_secured_bottles"])
+service_container = ExtResource("72_crate")
+service_content_id = &"brandy"
+serve_verb = "Take a bottle of"
+
+[node name="PortWineShelf" parent="Environment/BackBar" unique_id=339312108 instance=ExtResource("96_shelf")]
+position = Vector2(624, 29)
+content_id = &"port_wine"
+display_name = "Port Wine Shelf"
+unit_texture = ExtResource("91_0jr6o")
+unit_offsets = Array[Vector2]([Vector2(-17, 2), Vector2(-8, 2), Vector2(2, 2), Vector2(11, 2), Vector2(20, 2)])
+storage_location_id = &"back_bar_port_wine"
+storage_tags = Array[StringName]([&"bar_storage"])
+container_id = &"bottle"
+mirror_station = NodePath("PortWineService")
+
+[node name="PortWineService" parent="Environment/BackBar/PortWineShelf" unique_id=1970387530 instance=ExtResource("3_l3cfh")]
+served_drink = ExtResource("70_port_wine")
+maximum_servings = 5
+starting_servings = 5
+station_capabilities = Array[StringName]([&"pour_from_bottle"])
+service_container = ExtResource("72_crate")
+service_content_id = &"port_wine"
+serve_verb = "Take a bottle of"
+
+[node name="Storeroom" type="Node2D" parent="Environment" unique_id=902219571]
+
+[node name="GrogCaskStack" parent="Environment/Storeroom" unique_id=1241939096 instance=ExtResource("97_cask_stack")]
+position = Vector2(899, 62)
+content_id = &"kill_devil"
+display_name = "Grog Casks"
+unit_offsets = Array[Vector2]([Vector2(-32, 3), Vector2(-1, 4), Vector2(-16, -19), Vector2(30, 3), Vector2(14, -21), Vector2(-30, 20), Vector2(1, 21), Vector2(-14, -2), Vector2(32, 20), Vector2(16, -4)])
+collision_size = Vector2(84, 68)
+storage_backed = true
+storage_location_id = &"storeroom_kill_devil"
+storage_tags = Array[StringName]([&"cellar_storage"])
+registry = ExtResource("90_bevreg")
+storage_priority = 12
+
+[node name="AleCaskStack" parent="Environment/Storeroom" unique_id=2008644520 instance=ExtResource("97_cask_stack")]
+position = Vector2(1007, 57)
+content_id = &"ale"
+display_name = "Ale Casks"
+unit_offsets = Array[Vector2]([Vector2(-31, 5), Vector2(0, 6), Vector2(-15, -17), Vector2(31, 5), Vector2(15, -19), Vector2(-13, 18), Vector2(18, 19)])
+collision_size = Vector2(82, 64)
+storage_backed = true
+storage_location_id = &"storeroom_ale"
+storage_tags = Array[StringName]([&"cellar_storage"])
+registry = ExtResource("90_bevreg")
+storage_priority = 12
+
+[node name="CiderCaskStack" parent="Environment/Storeroom" unique_id=363455202 instance=ExtResource("97_cask_stack")]
+position = Vector2(1056, 122)
+content_id = &"cider"
+display_name = "Cider Casks"
+unit_offsets = Array[Vector2]([Vector2(-29, 10), Vector2(-2, 6), Vector2(29, 5), Vector2(15, -18), Vector2(-1, 17), Vector2(30, 18), Vector2(15, -5)])
+collision_size = Vector2(79, 62)
+storage_backed = true
+storage_location_id = &"storeroom_cider"
+storage_tags = Array[StringName]([&"cellar_storage"])
+registry = ExtResource("90_bevreg")
+storage_priority = 12
+
+[node name="WineCrate1" parent="Environment/Storeroom" unique_id=2039898286 instance=ExtResource("98_wine_crate")]
+position = Vector2(868, 163)
+storage_location_id = &"storeroom_wine_crates"
+storage_tags = Array[StringName]([&"cellar_storage"])
+
+[node name="WineCrate2" parent="Environment/Storeroom" unique_id=1358558346 instance=ExtResource("98_wine_crate")]
+position = Vector2(900, 164)
+storage_location_id = &"storeroom_wine_crates"
+storage_tags = Array[StringName]([&"cellar_storage"])
+
+[node name="WineCrate3" parent="Environment/Storeroom" unique_id=1651533715 instance=ExtResource("98_wine_crate")]
+position = Vector2(868, 192)
+storage_location_id = &"storeroom_wine_crates"
+storage_tags = Array[StringName]([&"cellar_storage"])
+
+[node name="WineCrate4" parent="Environment/Storeroom" unique_id=1940322480 instance=ExtResource("98_wine_crate")]
+position = Vector2(900, 193)
+storage_location_id = &"storeroom_wine_crates"
+storage_tags = Array[StringName]([&"cellar_storage"])
+
 [node name="FloorTransitions" type="Node2D" parent="." unique_id=24730963]
 position = Vector2(1, -5)
 
@@ -466,7 +623,7 @@ position = Vector2(395, 266)
 position = Vector2(552, 234)
 
 [node name="Bartender" parent="Entities" unique_id=745256854 instance=ExtResource("44_bartender")]
-position = Vector2(555, 137)
+position = Vector2(551, 138)
 
 [node name="Markers" type="Node2D" parent="." unique_id=1069500628]
 
@@ -666,7 +823,7 @@ visit_intent_registry = SubResource("Resource_6lsm7")
 customer_ai_balance = ExtResource("35_balance_config")
 customer_ai_diagnostics = ExtResource("36_diagnostics_config")
 customer_ai_report_manager = NodePath("../CustomerAIReportManager")
-customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtResource("18_r4lks"), ExtResource("18_captain"), ExtResource("64_5biqi"), ExtResource("65_23bmo"), ExtResource("66_1p6ov")])
+customer_types = Array[ExtResource("17_r4lks")]([ExtResource("17_necax"), ExtResource("18_r4lks"), ExtResource("18_captain"), ExtResource("64_5biqi"), ExtResource("65_23bmo"), ExtResource("66_1p6ov"), ExtResource("67_navofc"), ExtResource("68_planter")])
 group_spawner = NodePath("../GroupSpawner")
 
 [node name="TavernDemandController" type="Node" parent="Managers" unique_id=513549767]
@@ -692,108 +849,6 @@ stock_storage = NodePath("../../Environment/StockStorage")
 
 [node name="StaffReportManager" type="Node" parent="Managers" unique_id=1939219445]
 script = ExtResource("43_staff_report")
-
-[node name="Node" type="Node" parent="Managers" unique_id=2052429320]
-
-[node name="32x32SmallBarrel" type="Sprite2D" parent="Managers/Node" unique_id=1783441889]
-position = Vector2(867, 65)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel2" type="Sprite2D" parent="Managers/Node" unique_id=1179049656]
-position = Vector2(898, 66)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel3" type="Sprite2D" parent="Managers/Node" unique_id=688133653]
-position = Vector2(883, 43)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel4" type="Sprite2D" parent="Managers/Node" unique_id=1783081895]
-position = Vector2(929, 65)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel5" type="Sprite2D" parent="Managers/Node" unique_id=208563845]
-position = Vector2(913, 41)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel6" type="Sprite2D" parent="Managers/Node" unique_id=1592910299]
-position = Vector2(869, 82)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel7" type="Sprite2D" parent="Managers/Node" unique_id=1875953517]
-position = Vector2(900, 83)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel8" type="Sprite2D" parent="Managers/Node" unique_id=1089469876]
-position = Vector2(885, 60)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel9" type="Sprite2D" parent="Managers/Node" unique_id=1962658803]
-position = Vector2(931, 82)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel10" type="Sprite2D" parent="Managers/Node" unique_id=810412257]
-position = Vector2(915, 58)
-texture = ExtResource("69_umklk")
-
-[node name="Node2" type="Node" parent="Managers" unique_id=491991970]
-
-[node name="32x32SmallBarrel" type="Sprite2D" parent="Managers/Node2" unique_id=524264120]
-position = Vector2(976, 62)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel2" type="Sprite2D" parent="Managers/Node2" unique_id=799414507]
-position = Vector2(1007, 63)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel3" type="Sprite2D" parent="Managers/Node2" unique_id=1008991202]
-position = Vector2(992, 40)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel4" type="Sprite2D" parent="Managers/Node2" unique_id=839121866]
-position = Vector2(1038, 62)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel5" type="Sprite2D" parent="Managers/Node2" unique_id=308113839]
-position = Vector2(1022, 38)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel6" type="Sprite2D" parent="Managers/Node2" unique_id=1157223694]
-position = Vector2(994, 75)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel7" type="Sprite2D" parent="Managers/Node2" unique_id=1387646571]
-position = Vector2(1025, 76)
-texture = ExtResource("69_umklk")
-
-[node name="Node3" type="Node" parent="Managers" unique_id=1752961343]
-
-[node name="32x32SmallBarrel" type="Sprite2D" parent="Managers/Node3" unique_id=107394]
-position = Vector2(1027, 132)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel2" type="Sprite2D" parent="Managers/Node3" unique_id=139656907]
-position = Vector2(1054, 128)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel4" type="Sprite2D" parent="Managers/Node3" unique_id=1233957336]
-position = Vector2(1085, 127)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel5" type="Sprite2D" parent="Managers/Node3" unique_id=45420643]
-position = Vector2(1071, 104)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel6" type="Sprite2D" parent="Managers/Node3" unique_id=806821889]
-position = Vector2(1055, 139)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel7" type="Sprite2D" parent="Managers/Node3" unique_id=586543619]
-position = Vector2(1086, 140)
-texture = ExtResource("69_umklk")
-
-[node name="32x32SmallBarrel3" type="Sprite2D" parent="Managers/Node3" unique_id=832785303]
-position = Vector2(1071, 117)
-texture = ExtResource("69_umklk")
 
 [node name="BarManagementMenu" parent="." unique_id=1560950072 node_paths=PackedStringArray("game_manager", "economy_manager", "statistics_tracker") instance=ExtResource("27_62atk")]
 visible = false
@@ -826,135 +881,8 @@ script = ExtResource("93_bar")
 [node name="CustomerBehaviourPanel" type="Node" parent="." unique_id=365676011]
 script = ExtResource("87_23bmo")
 
-[node name="96x64Self02" type="Sprite2D" parent="." unique_id=755698243]
-position = Vector2(624, 50)
-scale = Vector2(0.656, 0.5)
-texture = ExtResource("83_2conb")
-
-[node name="96x64Self03" type="Sprite2D" parent="." unique_id=418111749]
-position = Vector2(567.99994, 50)
-scale = Vector2(0.656, 0.5)
-texture = ExtResource("83_2conb")
-
-[node name="96x64Self04" type="Sprite2D" parent="." unique_id=881973955]
-position = Vector2(624, 29)
-scale = Vector2(0.656, 0.5)
-texture = ExtResource("83_2conb")
-
-[node name="96x64Self05" type="Sprite2D" parent="." unique_id=687248049]
-position = Vector2(567.99994, 28)
-scale = Vector2(0.656, 0.5)
-texture = ExtResource("83_2conb")
-
-[node name="8x16Bottle02" type="Sprite2D" parent="." unique_id=1314103697]
-position = Vector2(550, 31)
-texture = ExtResource("89_flbmi")
-
-[node name="8x16Bottle03" type="Sprite2D" parent="." unique_id=610556803]
-position = Vector2(557, 31)
-texture = ExtResource("89_flbmi")
-
-[node name="8x16Bottle04" type="Sprite2D" parent="." unique_id=1918809427]
-position = Vector2(565, 31)
-texture = ExtResource("89_flbmi")
-
-[node name="8x16Bottle05" type="Sprite2D" parent="." unique_id=170652653]
-position = Vector2(572, 31)
-texture = ExtResource("89_flbmi")
-
-[node name="8x16Bottle06" type="Sprite2D" parent="." unique_id=229124839]
-position = Vector2(579, 31)
-texture = ExtResource("89_flbmi")
-
-[node name="8x16Bottle07" type="Sprite2D" parent="." unique_id=294260738]
-position = Vector2(586, 31)
-texture = ExtResource("89_flbmi")
-
-[node name="8x16Bottle09" type="Sprite2D" parent="." unique_id=709031087]
-position = Vector2(550, 53)
-texture = ExtResource("90_yv2hd")
-
-[node name="8x16Bottle10" type="Sprite2D" parent="." unique_id=2058795922]
-position = Vector2(559, 53)
-texture = ExtResource("90_yv2hd")
-
-[node name="8x16Bottle11" type="Sprite2D" parent="." unique_id=245683147]
-position = Vector2(568, 52)
-texture = ExtResource("90_yv2hd")
-
-[node name="8x16Bottle12" type="Sprite2D" parent="." unique_id=1340868989]
-position = Vector2(577, 53)
-texture = ExtResource("90_yv2hd")
-
-[node name="8x16Bottle13" type="Sprite2D" parent="." unique_id=714196177]
-position = Vector2(586, 53)
-texture = ExtResource("90_yv2hd")
-
-[node name="8x16Bottle08" type="Sprite2D" parent="." unique_id=94024803]
-position = Vector2(607, 31)
-texture = ExtResource("91_0jr6o")
-
-[node name="8x16Bottle14" type="Sprite2D" parent="." unique_id=1189916099]
-position = Vector2(616, 31)
-texture = ExtResource("91_0jr6o")
-
-[node name="8x16Bottle15" type="Sprite2D" parent="." unique_id=304150691]
-position = Vector2(626, 31)
-texture = ExtResource("91_0jr6o")
-
-[node name="8x16Bottle16" type="Sprite2D" parent="." unique_id=569034700]
-position = Vector2(635, 31)
-texture = ExtResource("91_0jr6o")
-
-[node name="8x16Bottle17" type="Sprite2D" parent="." unique_id=1444455017]
-position = Vector2(644, 31)
-texture = ExtResource("91_0jr6o")
-
-[node name="8x16Bottle01" type="Sprite2D" parent="." unique_id=1329534223]
-position = Vector2(607, 53)
-texture = ExtResource("92_g0u4x")
-
-[node name="8x16Bottle18" type="Sprite2D" parent="." unique_id=227082714]
-position = Vector2(615, 53)
-texture = ExtResource("92_g0u4x")
-
-[node name="8x16Bottle19" type="Sprite2D" parent="." unique_id=1102766907]
-position = Vector2(624, 53)
-texture = ExtResource("92_g0u4x")
-
-[node name="8x16Bottle20" type="Sprite2D" parent="." unique_id=506208352]
-position = Vector2(633, 53)
-texture = ExtResource("92_g0u4x")
-
-[node name="8x16Bottle21" type="Sprite2D" parent="." unique_id=130619824]
-position = Vector2(643, 53)
-texture = ExtResource("92_g0u4x")
-
-[node name="32x40WineCrate" type="Sprite2D" parent="." unique_id=1363432217]
-position = Vector2(868, 163)
-texture = ExtResource("86_5biqi")
-
-[node name="32x40WineCrate2" type="Sprite2D" parent="." unique_id=1441545237]
-position = Vector2(900, 164)
-texture = ExtResource("86_5biqi")
-
-[node name="32x40WineCrate3" type="Sprite2D" parent="." unique_id=1274143852]
-position = Vector2(933, 164)
-texture = ExtResource("86_5biqi")
-
-[node name="32x40WineCrate4" type="Sprite2D" parent="." unique_id=303845216]
-position = Vector2(868, 192)
-texture = ExtResource("86_5biqi")
-
-[node name="32x40WineCrate5" type="Sprite2D" parent="." unique_id=1101713089]
-position = Vector2(900, 193)
-texture = ExtResource("86_5biqi")
-
-[node name="32x40WineCrate6" type="Sprite2D" parent="." unique_id=957123647]
-position = Vector2(933, 193)
-texture = ExtResource("86_5biqi")
-
 [editable path="Environment/Grog_station"]
-[editable path="Environment/Grog_station2"]
-[editable path="Environment/Grog_station3"]
+[editable path="Environment/Cider_station"]
 [editable path="Environment/Ale_station"]
+[editable path="Environment/BackBar/CanaryWineShelf"]
+[editable path="Environment/BackBar/CanaryWineShelf/CanaryWineService"]

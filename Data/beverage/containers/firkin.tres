@@ -11,3 +11,4 @@ description = "Capacity is a configurable game value, historically inspired rath
 maximum_capacity = 72
 bulk_storage = true
 storage_space_usage = 0.72
+typical_storage_tags = Array[StringName]([&"bar_storage", &"cellar_storage"])
