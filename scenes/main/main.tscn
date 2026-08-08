@@ -7,12 +7,12 @@
 [ext_resource type="PackedScene" uid="uid://dmaa2lbdhwsr8" path="res://scenes/customers/customer.tscn" id="2_ow5a4"]
 [ext_resource type="PackedScene" uid="uid://wfl8kjme2q47" path="res://scenes/furniture/table.tscn" id="3_k2fmo"]
 [ext_resource type="PackedScene" uid="uid://dnd6om8dg26fm" path="res://scenes/furniture/drinks_station.tscn" id="3_l3cfh"]
+[ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="2_2bxlr_grog"]
 [ext_resource type="Script" uid="uid://bowoxvrqsdjw6" path="res://scripts/Managers/game_manager.gd" id="7_hujxm"]
 [ext_resource type="Script" uid="uid://cduu6wuftbtkl" path="res://scripts/UI/hud.gd" id="7_yyfjg"]
 [ext_resource type="Texture2D" uid="uid://c3pebfcaim567" path="res://assets/art/furniture/32x32_medium_barrel.png" id="8_6g21x"]
 [ext_resource type="Script" uid="uid://b5wcssexr0e0" path="res://scripts/Debug/navigation_debugger.gd" id="9_b1x3f"]
 [ext_resource type="Texture2D" uid="uid://cmym75xo6n2ua" path="res://assets/art/furniture/448x32_bar.png" id="11_obdhw"]
-[ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="12_37hlw"]
 [ext_resource type="PackedScene" uid="uid://djtgijinluyir" path="res://scenes/environment/CustomerDoor.tscn" id="12_nvumn"]
 [ext_resource type="Resource" uid="uid://8h83yo3jwte" path="res://resources/config/default_game_config.tres" id="15_hxu8e"]
 [ext_resource type="Script" uid="uid://bc5lnr8hbl0hj" path="res://systems/time/time_display.gd" id="16_p8abn"]
@@ -381,6 +381,7 @@ position = Vector2(156, 452)
 
 [node name="Grog_station" parent="Environment" unique_id=1053921962 instance=ExtResource("3_l3cfh")]
 position = Vector2(356, 80)
+served_drink = ExtResource("2_2bxlr_grog")
 
 [node name="Sprite2D" parent="Environment/Grog_station" index="0" unique_id=1803792753]
 texture = ExtResource("8_6g21x")
@@ -392,25 +393,18 @@ scale = Vector2(1.0249863, 0.88660073)
 [node name="Cider_station" parent="Environment" unique_id=1794778572 instance=ExtResource("3_l3cfh")]
 position = Vector2(461, 49)
 served_drink = ExtResource("94_cider")
-refill_item = ExtResource("95_cider_cask")
 
 [node name="CollisionShape2D" parent="Environment/Cider_station/InteractionArea" parent_id_path=PackedInt32Array(1794778572, 258262445) index="0" unique_id=422318540]
 position = Vector2(0, 1)
 scale = Vector2(0.75, 1)
 
-[node name="Ale_station" parent="Environment" unique_id=1835805780 instance=ExtResource("3_l3cfh")]
+[node name="SmallBeer_station" parent="Environment" unique_id=1835805780 instance=ExtResource("3_l3cfh")]
 position = Vector2(403, 49)
 rotation = -6.2831855
-served_drink = ExtResource("12_37hlw")
-refill_item = ExtResource("32_ale_keg")
+served_drink = ExtResource("70_small_beer")
 
 [node name="Sprite2D" parent="Environment/Ale_station" index="0" unique_id=1803792753]
 texture = null
-
-[node name="SmallBeer_tap" parent="Environment/Ale_station" unique_id=950489246 instance=ExtResource("3_l3cfh")]
-position = Vector2(16, 0)
-served_drink = ExtResource("70_small_beer")
-refill_item = ExtResource("71_sb_cask")
 
 [node name="StockStorage" parent="Environment" unique_id=567700205 instance=ExtResource("30_stock_storage")]
 position = Vector2(281, 60)
