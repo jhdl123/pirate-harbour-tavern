@@ -105,6 +105,36 @@ var base_buy_price: int = 0
 var base_sell_price: int = 0
 
 
+@export_category("Restock")
+
+## Beverage content a full unit of this stock item delivers.
+##
+## The link that makes restocking data-driven. A station knows what content it
+## serves; this says which stock item provides that content, so nothing has to
+## map "port wine station" to "port wine crate" in code. Empty means this item
+## is not drink stock.
+##
+## Without it the only association was the station's own [code]refill_item[/code]
+## override - and an instance that forgot to override inherited the base
+## scene's grog barrel while looking perfectly valid.
+@export var provides_content_id: StringName = &""
+
+## Container a full unit of this stock item represents - see
+## [ContainerDefinition] ids.
+##
+## A cask stack unit is a [code]firkin[/code]; a crate of bottles is a
+## [code]crate[/code]. Used to work out how much one collected unit refills.
+@export var provides_container_id: StringName = &""
+
+## How many servings this restocks a station by, when it cannot be derived.
+##
+## Zero means "work it out from the container capacity and the station's
+## serving size", which is the preferred path. A non-zero value is an
+## explicit override for stock that does not map cleanly onto a container.
+@export_range(0, 999, 1)
+var provides_servings: int = 0
+
+
 @export_category("Metadata")
 
 ## Starting per-stack metadata copied into every new [ItemStack].

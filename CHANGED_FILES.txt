@@ -1,25 +1,23 @@
-Drinks + service pass — SUPERSEDES drinks-system-pass.zip and
-storeroom-props-pass.zip. Extract this one only.
+Station config authority + Ale retirement (phase 1 of the repair brief)
 
-NEW SINCE THE LAST ZIP
-  Data/items/stock/small_beer_cask.tres     refill item for the small beer tap
-  tests/service_coverage_probe.{gd,tscn}    every orderable drink must be servable
+NEW
+  systems/beverage/station_stock_plan.gd    resolves content -> restock item from data
+  Data/items/stock/{madeira,port_wine,canary_wine,brandy}_crate.tres
 
-CHANGED SINCE THE LAST ZIP
-  Data/beverage/drinks/{madeira,brandy,port_wine,canary_wine}.tres
-        bottle_serving moved to the front, so these default to a bottle
-  systems/beverage/beverage_scene_setup.gd
-        respects scene-authored station capabilities; caps starting stock at
-        the station's own maximum_servings
-  scripts/Interactables/stocked_display.gd  + mirror_station
-  scenes/main/main.tscn                     4 bottle services + small beer tap
-  resources/CustomerTypes/*.tres (8)        servable drinks only
-  Data/items/item_registry.tres             small_beer_cask registered
-  tests/{drinks_system,storeroom_props}_probe.gd   updated to the new design
-
-CARRIED OVER FROM THE EARLIER ZIPS (still included)
-  systems/customer_ai/drink_preference.gd, scripts/Interactables/stocked_display.gd,
-  scenes/furniture/{bottle_shelf,cask_stack,wine_crate}.tscn,
-  resources/CustomerTypes/{naval_officer,plantation_owner}.tres + personalities,
-  Data/items/stock/cider_cask.tres, container/storage/routing changes,
-  scripts/{data/customer_type.gd,Entities/customer.gd}
+MODIFIED
+  systems/items/item_definition.gd          + provides_content_id / provides_container_id
+                                              / provides_servings
+  Data/items/stock/{grog_barrel,ale_keg,cider_cask,small_beer_cask}.tres
+                                            content links authored
+  systems/beverage/beverage_scene_setup.gd  derives refill_item per station; warns on
+                                              mismatch; + item_registry export
+  scenes/furniture/drinks_station.tscn      grog served_drink AND grog_barrel refill_item
+                                              REMOVED from the base scene
+  scenes/main/main.tscn                     Grog_station now names its own drink;
+                                              Ale_station -> SmallBeer_station;
+                                              SmallBeer_tap removed; stale refill
+                                              overrides removed
+  resources/CustomerTypes/{local_worker,sailor,sailor_impatient,pirate}.tres
+                                            Ale removed from every menu
+  Data/items/item_registry.tres             4 crates registered
+  tests/{service_coverage,drinks_system,storeroom_props}_probe.gd

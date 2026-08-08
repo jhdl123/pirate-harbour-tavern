@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ItemDefinition" format=3]
+
+[ext_resource type="Script" uid="uid://dhrer24xmcsff" path="res://systems/items/item_definition.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://0oppepl715f2" path="res://assets/art/furniture/32x40_wine_crate.png" id="2_tex"]
+
+[resource]
+script = ExtResource("1_script")
+item_id = &"canary_wine_crate"
+display_name = "Canary Wine Crate"
+description = "A crate of canary sack bottles. Too bulky to fit in a backpack."
+tags = Array[StringName]([&"drink_stock", &"bulky_item", &"resource"])
+inventory_icon = ExtResource("2_tex")
+world_texture = ExtResource("2_tex")
+carried_texture = ExtResource("2_tex")
+preferred_destination = 3
+base_buy_price = 140
+base_sell_price = 70
+provides_content_id = &"canary_wine"
+provides_container_id = &"crate"
+metadata/_custom_type_script = "uid://dhrer24xmcsff"

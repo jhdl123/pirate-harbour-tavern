@@ -2,33 +2,27 @@ HOW TO APPLY
 ============
 
 1. Close Godot.
-2. Extract over your project root. SUPERSEDES both earlier ZIPs.
-3. Reopen and let the import finish. If StockedDisplay or DrinkPreference show
-   as unknown classes, Project > Reload Current Project once.
-
-OPTIONAL, silences one warning in your log
-------------------------------------------
-Change line 1 of Data/items/item_registry.tres to:
-  [gd_resource type="Resource" script_class="ItemRegistry" format=3 uid="uid://xnph4ftjkfi1"]
+2. Extract over your project root (this is a diff against commit cd5067d, not a
+   full replacement of the earlier ZIPs).
+3. Reopen. If StationStockPlan shows as an unknown class, Project > Reload
+   Current Project once.
 
 VERIFY
 ------
-  godot --headless res://tests/service_coverage_probe.tscn   -> 17 passed, 0 failed
+  godot --headless res://tests/service_coverage_probe.tscn   -> 30 passed, 0 failed
   godot --headless res://tests/drinks_system_probe.tscn      -> 53 passed, 0 failed
-  godot --headless res://tests/storeroom_props_probe.tscn    -> 45 passed, 0 failed
+  godot --headless res://tests/storeroom_props_probe.tscn    -> 52 passed, 0 failed
 
-STATIONS YOU NOW HAVE (8)
+WHAT TO LOOK FOR IN GODOT
 -------------------------
-  Ale_station           ale          20 servings   on the counter
-  Ale_station/SmallBeer_tap  small beer  20        second tap, +16px
-  Grog_station          grog         20
-  Cider_station         cider        20
-  BackBar shelves       madeira 5 / canary wine 5 / brandy 6 / port wine 5
-                        each a pour_from_bottle station on its shelf
+  - Seven stations: Grog, Cider, SmallBeer (poured) + 4 bottle services.
+  - No station should ever ask for a Grog Barrel unless it pours kill-devil.
+    The stock alert on the Port Wine shelf should now read "Port Wine Crate".
+  - drinks_station.tscn now ships with NO drink and NO refill item. Any NEW
+    station you instance will warn on startup until you set served_drink.
+    That is deliberate - it is what stops the grog default returning.
 
-KNOWN, NOT REGRESSIONS
-----------------------
-  group_keg_loop_test 27/5 — the recorded baseline, exact failure set. Flaky
-  (27/5, 28/4, 29/3 seen on identical builds); compare the SET, not the count.
-  group_framework_test 2 failures, both SEATED cases, expected while
-  standing_places_only is on.
+STILL BROKEN, NOT YET FIXED (see the report)
+--------------------------------------------
+  Bartender carried-item recovery loop, BarCounter backpressure, storeroom as
+  restock source, bulk shelf restock, customer substitution.

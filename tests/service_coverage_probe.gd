@@ -36,6 +36,23 @@ func _ready() -> void:
 			list.append(String(customer_type.type_id))
 			wanted[String(drink.item_id)] = list
 
+	print("--- stock plans ---")
+
+	var items: ItemRegistry = load("res://Data/items/item_registry.tres")
+	var bev: BeverageRegistry = main.get_node(^"Managers/Cellar").registry
+
+	for node in stations:
+		var station: DrinksStation = node as DrinksStation
+		var plan: StationStockPlan = StationStockPlan.for_station(station, bev, items)
+		print("  %s" % plan.describe())
+		_ok("%s resolves a stock plan" % station.name, plan.is_valid(), plan.detail)
+		_ok("%s restock item matches its content" % station.name,
+			plan.is_valid() and station.refill_item != null
+			and plan.accepts_stock(station.refill_item),
+			"refill_item=%s content=%s" % [
+				station.refill_item.item_id if station.refill_item else "<null>",
+				String(plan.content_id)])
+
 	print("--- coverage ---")
 
 	for drink_id: String in wanted:

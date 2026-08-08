@@ -20,8 +20,8 @@ const CASK_MEASURES: Dictionary = {
 ## DrinkDefinition sharing the same content) is not what gets ordered.
 const EXPECTED_MENU: Dictionary = {
 	"local_worker":     ["small_beer", "grog"],
-	"sailor":           ["ale", "small_beer", "cider"],
-	"pirate":           ["grog", "ale", "cider"],
+	"sailor":           ["small_beer", "cider", "grog"],
+	"pirate":           ["grog", "cider", "small_beer"],
 	"captain":          ["madeira", "brandy"],
 	"merchant":         ["madeira", "port_wine"],
 	"naval_officer":    ["madeira", "port_wine", "brandy"],

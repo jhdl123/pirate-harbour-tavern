@@ -5,23 +5,26 @@
 [ext_resource type="Resource" uid="uid://ptruohkabman" path="res://Data/items/drinks/ale.tres" id="4_ale"]
 [ext_resource type="Texture2D" uid="uid://bm4q7xjhroucl" path="res://assets/art/characters/32x32_sailor01.png" id="5_tex"]
 [ext_resource type="Resource" uid="uid://du5b6ythluc2i" path="res://Data/customer_ai/personalities/local_worker.tres" id="6_pers"]
-[ext_resource type="Script" uid="uid://pq058dsu2503" path="res://systems/customer_ai/drink_preference.gd" id="28_prefscript"]
 [ext_resource type="Resource" path="res://Data/beverage/drinks/small_beer.tres" id="29_small_beer"]
 [ext_resource type="Resource" uid="uid://daaltvd55kxky" path="res://Data/items/drinks/grog.tres" id="30_grog"]
+[ext_resource type="Script" path="res://systems/customer_ai/drink_preference.gd" id="40_prefscript"]
+[ext_resource type="Resource" path="res://Data/beverage/drinks/small_beer.tres" id="41_small_beer"]
+[ext_resource type="Resource" path="res://Data/items/drinks/grog.tres" id="42_grog"]
 
-[sub_resource type="Resource" id="DrinkPreference_small_beer"]
-script = ExtResource("28_prefscript")
-drink = ExtResource("29_small_beer")
+[sub_resource type="Resource" script_class="DrinkPreference" id="DrinkPreference_small_beer"]
+script = ExtResource("40_prefscript")
+drink = ExtResource("41_small_beer")
 weight = 5.0
 preferred_format_ids = Array[StringName]([&"tankard", &"mug"])
 typical_servings = 2
 metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
-[sub_resource type="Resource" id="DrinkPreference_grog"]
-script = ExtResource("28_prefscript")
-drink = ExtResource("30_grog")
+[sub_resource type="Resource" script_class="DrinkPreference" id="DrinkPreference_grog"]
+script = ExtResource("40_prefscript")
+drink = ExtResource("42_grog")
 weight = 2.0
 preferred_format_ids = Array[StringName]([&"dram", &"cup"])
+typical_servings = 1
 metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
 [resource]
@@ -32,7 +35,6 @@ spawn_weight = 7.0
 patience_duration_minutes = 20
 available_drinks = Array[ExtResource("2_drink")]([ExtResource("30_grog"), ExtResource("4_ale")])
 preferred_drink = ExtResource("4_ale")
-drink_preferences = Array[ExtResource("28_prefscript")]([SubResource("DrinkPreference_small_beer"), SubResource("DrinkPreference_grog")])
 personality = ExtResource("6_pers")
 type_id = &"local_worker"
 tags = Array[StringName]([&"local", &"worker"])
@@ -65,3 +67,4 @@ conversation_topics = Array[StringName]([&"work", &"gossip"])
 discretion_tendency = 0.4
 credibility_tendency = 0.6
 secrecy_tendency = 0.3
+drink_preferences = Array[ExtResource("40_prefscript")]([SubResource("DrinkPreference_small_beer"), SubResource("DrinkPreference_grog")])

@@ -15,4 +15,6 @@ carried_texture = ExtResource("2_tex")
 preferred_destination = 3
 base_buy_price = 20
 base_sell_price = 10
+provides_content_id = &"small_beer"
+provides_container_id = &"kilderkin"
 metadata/_custom_type_script = "uid://dhrer24xmcsff"

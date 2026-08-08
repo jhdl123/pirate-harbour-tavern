@@ -26,6 +26,9 @@ class StationSetup extends Resource:
 
 @export var registry: BeverageRegistry
 
+## Item registry, used to resolve which stock item restocks each station.
+@export var item_registry: ItemRegistry
+
 
 @export_category("Stations")
 
@@ -137,7 +140,54 @@ func _configure_station(station: DrinksStation) -> bool:
 
 		station.grant_service_stock(measures)
 
+	_apply_stock_plan(station)
+
 	return true
+
+
+## Derives what legitimately restocks this station and writes it on.
+##
+## Authoritative over anything the scene authored. The Port Wine station asking
+## staff for a Grog Barrel was a station inheriting the base scene's stock item
+## and nothing being able to tell that was wrong - so the answer is to stop
+## trusting the field and compute it from the content the station pours.
+func _apply_stock_plan(station: DrinksStation) -> void:
+	var items: ItemRegistry = _get_item_registry()
+	var plan: StationStockPlan = StationStockPlan.for_station(
+		station, registry, items
+	)
+
+	if not plan.is_valid():
+		push_warning("Station stock plan invalid - %s" % plan.describe())
+		# Leave nothing behind rather than a plausible-looking wrong item: an
+		# absent refill_item creates no task, a wrong one creates a bad task.
+		station.refill_item = null
+		return
+
+	if (
+		station.refill_item != null
+		and station.refill_item.item_id != plan.restock_item.item_id
+	):
+		push_warning(
+			"%s had refill_item '%s' but pours '%s'; using '%s'." % [
+				station.name,
+				String(station.refill_item.item_id),
+				String(plan.content_id),
+				String(plan.restock_item.item_id),
+			]
+		)
+
+	station.refill_item = plan.restock_item
+
+	if plan.servings_per_unit > 0:
+		station.servings_per_refill_item = plan.servings_per_unit
+
+
+func _get_item_registry() -> ItemRegistry:
+	if item_registry == null:
+		item_registry = load("res://Data/items/item_registry.tres")
+
+	return item_registry
 
 
 func _find_setup(station_name: StringName) -> StationSetup:

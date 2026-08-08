@@ -47,10 +47,13 @@ const EXPECTED_CRATES: Dictionary = {
 	"Environment/Storeroom/WineCrate4": Vector2(900, 193),
 }
 
+## Ale is retired from normal service; Small Beer took its stand.
+## refill_item is DERIVED from the poured content now, so these also assert
+## that no station inherited the base scene's grog barrel.
 const EXPECTED_STATIONS: Dictionary = {
-	"Environment/Ale_station": ["ale", Vector2(353, 76), "ale_keg"],
-	"Environment/Grog_station": ["grog", Vector2(396, 50), "grog_barrel"],
-	"Environment/Cider_station": ["cider", Vector2(433, 50), "cider_cask"],
+	"Environment/SmallBeer_station": ["small_beer", Vector2(403, 49), "small_beer_cask"],
+	"Environment/Grog_station": ["grog", Vector2(356, 80), "grog_barrel"],
+	"Environment/Cider_station": ["cider", Vector2(461, 49), "cider_cask"],
 }
 
 var passed: int = 0
@@ -154,14 +157,20 @@ func _check_stations() -> void:
 
 	# Three cask stations, a small beer tap on the ale stand, four bottle
 	# services on the shelves.
-	_ok("eight drink stations",
-		get_tree().get_nodes_in_group(&"drink_stations").size() == 8,
+	# Three poured stands (grog, cider, small beer) plus four bottle services.
+	_ok("seven drink stations",
+		get_tree().get_nodes_in_group(&"drink_stations").size() == 7,
 		"found %d" % get_tree().get_nodes_in_group(&"drink_stations").size())
 
-	var ale: DrinksStation = main.get_node_or_null(^"Environment/Ale_station") as DrinksStation
-	var grog: DrinksStation = main.get_node_or_null(^"Environment/Grog_station") as DrinksStation
-	_ok("ale station uses the grog station sprite",
-		ale != null and grog != null and ale.sprite.texture == grog.sprite.texture)
+	_ok("no Ale station remains",
+		main.get_node_or_null(^"Environment/Ale_station") == null)
+
+	# Stations are free to use different sprites - the grog stand uses the
+	# medium barrel art. What matters is that every one HAS a sprite.
+	for node in get_tree().get_nodes_in_group(&"drink_stations"):
+		var station: DrinksStation = node as DrinksStation
+		_ok("%s has a sprite" % station.name,
+			station.sprite != null and station.sprite.texture != null)
 
 
 func _check_no_leftovers() -> void:
