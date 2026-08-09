@@ -1,30 +1,10 @@
-Groups, recovery, storeroom + Order Ledger UI fix
-Diff against 0e1f3f1. SUPERSEDES groups-recovery-and-storeroom.zip -
-it contains that work too, so extract this one only.
+Station reachability + wine crate stock display
+Diff against commit 88f119d.
 
-NEW SINCE THE LAST ZIP
-  scenes/ui/stock_order_menu.gd     reads entry.get_offer_id() /
-                                    get_display_name() / get_detail_text()
-                                    instead of entry.item.* — a filled
-                                    container has no ItemDefinition, so the
-                                    ledger threw the moment drink stock
-                                    became orderable
   scripts/Interactables/drinks_station.gd
-                                    no longer warns "cannot resolve content"
-                                    when the registry simply has not been
-                                    supplied yet
-  systems/beverage/station_stock_plan.gd
-                                    3 GDScript warnings cleared
-  scenes/main/main.tscn             orphaned Sprite2D override for the
-                                    removed Ale_station removed
-  Data/items/item_registry.tres     uid claimed, silencing the beverage
-                                    registry's invalid-UID warning
-  tests/delivery_storeroom_probe.gd now builds the real order menu
-
-CARRIED OVER (unchanged from the last ZIP)
-  Groups: small_beer.tres formats, small_beer_table_keg.tres,
-          group_order_service.gd, group_keg_stock_service.gd,
-          dock_workers/sailor_pair tags
-  Recovery: carried_item_policy.gd, carried_item_recovery.gd, staff_member.gd
-  Ledger/storeroom: harbour_supplies.tres, main.tscn props
-  Test fixtures: the five group suites, drinks_system, storeroom_props
+        + get_interaction_point() — snaps the approach point to the nearest
+          navigable floor, and + approach_probe_distance (72px)
+  scenes/furniture/wine_crate.tscn
+        unit_offsets 1 -> 3 stacked positions so stock level is visible
+  tests/reachability_probe.{gd,tscn}
+        new — measures every station and prop against the live navmesh

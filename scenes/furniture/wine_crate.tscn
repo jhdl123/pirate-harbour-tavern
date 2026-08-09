@@ -10,7 +10,7 @@ size = Vector2(28, 26)
 script = ExtResource("1_crate")
 display_name = "Wine Crate"
 unit_texture = ExtResource("2_crate_tex")
-unit_offsets = Array[Vector2]([Vector2(0, 0)])
+unit_offsets = Array[Vector2]([Vector2(0, 0), Vector2(-2, -7), Vector2(1, -14)])
 collision_offset = Vector2(0, 7)
 container_id = &"crate"
 

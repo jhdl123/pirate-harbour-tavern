@@ -1,48 +1,23 @@
 HOW TO APPLY
 ============
-
 1. Close Godot.
-2. Extract over your project root. SUPERSEDES groups-recovery-and-storeroom.zip.
-3. Reopen. Godot may still report the Ale_station recovery ONCE while it loads
-   the old cached scene; re-save main.tscn in the editor and it stops.
-
-WHAT THIS FIXES FROM YOUR LOG
------------------------------
-  StockOrderMenu._build_catalogue: Invalid access to 'item_id' on Nil
-        -> the ledger read entry.item.item_id, which is null for a cask or
-           crate offer. This was the whole Order Ledger being unusable.
-  "MadeiraService cannot resolve content 'madeira'" (x4)
-        -> false alarm on every start-up; the registry arrives a frame later.
-           A genuinely unresolvable content still warns.
-  "Parent path './Environment/Ale_station' ... has vanished"
-        -> orphaned Sprite2D override removed. It also set texture = null.
-  "beverage_registry.tres:38 - invalid UID"
-        -> item_registry.tres now claims uid://xnph4ftjkfi1.
-  3 warnings in station_stock_plan.gd (ternary, shadowed param, int division)
-
-  The remaining warnings in your log (tavern_task, comm_message, modifier,
-  tavern_lifecycle, hud, stock_dev_panel, customer_group, group_manager,
-  end_of_day_summary, daily_control_bar, social_compatibility,
-  social_presence_service) are pre-existing style noise in files this work
-  has never touched.
+2. Extract over your project root (diff against 88f119d).
+3. Reopen.
 
 VERIFY
 ------
-  godot --headless res://tests/delivery_storeroom_probe.tscn  -> 33 / 0
-  godot --headless res://tests/group_and_recovery_probe.tscn  -> 34 / 0
-  godot --headless res://tests/drinks_system_probe.tscn       -> 61 / 0
-  godot --headless res://tests/storeroom_props_probe.tscn     -> 52 / 0
-  godot --headless res://tests/service_coverage_probe.tscn    -> 30 / 0
+  godot --headless res://tests/reachability_probe.tscn  -> 36 / 0
 
-BASELINES UNCHANGED (not regressions)
--------------------------------------
-  group_loop / parity / milestone   0 failed
-  group_framework_test              2 failed  (SEATED cases)
-  group_keg_loop_test              27 / 5     (exact known set)
-  group_keg_ordering_test           5 failed  (unchanged from 0e1f3f1)
+WHAT TO WATCH IN GAME
+---------------------
+  - The bartender should now walk to the FRONT of the bottle shelves instead
+    of into them. Previously: 29 "could not reach Port Wine Station (blocked)"
+    failures and 207 stuck recoveries in one session.
+  - refill_station tasks should now get claimed (they were 3 created /
+    0 claimed).
+  - Order wine. Each crate now shows 1-3 crates stacked as stock rises.
 
-HOUSEKEEPING
-------------
-  CHANGED_FILES.txt and HOW_TO_APPLY.txt from an earlier ZIP are committed in
-  your repo root. They're delivery notes - safe to delete, and don't commit
-  this ZIP's copies either.
+STILL OPEN (see the message)
+----------------------------
+  prepare_drink 47.6% cancellation - BarCounter output slots still are not
+  reserved. That is the next fix.

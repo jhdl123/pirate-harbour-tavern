@@ -89,6 +89,14 @@ enum StockState {
 @export_range(0, 999, 1) var stock_reset_threshold: int = 8
 
 @export_category("Interaction")
+## How far toward the approaching actor to probe for walkable floor.
+##
+## Only affects which SIDE of the station the approach point lands on; the
+## snap does the rest. Too small and a wall-mounted station can resolve to the
+## far side of its own wall.
+@export_range(0.0, 128.0, 1.0)
+var approach_probe_distance: float = 72.0
+
 @export var serve_verb: String = "Pour"
 @export var return_verb: String = "Put back"
 @export var refill_verb: String = "Refill"
@@ -146,6 +154,42 @@ func _build_output_container() -> void:
 
 func get_output_slot() -> ItemSlot:
 	return output_container.get_slot(0) if output_container != null else null
+
+## Where an actor should stand to use this station.
+##
+## Stations sit against the back wall, off the walkable mesh - that is correct
+## for furniture, but Interactable's fallback returns the object's own
+## position, so staff were being sent INTO the shelf. The poured stands are
+## ~31px from walkable floor and staff reached them anyway; the bottle shelves
+## are 56-70px back and staff could not, which is why bartender_02 logged 29
+## "could not reach Port Wine Station (blocked)" failures, 207 stuck
+## recoveries, and every refill_station task went unclaimed.
+##
+## Snapping to the nearest navigable point fixes all stations at once and needs
+## no per-instance data: a station already on the mesh is unaffected.
+func get_interaction_point(
+	from_position: Vector2
+) -> Vector2:
+	var map: RID = get_world_2d().navigation_map
+
+	if not map.is_valid():
+		return global_position
+
+	# Aim slightly toward the approaching actor first, so a station flush
+	# against a wall resolves to the floor side rather than behind it.
+	var toward: Vector2 = global_position.direction_to(from_position)
+	var probe: Vector2 = global_position + toward * approach_probe_distance
+	var snapped_point: Vector2 = NavigationServer2D.map_get_closest_point(
+		map, probe
+	)
+
+	if snapped_point.is_zero_approx():
+		# An empty map returns the origin rather than failing - never send an
+		# actor to (0, 0).
+		return global_position
+
+	return snapped_point
+
 
 func get_interaction_display_name() -> String:
 	return "%s Station" % served_drink.display_name if served_drink != null else String(name).capitalize()
