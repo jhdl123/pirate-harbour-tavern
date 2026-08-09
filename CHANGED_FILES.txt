@@ -1,23 +1,30 @@
-Station config authority + Ale retirement (phase 1 of the repair brief)
+Groups, recovery, storeroom + Order Ledger UI fix
+Diff against 0e1f3f1. SUPERSEDES groups-recovery-and-storeroom.zip -
+it contains that work too, so extract this one only.
 
-NEW
-  systems/beverage/station_stock_plan.gd    resolves content -> restock item from data
-  Data/items/stock/{madeira,port_wine,canary_wine,brandy}_crate.tres
+NEW SINCE THE LAST ZIP
+  scenes/ui/stock_order_menu.gd     reads entry.get_offer_id() /
+                                    get_display_name() / get_detail_text()
+                                    instead of entry.item.* — a filled
+                                    container has no ItemDefinition, so the
+                                    ledger threw the moment drink stock
+                                    became orderable
+  scripts/Interactables/drinks_station.gd
+                                    no longer warns "cannot resolve content"
+                                    when the registry simply has not been
+                                    supplied yet
+  systems/beverage/station_stock_plan.gd
+                                    3 GDScript warnings cleared
+  scenes/main/main.tscn             orphaned Sprite2D override for the
+                                    removed Ale_station removed
+  Data/items/item_registry.tres     uid claimed, silencing the beverage
+                                    registry's invalid-UID warning
+  tests/delivery_storeroom_probe.gd now builds the real order menu
 
-MODIFIED
-  systems/items/item_definition.gd          + provides_content_id / provides_container_id
-                                              / provides_servings
-  Data/items/stock/{grog_barrel,ale_keg,cider_cask,small_beer_cask}.tres
-                                            content links authored
-  systems/beverage/beverage_scene_setup.gd  derives refill_item per station; warns on
-                                              mismatch; + item_registry export
-  scenes/furniture/drinks_station.tscn      grog served_drink AND grog_barrel refill_item
-                                              REMOVED from the base scene
-  scenes/main/main.tscn                     Grog_station now names its own drink;
-                                              Ale_station -> SmallBeer_station;
-                                              SmallBeer_tap removed; stale refill
-                                              overrides removed
-  resources/CustomerTypes/{local_worker,sailor,sailor_impatient,pirate}.tres
-                                            Ale removed from every menu
-  Data/items/item_registry.tres             4 crates registered
-  tests/{service_coverage,drinks_system,storeroom_props}_probe.gd
+CARRIED OVER (unchanged from the last ZIP)
+  Groups: small_beer.tres formats, small_beer_table_keg.tres,
+          group_order_service.gd, group_keg_stock_service.gd,
+          dock_workers/sailor_pair tags
+  Recovery: carried_item_policy.gd, carried_item_recovery.gd, staff_member.gd
+  Ledger/storeroom: harbour_supplies.tres, main.tscn props
+  Test fixtures: the five group suites, drinks_system, storeroom_props

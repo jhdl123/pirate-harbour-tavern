@@ -279,7 +279,9 @@ func _check_storage_props() -> void:
 	# Only the bulk cask stacks own storage now. The back-bar shelves display
 	# their service station's bottles instead, so there is one source of truth
 	# for what is on the shelf.
-	_ok("the three cask stacks are storage-backed", backed == 3, "found %d" % backed)
+	# Three cask stacks plus four drink-specific wine crates now hold real
+	# stock; the back-bar shelves mirror their service station instead.
+	_ok("seven storeroom props are storage-backed", backed == 7, "found %d" % backed)
 
 	for shelf_name: String in ["MadeiraShelf", "BrandyShelf"]:
 		var shelf: StockedDisplay = main.get_node_or_null(
@@ -289,56 +291,56 @@ func _check_storage_props() -> void:
 			shelf != null and not shelf.mirror_station.is_empty() and not shelf.storage_backed)
 
 	# Empty stores show nothing - that is the visible signal the player reads.
-	var ale: StockedDisplay = main.get_node_or_null(
-		^"Environment/Storeroom/AleCaskStack"
+	var beer: StockedDisplay = main.get_node_or_null(
+		^"Environment/Storeroom/SmallBeerCaskStack"
 	)
-	_ok("an empty ale stack shows no casks",
-		ale != null and ale.get_visible_units() == 0,
-		"showing %d" % (ale.get_visible_units() if ale else -1))
+	_ok("an empty small beer stack shows no casks",
+		beer != null and beer.get_visible_units() == 0,
+		"showing %d" % (beer.get_visible_units() if beer else -1))
 
 
 func _check_delivery_routing() -> void:
-	var ale: StockedDisplay = main.get_node_or_null(
-		^"Environment/Storeroom/AleCaskStack"
+	var beer: StockedDisplay = main.get_node_or_null(
+		^"Environment/Storeroom/SmallBeerCaskStack"
 	)
 	var cellar: BeverageStorage = main.get_node_or_null(^"Managers/Cellar")
 
-	if ale == null or cellar == null:
+	if beer == null or cellar == null:
 		_ok("routing fixtures present", false)
 		return
 
-	var firkin: ContainerDefinition = registry.get_container(&"firkin")
+	var kilderkin: ContainerDefinition = registry.get_container(&"kilderkin")
 
-	# Two firkins of ale should land in the ale stack, not the Cellar.
+	# Two casks of small beer land in the small beer stack, not the Cellar.
 	for i: int in range(2):
 		var batch := FilledContainer.new()
-		batch.container = firkin
-		batch.content_id = &"ale"
-		batch.quantity = firkin.maximum_capacity
+		batch.container = kilderkin
+		batch.content_id = &"small_beer"
+		batch.quantity = kilderkin.maximum_capacity
 
-		_ok("ale stack accepts ale firkin %d" % (i + 1),
-			ale.get_storage().add_batch(batch))
+		_ok("small beer stack accepts small beer cask %d" % (i + 1),
+			beer.get_storage().add_batch(batch))
 
-	_ok("the ale stack outranks the Cellar for ale",
-		ale.get_storage().storage_priority > cellar.storage_priority,
-		"%d vs %d" % [ale.get_storage().storage_priority, cellar.storage_priority])
+	_ok("the small beer stack outranks the Cellar for small beer",
+		beer.get_storage().storage_priority > cellar.storage_priority,
+		"%d vs %d" % [beer.get_storage().storage_priority, cellar.storage_priority])
 
-	_ok("two delivered firkins show as two casks",
-		ale.get_visible_units() == 2, "showing %d" % ale.get_visible_units())
+	_ok("two delivered casks show as two casks",
+		beer.get_visible_units() == 2, "showing %d" % beer.get_visible_units())
 
 	# And the wrong liquid is refused rather than silently stored.
 	var wrong := FilledContainer.new()
-	wrong.container = firkin
+	wrong.container = kilderkin
 	wrong.content_id = &"madeira"
-	wrong.quantity = firkin.maximum_capacity
+	wrong.quantity = kilderkin.maximum_capacity
 
-	_ok("the ale stack refuses madeira",
-		not ale.get_storage().accepts(wrong))
+	_ok("the small beer stack refuses madeira",
+		not beer.get_storage().accepts(wrong))
 	_ok("the Cellar still takes what the specific stores refuse",
 		cellar.accepts(wrong))
 
 	# Drawing stock back down must shrink the visible pile again.
-	var batches: Array[FilledContainer] = ale.get_storage().get_batches()
-	ale.get_storage().remove_batch(batches[0])
+	var batches: Array[FilledContainer] = beer.get_storage().get_batches()
+	beer.get_storage().remove_batch(batches[0])
 	_ok("taking a cask removes one from the pile",
-		ale.get_visible_units() == 1, "showing %d" % ale.get_visible_units())
+		beer.get_visible_units() == 1, "showing %d" % beer.get_visible_units())

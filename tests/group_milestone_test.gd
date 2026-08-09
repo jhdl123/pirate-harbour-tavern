@@ -68,7 +68,7 @@ func _build_world() -> void:
 		"res://scenes/furniture/drinks_station.tscn"
 	)
 
-	for pair: Array in [[&"ale", "AleStation"], [&"kill_devil", "RumStation"]]:
+	for pair: Array in [[&"small_beer", "SmallBeerStation"], [&"ale", "AleStation"], [&"kill_devil", "RumStation"]]:
 		var station: DrinksStation = station_scene.instantiate()
 		station.name = String(pair[1])
 		station.served_drink = registry.get_drink(pair[0])
@@ -83,7 +83,7 @@ func _build_world() -> void:
 	storage.name = "StockStorage"
 	add_child(storage)
 
-	keg_item = load("res://Data/items/group_servings/ale_table_keg.tres")
+	keg_item = load("res://Data/items/group_servings/small_beer_table_keg.tres")
 	icon_texture = load("res://Data/items/drinks/ale.tres").order_icon_texture
 
 	stock_service = GroupKegStockService.new()

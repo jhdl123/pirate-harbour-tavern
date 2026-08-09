@@ -13,7 +13,7 @@ size_weights = {
 2: 1.0
 }
 shared_order_chance = 0.45
-preferred_serving_tags = Array[StringName]([&"ale", &"beer", &"rum"])
+preferred_serving_tags = Array[StringName]([&"small_beer", &"beer", &"rum"])
 maximum_shared_portions = 6
 reorder_chance = 0.6
 spending_modifier = 0.9

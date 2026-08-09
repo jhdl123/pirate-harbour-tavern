@@ -43,7 +43,7 @@ func _build_world() -> void:
 
 	var scene: PackedScene = load("res://scenes/furniture/drinks_station.tscn")
 
-	for pair in [[&"ale", "AleStation"], [&"kill_devil", "RumStation"]]:
+	for pair in [[&"small_beer", "SmallBeerStation"], [&"ale", "AleStation"], [&"kill_devil", "RumStation"]]:
 		var station: DrinksStation = scene.instantiate()
 		station.name = pair[1]
 		station.served_drink = registry.get_drink(pair[0])

@@ -27,7 +27,7 @@ signal reservation_released(reservation: Dictionary)
 
 ## Fallback path used when [member keg_item] is not wired in the inspector.
 @export var keg_item_path: String = (
-	"res://Data/items/group_servings/ale_table_keg.tres"
+	"res://Data/items/group_servings/small_beer_table_keg.tres"
 )
 
 

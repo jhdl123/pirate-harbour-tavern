@@ -29,7 +29,7 @@ const EXPECTED_UNITS: Dictionary = {
 		Vector2(913, 41), Vector2(869, 82), Vector2(900, 83), Vector2(885, 60),
 		Vector2(931, 82), Vector2(915, 58),
 	],
-	"Environment/Storeroom/AleCaskStack": [
+	"Environment/Storeroom/SmallBeerCaskStack": [
 		Vector2(976, 62), Vector2(1007, 63), Vector2(992, 40), Vector2(1038, 62),
 		Vector2(1022, 38), Vector2(994, 75), Vector2(1025, 76),
 	],
@@ -213,7 +213,7 @@ func _check_collision() -> void:
 
 	# The three stacks must not share one resized shape.
 	var grog: StaticBody2D = main.get_node_or_null(^"Environment/Storeroom/GrogCaskStack")
-	var ale: StaticBody2D = main.get_node_or_null(^"Environment/Storeroom/AleCaskStack")
+	var ale: StaticBody2D = main.get_node_or_null(^"Environment/Storeroom/SmallBeerCaskStack")
 	var g_rect: RectangleShape2D = grog.get_node(^"CollisionShape2D").shape
 	var a_rect: RectangleShape2D = ale.get_node(^"CollisionShape2D").shape
 	_ok("cask stacks own separate collision shapes", g_rect != a_rect and g_rect.size != a_rect.size,

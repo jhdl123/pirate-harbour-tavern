@@ -60,6 +60,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+## Registry used to name containers and contents in the catalogue.
+##
+## Filled-container offers have no ItemDefinition to read a name from, so the
+## display text is composed from the beverage registry instead. Missing it is
+## not fatal - the entry falls back to its raw ids.
+func _get_beverage_registry() -> BeverageRegistry:
+	for node in get_tree().get_nodes_in_group(&"beverage_storage"):
+		var storage := node as BeverageStorage
+
+		if storage != null and storage.registry != null:
+			return storage.registry
+
+	return null
+
+
 func _build_catalogue() -> void:
 	for child: Node in row_list.get_children():
 		child.queue_free()
@@ -73,7 +88,7 @@ func _build_catalogue() -> void:
 		if entry == null or not entry.is_valid():
 			continue
 
-		var item_id: StringName = entry.item.item_id
+		var item_id: StringName = entry.get_offer_id()
 		_quantities[item_id] = 0
 
 		var row: HBoxContainer = HBoxContainer.new()
@@ -82,8 +97,8 @@ func _build_catalogue() -> void:
 
 		var item_label: Label = Label.new()
 		item_label.custom_minimum_size.x = ROW_NAME_WIDTH
-		item_label.text = entry.item.display_name
-		item_label.tooltip_text = entry.item.description
+		item_label.text = entry.get_display_name(_get_beverage_registry())
+		item_label.tooltip_text = entry.get_detail_text(_get_beverage_registry())
 		row.add_child(item_label)
 
 		var price_label: Label = Label.new()
@@ -129,10 +144,10 @@ func _change_quantity(
 	entry: OrderCatalogueEntry,
 	change: int
 ) -> void:
-	if _submitted or entry == null or entry.item == null:
+	if _submitted or entry == null:
 		return
 
-	var item_id: StringName = entry.item.item_id
+	var item_id: StringName = entry.get_offer_id()
 	var current_quantity: int = int(_quantities.get(item_id, 0))
 	var new_quantity: int = clampi(
 		current_quantity + change,
@@ -184,11 +199,11 @@ func _calculate_total() -> int:
 	var total: int = 0
 
 	for entry: OrderCatalogueEntry in supplier.entries:
-		if entry == null or entry.item == null:
+		if entry == null:
 			continue
 
 		var quantity: int = int(
-			_quantities.get(entry.item.item_id, 0)
+			_quantities.get(entry.get_offer_id(), 0)
 		)
 
 		total += quantity * entry.get_unit_price()

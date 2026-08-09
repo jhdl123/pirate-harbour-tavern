@@ -91,7 +91,7 @@ func _build_world() -> void:
 		"res://scenes/furniture/drinks_station.tscn"
 	)
 
-	for pair in [[&"ale", "AleStation"], [&"kill_devil", "RumStation"],
+	for pair in [[&"small_beer", "SmallBeerStation"], [&"ale", "AleStation"], [&"kill_devil", "RumStation"],
 			[&"small_beer", "BeerStation"]]:
 		var station: DrinksStation = station_scene.instantiate()
 		station.name = pair[1]

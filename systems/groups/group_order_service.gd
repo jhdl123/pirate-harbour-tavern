@@ -44,16 +44,21 @@ signal order_failed(order: GroupOrder)
 
 @export_category("Milestone")
 
-## Forces every shared group order to be one Ale keg.
+## Forces every shared group order to be one small beer keg.
 ##
-## The basic group milestone is deliberately one shape: Ale in a table cask.
+## The basic group milestone is deliberately one shape: the house beer in a
+## table cask. It was Ale until Small Beer replaced Ale as an active poured
+## drink - at which point the forced pairing pointed at a drink with no
+## station, find_capable_station() returned null, and every group failed with
+## no_keg_or_no_drinks. The forced drink MUST be one the tavern can actually
+## serve.
 ## Weighted selection across every drink and format still exists below and is
 ## used as the fallback, so turning this off restores the general behaviour
 ## without any other change.
 @export var force_ale_table_cask: bool = true
 
 ## Drink used when [member force_ale_table_cask] is on.
-@export var forced_drink_id: StringName = &"ale"
+@export var forced_drink_id: StringName = &"small_beer"
 
 ## Serving format used when [member force_ale_table_cask] is on.
 @export var forced_serving_format_id: StringName = &"table_cask"

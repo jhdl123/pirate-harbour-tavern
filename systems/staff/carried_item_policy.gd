@@ -126,6 +126,25 @@ var maximum_reassignment_distance: float = 0.0
 ##
 ## Stops a worker with an unreturnable item spinning on the same failing
 ## attempt every frame.
+## How many times recovery may fail before the worker stops re-planning.
+##
+## Without a bound, a carried item nothing will accept re-plans forever on the
+## retry timer: EVALUATING_TASKS -> RECOVERING_ITEM -> EVALUATING_TASKS, with
+## the worker never doing anything else. The retry delay throttles that loop
+## but never ends it. After this many failures the worker makes one last
+## unfiltered attempt at any destination, then gives up on putting the item
+## down and returns to normal work still holding it.
+@export_range(1, 20, 1)
+var maximum_recovery_attempts: int = 3
+
+## Whether the final attempt may ignore the preferred outcome order.
+##
+## The ordered strategies exist to put an item somewhere sensible. Once they
+## have all failed, somewhere is better than nowhere - so the last attempt
+## takes any destination that will accept the item rather than insisting on
+## the nicest one.
+@export var escalate_to_any_destination: bool = true
+
 @export_range(0.0, 120.0, 0.5)
 var recovery_retry_seconds: float = 5.0
 

@@ -135,21 +135,20 @@ func describe() -> String:
 			restock_item.display_name, servings_per_unit
 		]
 
-	return "%s: %s - %s" % [
-		"?" if station == null else station.name,
-		String(get_reason_code()), detail
-	]
+	var station_name: String = "?" if station == null else String(station.name)
+
+	return "%s: %s - %s" % [station_name, String(get_reason_code()), detail]
 
 
 static func _find_stock_for_content(
-	content_id: StringName,
+	wanted_content_id: StringName,
 	item_registry: ItemRegistry
 ) -> ItemDefinition:
-	if item_registry == null or content_id.is_empty():
+	if item_registry == null or wanted_content_id.is_empty():
 		return null
 
 	for item: ItemDefinition in item_registry.definitions:
-		if item != null and item.provides_content_id == content_id:
+		if item != null and item.provides_content_id == wanted_content_id:
 			return item
 
 	return null
@@ -175,4 +174,8 @@ static func _resolve_servings_per_unit(
 
 	var per_serving: int = maxi(target.get_measures_per_serving(), 1)
 
-	return maxi(container.maximum_capacity / per_serving, 1)
+	# Deliberate integer division: a partial serving is not a serving.
+	@warning_ignore("integer_division")
+	var whole_servings: int = container.maximum_capacity / per_serving
+
+	return maxi(whole_servings, 1)

@@ -407,10 +407,17 @@ func _build_service_batch() -> void:
 		)
 		return
 
-	var content: BeverageContentDefinition = null
+	if beverage_registry == null:
+		# Nothing is wrong yet. BeverageSceneSetup supplies the registry a
+		# frame after every station's _ready() and then calls
+		# rebuild_service_batch(), so warning here fires on every start-up for
+		# every scene-authored station and says "falling back to legacy
+		# servings" about a batch that is about to be built correctly.
+		return
 
-	if beverage_registry != null:
-		content = beverage_registry.get_content(content_id)
+	var content: BeverageContentDefinition = beverage_registry.get_content(
+		content_id
+	)
 
 	if content == null:
 		push_warning(

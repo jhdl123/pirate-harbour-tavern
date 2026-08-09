@@ -84,6 +84,46 @@ static func plan(
 	return _impossible("no route available and disposal is not permitted")
 
 
+## Last-resort plan that takes ANY destination, ignoring the preferred order.
+##
+## The ordered strategies say where an item SHOULD go. Once every one of them
+## has failed repeatedly, the question changes from "where does this belong?"
+## to "will anything take it?" - because a worker holding an item nothing
+## will accept has nothing else to do. Reassignment and retention are excluded
+## deliberately: neither puts the item down, which is the whole point here.
+static func plan_any_destination(
+	worker: Node,
+	policy: CarriedItemPolicy
+) -> Dictionary:
+	var carrier: ItemCarrier = _get_carrier(worker)
+
+	if carrier == null or not carrier.is_carrying():
+		return _impossible("nothing carried")
+
+	if policy == null:
+		policy = CarriedItemPolicy.new()
+
+	var definition: ItemDefinition = carrier.get_carried_definition()
+
+	for outcome: CarriedItemPolicy.Outcome in [
+		CarriedItemPolicy.Outcome.RETURN_TO_SERVICE_SLOT,
+		CarriedItemPolicy.Outcome.RETURN_TO_SOURCE_STATION,
+		CarriedItemPolicy.Outcome.RETURN_TO_STORAGE,
+	]:
+		var candidate: Dictionary = _plan_outcome(
+			worker, carrier, definition, policy, outcome
+		)
+
+		if bool(candidate.get("is_possible", false)):
+			candidate["detail"] = "escalated: %s" % String(
+				candidate.get("detail", "")
+			)
+
+			return candidate
+
+	return _impossible("no destination of any kind will accept this item")
+
+
 static func _plan_outcome(
 	worker: Node,
 	carrier: ItemCarrier,

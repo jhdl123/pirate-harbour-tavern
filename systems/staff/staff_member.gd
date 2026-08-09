@@ -154,6 +154,12 @@ var _carried_recovery_plan: Dictionary = {}
 ## Seconds before a failed recovery is attempted again.
 var _carried_recovery_retry_seconds: float = 0.0
 
+## Consecutive failed attempts to put the current carried item down.
+var _carried_recovery_attempts: int = 0
+
+## True once recovery has been given up on for the current carried item.
+var _carried_recovery_abandoned: bool = false
+
 ## Built once if no policy is configured, so recovery always has rules.
 var _fallback_carried_policy: CarriedItemPolicy = null
 
@@ -412,14 +418,36 @@ func _tick_idle() -> void:
 func _handle_carried_item() -> bool:
 	var policy: CarriedItemPolicy = _get_carried_item_policy()
 
+	# A carried item the worker has already given up on is not re-planned.
+	# Something must change first - a new task, a freed slot, a different item
+	# - and each of those clears the flag. Without this the worker cycles
+	# EVALUATING_TASKS -> RECOVERING_ITEM forever on the retry timer.
+	if _carried_recovery_abandoned:
+		return false
+
 	if _carried_recovery_retry_seconds > 0.0:
 		# A recovery that just failed is not retried every frame.
 		return not policy.may_work_while_holding_unrelated_item
 
 	var plan: Dictionary = CarriedItemRecovery.plan(self, policy)
 
+	# Every preferred route has failed enough times to stop trying them. Take
+	# any destination at all before giving up.
+	if (
+		not bool(plan.get("is_possible", false))
+		and policy.escalate_to_any_destination
+		and _carried_recovery_attempts >= policy.maximum_recovery_attempts - 1
+	):
+		plan = CarriedItemRecovery.plan_any_destination(self, policy)
+
 	if not bool(plan.get("is_possible", false)):
+		_carried_recovery_attempts += 1
 		_report_recovery_failure(String(plan.get("detail", "")), policy)
+
+		if _carried_recovery_attempts >= policy.maximum_recovery_attempts:
+			_abandon_carried_recovery(String(plan.get("detail", "")))
+
+			return false
 
 		return not policy.may_work_while_holding_unrelated_item
 
@@ -497,6 +525,7 @@ func _execute_carried_recovery(
 
 	if bool(result.get("success", false)):
 		_carried_item_recoveries += 1
+		reset_carried_recovery()
 
 		_record_carried_event(
 			result.get("reason", StaffTransitionReason.CARRIED_ITEM_RETURNED),
@@ -506,6 +535,49 @@ func _execute_carried_recovery(
 		return
 
 	_report_recovery_failure(String(result.get("detail", "")), policy)
+
+
+## Stops trying to put the carried item down, and lets the worker work again.
+##
+## The item is NOT destroyed - it stays in the worker's hands and is recorded
+## as an unrecovered carry. The guarantee this buys is the one that matters:
+## no worker sits in RECOVERING_ITEM indefinitely. The flag clears the moment
+## the situation could plausibly differ, so a freed slot or a new order gets
+## another attempt.
+func _abandon_carried_recovery(
+	detail: String
+) -> void:
+	_carried_recovery_abandoned = true
+	_carried_recovery_plan = {}
+	_carried_recovery_retry_seconds = 0.0
+
+	_record_carried_event(
+		StaffTransitionReason.CARRIED_ITEM_RECOVERY_FAILED,
+		"abandoned after %d attempts: %s" % [_carried_recovery_attempts, detail]
+	)
+
+	TaskBoard.report_issue(
+		TavernTaskService.ISSUE_TRANSFER_FAILED,
+		"%s gave up putting down %s after %d attempts and will keep working." % [
+			String(staff_id),
+			item_carrier.get_carried_stack().get_display_name(),
+			_carried_recovery_attempts,
+		],
+		{ "staff_id": String(staff_id), "unrecovered_carry": true }
+	)
+
+	if current_state == State.RECOVERING_ITEM:
+		_set_state(State.IDLE, StaffTransitionReason.IDLE_ARRIVAL)
+
+
+## Clears the give-up flag so recovery may be attempted again.
+##
+## Called whenever the world changed in a way that could make a destination
+## available: the carried item changed, or a recovery succeeded.
+func reset_carried_recovery() -> void:
+	_carried_recovery_abandoned = false
+	_carried_recovery_attempts = 0
+	_carried_recovery_retry_seconds = 0.0
 
 
 func _report_recovery_failure(
@@ -764,6 +836,11 @@ func _take_task(
 ) -> bool:
 	if task == null:
 		return false
+
+	# New work means new destinations may exist, so a carry that was given up
+	# on becomes worth retrying.
+	if _carried_recovery_abandoned:
+		reset_carried_recovery()
 
 	if not can_perform_task(task):
 		TaskBoard.report_capability_violation(self, staff_id, task, route)
