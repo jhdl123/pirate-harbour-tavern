@@ -380,6 +380,74 @@ func _get_measures_per_unit() -> int:
 	return 0 if container == null else container.maximum_capacity
 
 
+# --- Stock source ------------------------------------------------------------
+#
+# The same three calls StockStorage offers, so a storeroom prop can BE the
+# source of a refill task. It could not before: RefillStationExecutor.can_claim()
+# asked the legacy singleton StockStorage whether it held the station's stock
+# item, and deliveries stopped going there the moment the order catalogue moved
+# to filled containers. Every refill task was created and none was ever
+# claimable - 2 created / 0 claimed in the 9 Aug session.
+
+
+## How many whole units of [param item_id] this prop holds.
+##
+## Matched by content, not item id: the prop stores measures of a beverage,
+## and the stock item is whatever declares it provides that content.
+func count_item(item_id: StringName) -> int:
+	if _storage == null or not _provides_item(item_id):
+		return 0
+
+	var per_unit: int = _get_measures_per_unit()
+
+	if per_unit <= 0:
+		return _storage.get_batch_count()
+
+	return int(floor(float(get_stored_measures()) / float(per_unit)))
+
+
+## Removes one unit and hands it to [param carrier] as its stock item.
+func take_one(item_id: StringName, carrier: ItemCarrier) -> ItemTransferResult:
+	if carrier == null:
+		return ItemTransferResult.failure(ItemTransferResult.Status.INVALID_REQUEST)
+
+	if _storage == null or not _provides_item(item_id):
+		return ItemTransferResult.failure(ItemTransferResult.Status.REJECTED_ITEM)
+
+	var batches: Array[FilledContainer] = _storage.get_batches()
+
+	if batches.is_empty():
+		return ItemTransferResult.failure(ItemTransferResult.Status.SOURCE_EMPTY)
+
+	var definition: ItemDefinition = _find_stock_definition(item_id)
+
+	if definition == null:
+		return ItemTransferResult.failure(ItemTransferResult.Status.REJECTED_ITEM)
+
+	var given: ItemTransferResult = carrier.give(ItemStack.create(definition, 1))
+
+	if not given.is_success():
+		return given
+
+	# Only remove the batch once the carrier has actually taken it, or a full
+	# pair of hands would silently destroy a container.
+	_storage.remove_batch(batches[0])
+
+	return given
+
+
+func _provides_item(item_id: StringName) -> bool:
+	var definition: ItemDefinition = _find_stock_definition(item_id)
+
+	return definition != null and definition.provides_content_id == content_id
+
+
+func _find_stock_definition(item_id: StringName) -> ItemDefinition:
+	var registry: ItemRegistry = load("res://Data/items/item_registry.tres")
+
+	return null if registry == null else registry.get_definition(item_id)
+
+
 func _get_configuration_warnings() -> PackedStringArray:
 	var warnings := PackedStringArray()
 

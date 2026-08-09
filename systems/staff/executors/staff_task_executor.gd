@@ -292,7 +292,11 @@ static func get_standing_position_near(
 	if not NavigationService.is_map_ready(map):
 		return world_position
 
-	return NavigationService.project_to_mesh(map, world_position)
+	# Biased toward the worker so the stand lands inside the walkable polygon
+	# rather than on its edge, where an actor cannot hold position.
+	return NavigationService.project_to_mesh_from(
+		map, world_position, worker_2d.global_position
+	)
 
 
 static func get_carrier(

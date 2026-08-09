@@ -144,5 +144,8 @@ func _check_bottle_storage_wiring() -> void:
 			"only %d unit offset(s) - stock level is invisible" % capacity)
 
 		var point: Vector2 = prop.global_position
+		var approach: Vector2 = point + Vector2(0, 40)
+		print("    centre off-mesh %.1fpx  reachable %s" % [
+			_off_mesh(point), _is_reachable(point)])
 		_ok("%s sits on reachable floor" % prop.name,
 			_off_mesh(point) < 64.0, "%.1fpx from the mesh" % _off_mesh(point))

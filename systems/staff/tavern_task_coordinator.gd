@@ -542,10 +542,21 @@ func _create_prepare_tasks() -> void:
 		var counter := counter_node as BarCounter
 		if counter == null:
 			continue
+		# A budget, not a yes/no. _counter_has_empty_slot() answers "is ANY slot
+		# free", so with three free slots and seven thirsty drink types it said
+		# yes seven times and created seven tasks. Six then lost the race and
+		# were cancelled `no_longer_required` - 37 of them last session - and
+		# whoever had already collected a drink was left holding it with
+		# nowhere to put it. Counting free slots against work already in
+		# flight is the reservation, without a second reservation framework.
+		var slot_budget: int = (
+			_count_free_slots(counter) - _count_prepare_tasks_for(counter)
+		)
+
 		for item_id in demand.keys():
+			if slot_budget <= 0:
+				break
 			if _count_prepared_on_bars(item_id) >= int(demand[item_id]):
-				continue
-			if not _counter_has_empty_slot(counter):
 				continue
 			var station := _find_station_for_drink(item_id)
 			if station == null or station.served_drink == null:
@@ -559,16 +570,24 @@ func _create_prepare_tasks() -> void:
 				"urgency": _highest_serve_urgency(item_id),
 				"metadata": {"drink": String(item_id), "counter": String(counter.name)},
 			})
+			slot_budget -= 1
 
 func _create_refill_tasks() -> void:
-	var storage := _find_stock_storage()
-	if storage == null:
-		return
+	var fallback := _find_stock_storage()
 	for node: Node in get_tree().get_nodes_in_group(&"drink_stations"):
 		var station := node as DrinksStation
 		if station == null or station.refill_item == null:
 			continue
 		if station.current_servings > station.low_stock_threshold:
+			continue
+		# The storeroom prop holding this content is the real source now.
+		# StockStorage stays as a fallback for stock that still lives there,
+		# but deliveries land in the props, so asking StockStorage first is
+		# what left every refill task unclaimable.
+		var storage: Node = _find_stock_source_for(station.refill_item)
+		if storage == null:
+			storage = fallback
+		if storage == null:
 			continue
 		var key := TavernTaskService.build_node_key(TavernTaskTypes.REFILL_STATION, station)
 		var urgency := 1.0 if station.current_servings <= 0 else 0.55
@@ -580,6 +599,20 @@ func _create_refill_tasks() -> void:
 			"urgency": urgency,
 			"metadata": {"station": String(station.name), "stock_item": String(station.refill_item.item_id)},
 		})
+
+## The storeroom prop that actually holds [param stock_item], if any.
+func _find_stock_source_for(stock_item: ItemDefinition) -> Node:
+	if stock_item == null:
+		return null
+
+	for node: Node in get_tree().get_nodes_in_group(&"stocked_display"):
+		if not node.has_method(&"count_item"):
+			continue
+		if int(node.call(&"count_item", stock_item.item_id)) > 0:
+			return node
+
+	return null
+
 
 func _is_prepare_task_still_needed(task: TavernTask) -> bool:
 	var counter := task.get_target() as BarCounter
@@ -613,6 +646,37 @@ func _count_prepared_on_bars(item_id: StringName) -> int:
 			if slot != null and not slot.is_empty() and slot.get_item_id() == item_id:
 				total += slot.get_quantity()
 	return total
+
+## Empty service slots on [param counter].
+func _count_free_slots(counter: BarCounter) -> int:
+	if counter == null or counter.get_service_container() == null:
+		return 0
+
+	var free: int = 0
+
+	for slot in counter.get_service_container().get_slots():
+		if slot != null and slot.is_empty():
+			free += 1
+
+	return free
+
+
+## Prepare tasks already open or claimed against [param counter].
+##
+## Claimed tasks count too: a bartender halfway to the bar with a drink has
+## effectively spoken for a slot even though it is still empty.
+func _count_prepare_tasks_for(counter: BarCounter) -> int:
+	var pending: int = 0
+
+	for task: TavernTask in TaskBoard.get_active_tasks():
+		if task.task_type != TavernTaskTypes.PREPARE_DRINK:
+			continue
+
+		if task.get_target() == counter:
+			pending += 1
+
+	return pending
+
 
 func _counter_has_empty_slot(counter: BarCounter) -> bool:
 	if counter == null or counter.get_service_container() == null:

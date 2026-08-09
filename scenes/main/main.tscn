@@ -357,7 +357,7 @@ tile_map_data = PackedByteArray("AAAWAAMAAAAXAAEAAAAXAAMAAAAWAAEAAAAYAAMAAAAXAAE
 tile_set = SubResource("TileSet_budmp")
 
 [node name="BarCounter" parent="Environment" unique_id=2047538336 instance=ExtResource("2_iuonh")]
-position = Vector2(505, 128)
+position = Vector2(506.00003, 137)
 
 [node name="table1" parent="Environment" unique_id=1719880889 instance=ExtResource("3_k2fmo")]
 position = Vector2(448, 319)
@@ -462,6 +462,8 @@ starting_servings = 5
 station_capabilities = Array[StringName]([&"pour_from_bottle"])
 service_container = ExtResource("72_crate")
 service_content_id = &"madeira"
+low_stock_threshold = 1
+stock_reset_threshold = 3
 serve_verb = "Take a bottle of"
 
 [node name="CanaryWineShelf" parent="Environment/BackBar" unique_id=1589320964 instance=ExtResource("96_shelf")]
@@ -482,6 +484,8 @@ starting_servings = 5
 station_capabilities = Array[StringName]([&"pour_from_bottle"])
 service_container = ExtResource("72_crate")
 service_content_id = &"canary_wine"
+low_stock_threshold = 1
+stock_reset_threshold = 3
 serve_verb = "Take a bottle of"
 
 [node name="Sprite2D" parent="Environment/BackBar/CanaryWineShelf/CanaryWineService" index="0" unique_id=1803792753]
@@ -505,6 +509,8 @@ starting_servings = 6
 station_capabilities = Array[StringName]([&"pour_from_bottle", &"access_secured_bottles"])
 service_container = ExtResource("72_crate")
 service_content_id = &"brandy"
+low_stock_threshold = 1
+stock_reset_threshold = 4
 serve_verb = "Take a bottle of"
 
 [node name="PortWineShelf" parent="Environment/BackBar" unique_id=339312108 instance=ExtResource("96_shelf")]
@@ -525,6 +531,8 @@ starting_servings = 5
 station_capabilities = Array[StringName]([&"pour_from_bottle"])
 service_container = ExtResource("72_crate")
 service_content_id = &"port_wine"
+low_stock_threshold = 1
+stock_reset_threshold = 3
 serve_verb = "Take a bottle of"
 
 [node name="Storeroom" type="Node2D" parent="Environment" unique_id=902219571]
@@ -574,7 +582,7 @@ content_id = &"port_wine"
 display_name = "Port Wine Crate"
 storage_backed = true
 storage_location_id = &"storeroom_port_wine"
-storage_tags = Array[StringName]([&"cellar_storage"])
+storage_tags = Array[StringName]([&"locked_storage", &"cellar_storage"])
 registry = ExtResource("90_bevreg")
 storage_priority = 12
 
@@ -584,7 +592,7 @@ content_id = &"canary_wine"
 display_name = "Canary Wine Crate"
 storage_backed = true
 storage_location_id = &"storeroom_canary_wine"
-storage_tags = Array[StringName]([&"cellar_storage"])
+storage_tags = Array[StringName]([&"locked_storage", &"cellar_storage"])
 registry = ExtResource("90_bevreg")
 storage_priority = 12
 
@@ -594,7 +602,7 @@ content_id = &"madeira"
 display_name = "Madeira Crate"
 storage_backed = true
 storage_location_id = &"storeroom_madeira"
-storage_tags = Array[StringName]([&"cellar_storage"])
+storage_tags = Array[StringName]([&"locked_storage", &"cellar_storage"])
 registry = ExtResource("90_bevreg")
 storage_priority = 12
 
@@ -604,7 +612,7 @@ content_id = &"brandy"
 display_name = "Brandy Crate"
 storage_backed = true
 storage_location_id = &"storeroom_brandy"
-storage_tags = Array[StringName]([&"cellar_storage"])
+storage_tags = Array[StringName]([&"locked_storage", &"cellar_storage"])
 registry = ExtResource("90_bevreg")
 storage_priority = 12
 

@@ -7,7 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://cmlx2g5ncuvg8" path="res://assets/art/characters/32x32_sailor03.png" id="4_aqhne"]
 [ext_resource type="Resource" path="res://Data/customer_ai/personalities/captain.tres" id="4_personality"]
 [ext_resource type="Script" uid="uid://pq058dsu2503" path="res://systems/customer_ai/drink_preference.gd" id="27_prefscript"]
-[ext_resource type="Resource" path="res://Data/beverage/drinks/madeira.tres" id="28_madeira"]
+[ext_resource type="Resource" uid="uid://d0gabd74q0510" path="res://Data/beverage/drinks/madeira.tres" id="28_madeira"]
 [ext_resource type="Resource" path="res://Data/beverage/drinks/brandy.tres" id="29_brandy"]
 
 [sub_resource type="Resource" id="DrinkPreference_madeira"]

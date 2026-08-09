@@ -50,8 +50,85 @@ static func find_unreachable_points(tree: SceneTree) -> Array[Dictionary]:
 	_check_seats(tree, map, problems)
 	_check_group_places(tree, map, problems)
 	_check_service_slots(tree, map, problems)
+	_check_approachable(tree, map, problems)
 
 	return problems
+
+
+## Checks that staff can actually STAND at everything they must walk to.
+##
+## Distinct from the off-mesh checks above, which ask "is this point walkable".
+## A storeroom cask stack is meant to sit off the mesh - it is furniture. The
+## question that matters is whether the approach the executors compute lands
+## somewhere an actor can hold position, and whether that spot is within reach
+## of the object. Both storeroom restock stalls came from a stand the worker
+## could touch but never settle on.
+static func _check_approachable(
+	tree: SceneTree,
+	map: RID,
+	problems: Array[Dictionary]
+) -> void:
+	var groups: Array[StringName] = [
+		&"drink_stations", &"stocked_display", &"stock_storage",
+		&"bar_counters", &"tavern_activity_points",
+	]
+
+	var floor_point: Vector2 = _floor_reference(map)
+
+	for group: StringName in groups:
+		for node: Node in tree.get_nodes_in_group(group):
+			var node_2d: Node2D = node as Node2D
+
+			if node_2d == null:
+				continue
+
+			var stand: Vector2 = NavigationService.project_to_mesh_from(
+				map, node_2d.global_position, floor_point
+			)
+
+			# The question is not how far the stand is from the object - a
+			# cask stack is furniture and staff are meant to stand beside it.
+			# It is whether an actor can PATH there and HOLD it. A point on a
+			# polygon edge fails both, silently, forever.
+			if _is_standable(map, stand, floor_point):
+				continue
+
+			problems.append({
+				"node_path": String(node_2d.get_path()),
+				"kind": "approach for %s" % String(group),
+				"position": node_2d.global_position,
+				"nearest_navmesh": stand,
+				"off_mesh_distance": stand.distance_to(node_2d.global_position),
+			})
+
+
+## Whether an actor could walk to [param point] and stay on it.
+static func _is_standable(
+	map: RID,
+	point: Vector2,
+	from_position: Vector2
+) -> bool:
+	if NavigationServer2D.map_get_closest_point(map, point).distance_to(point) > 1.0:
+		return false
+
+	var path: PackedVector2Array = NavigationServer2D.map_get_path(
+		map, from_position, point, true
+	)
+
+	if path.size() < 2:
+		return false
+
+	return path[path.size() - 1].distance_to(point) <= APPROACH_ARRIVAL_TOLERANCE
+
+
+## A point known to be on the mesh, used to bias approach projections.
+static func _floor_reference(map: RID) -> Vector2:
+	var regions: Array[RID] = NavigationServer2D.map_get_regions(map)
+
+	if regions.is_empty():
+		return Vector2.ZERO
+
+	return NavigationServer2D.map_get_closest_point(map, Vector2(600, 400))
 
 
 static func _check_seats(
@@ -151,6 +228,14 @@ static func _test_point(
 		"nearest_navmesh": closest,
 		"off_mesh_distance": distance,
 	})
+
+
+## How close a computed path must end to the stand for it to count as reached.
+##
+## Matches StaffTaskExecutor.ARRIVAL_TOLERANCE. A path that stops further away
+## than this means the actor never satisfies its arrival check and the executor
+## re-issues the same move forever.
+const APPROACH_ARRIVAL_TOLERANCE: float = 16.0
 
 
 ## Logs every problem as a warning. Returns true when the level is clean.

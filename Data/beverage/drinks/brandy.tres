@@ -1,6 +1,9 @@
 [gd_resource type="Resource" script_class="DrinkDefinition" format=3]
 
 [ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_38fdd"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/8x16_bottle_02.png" id="41_tex_full"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_wine_empty.png" id="41_tex_empty"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_wine_broken.png" id="41_tex_broken"]
 
 [resource]
 script = ExtResource("1_38fdd")
@@ -21,3 +24,10 @@ description = "Balance values are configurable placeholders, not historical meas
 tags = Array[StringName]([&"prepared_drink", &"service_item", &"spirit", &"strong_alcohol", &"premium", &"imported", &"luxury", &"captain_favourite", &"officer_favourite"])
 preferred_destination = 1
 base_sell_price = 35
+inventory_icon = ExtResource("41_tex_full")
+world_texture = ExtResource("41_tex_full")
+carried_texture = ExtResource("41_tex_full")
+order_icon_texture = ExtResource("41_tex_full")
+empty_container_texture = ExtResource("41_tex_empty")
+broken_container_texture = ExtResource("41_tex_broken")
+

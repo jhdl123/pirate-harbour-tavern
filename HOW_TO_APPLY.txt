@@ -1,23 +1,31 @@
 HOW TO APPLY
 ============
 1. Close Godot.
-2. Extract over your project root (diff against 88f119d).
+2. Extract over your project root. SUPERSEDES nav-scan-and-backpressure.zip
+   and sprites-and-restock.zip - it contains both.
 3. Reopen.
 
 VERIFY
 ------
-  godot --headless res://tests/reachability_probe.tscn  -> 36 / 0
+  godot --headless res://tests/nav_and_backpressure_probe.tscn -> 49 / 0
+  godot --headless res://tests/reachability_probe.tscn         -> 36 / 0
+  Startup should print: NAVIGATION SCAN: all seats, slots and props are
+  approachable.
 
-WHAT TO WATCH IN GAME
----------------------
-  - The bartender should now walk to the FRONT of the bottle shelves instead
-    of into them. Previously: 29 "could not reach Port Wine Station (blocked)"
-    failures and 207 stuck recoveries in one session.
-  - refill_station tasks should now get claimed (they were 3 created /
-    0 claimed).
-  - Order wine. Each crate now shows 1-3 crates stacked as stock rises.
+READ THIS - IT IS A LEVEL ISSUE, NOT A CODE ONE
+-----------------------------------------------
+Measured on your current main.tscn: there is NO walkable floor behind the
+bar. Walkable space starts at about y=132; the counter is at y=128 and the
+DEPOSIT-side slot points are at y=77, entirely off the mesh. The only
+walkable spot behind the counter is an isolated pocket near (521, 80) that
+connects to nothing.
 
-STILL OPEN (see the message)
-----------------------------
-  prepare_drink 47.6% cancellation - BarCounter output slots still are not
-  reserved. That is the next fix.
+That pocket is where "the barman ended up stuck on the wrong side of the
+bar" came from. The code now refuses to send anyone into it, so staff work
+the bar from the customer side and service works - but the two-sided
+BarCounter design (bartender deposits from behind, Tavern Hand collects from
+the front) cannot function until there is walkable floor behind the counter.
+
+If you want that design back, the room needs a staff-side gangway behind the
+bar wide enough to stand in - roughly 24px of clear floor, and connected to
+the rest of the room so staff can walk in and out.

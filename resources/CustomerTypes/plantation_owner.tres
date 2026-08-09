@@ -6,7 +6,7 @@
 [ext_resource type="Resource" path="res://Data/customer_ai/personalities/plantation_owner.tres" id="5_pers"]
 [ext_resource type="Resource" path="res://Data/beverage/drinks/rum_punch.tres" id="8_rum_punch"]
 [ext_resource type="Script" uid="uid://pq058dsu2503" path="res://systems/customer_ai/drink_preference.gd" id="18_prefscript"]
-[ext_resource type="Resource" path="res://Data/beverage/drinks/madeira.tres" id="19_madeira"]
+[ext_resource type="Resource" uid="uid://d0gabd74q0510" path="res://Data/beverage/drinks/madeira.tres" id="19_madeira"]
 [ext_resource type="Resource" path="res://Data/beverage/drinks/brandy.tres" id="20_brandy"]
 [ext_resource type="Resource" path="res://Data/beverage/drinks/canary_wine.tres" id="21_canary_wine"]
 

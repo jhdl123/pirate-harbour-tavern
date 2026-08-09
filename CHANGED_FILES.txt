@@ -1,10 +1,14 @@
-Station reachability + wine crate stock display
-Diff against commit 88f119d.
+Bar-side navigation fix (supersedes nav-scan-and-backpressure.zip)
+Diff against 9a8e682.
 
-  scripts/Interactables/drinks_station.gd
-        + get_interaction_point() — snaps the approach point to the nearest
-          navigable floor, and + approach_probe_distance (72px)
-  scenes/furniture/wine_crate.tscn
-        unit_offsets 1 -> 3 stacked positions so stock level is visible
-  tests/reachability_probe.{gd,tscn}
-        new — measures every station and prop against the live navmesh
+THE FIX
+  systems/navigation/navigation_service.gd
+        project_to_mesh_from() rewritten. It no longer biases toward the
+        worker - that dragged the bar's deposit-side stand across the counter.
+        It now samples around the object for a point that is INTERIOR (has
+        walkable clearance all round) AND REACHABLE from the actor, nearest
+        to the request. Points already standable are returned untouched.
+
+EVERYTHING ELSE carried over from nav-scan-and-backpressure.zip:
+  startup navigation scan, per-destination nav telemetry, bar slot budget,
+  bottle-station thresholds, plus the sprites/restock work before it.

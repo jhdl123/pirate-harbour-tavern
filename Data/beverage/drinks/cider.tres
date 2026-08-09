@@ -2,6 +2,9 @@
 
 [ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_ra3it"]
 [ext_resource type="Resource" path="res://Data/beverage/spoilage/poured_drink.tres" id="2_7xdaj"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_ale.png" id="42_tex_full"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_ale_empty.png" id="42_tex_empty"]
+[ext_resource type="Texture2D" path="res://assets/art/items/drinks/16x16_ale_broken.png" id="42_tex_broken"]
 
 [resource]
 script = ExtResource("1_ra3it")
@@ -20,3 +23,10 @@ description = "Balance values are configurable placeholders, not historical meas
 tags = Array[StringName]([&"prepared_drink", &"service_item", &"cider", &"weak_alcohol", &"merchant_favourite"])
 preferred_destination = 1
 base_sell_price = 6
+inventory_icon = ExtResource("42_tex_full")
+world_texture = ExtResource("42_tex_full")
+carried_texture = ExtResource("42_tex_full")
+order_icon_texture = ExtResource("42_tex_full")
+empty_container_texture = ExtResource("42_tex_empty")
+broken_container_texture = ExtResource("42_tex_broken")
+

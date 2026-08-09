@@ -1,6 +1,9 @@
-[gd_resource type="Resource" script_class="DrinkDefinition" format=3]
+[gd_resource type="Resource" script_class="DrinkDefinition" format=3 uid="uid://d0gabd74q0510"]
 
-[ext_resource type="Script" path="res://systems/items/drink_definition.gd" id="1_6jqct"]
+[ext_resource type="Script" uid="uid://bmwkoswb21je6" path="res://systems/items/drink_definition.gd" id="1_6jqct"]
+[ext_resource type="Texture2D" uid="uid://3tg7hau1wpvp" path="res://assets/art/items/drinks/16x16_wine_broken.png" id="41_tex_broken"]
+[ext_resource type="Texture2D" uid="uid://bp51iedqmcsdx" path="res://assets/art/items/drinks/16x16_wine_empty.png" id="41_tex_empty"]
+[ext_resource type="Texture2D" uid="uid://b8s58btycg33k" path="res://assets/art/items/drinks/8x16_bottle_09.png" id="41_tex_full"]
 
 [resource]
 script = ExtResource("1_6jqct")
@@ -13,9 +16,15 @@ content_id = &"madeira"
 serving_format_ids = Array[StringName]([&"bottle_serving", &"glass"])
 service_method = 1
 required_station_capabilities = Array[StringName]([&"pour_from_bottle"])
+order_icon_texture = ExtResource("41_tex_full")
+empty_container_texture = ExtResource("41_tex_empty")
+broken_container_texture = ExtResource("41_tex_broken")
 item_id = &"madeira"
 display_name = "Madeira Wine"
 description = "Balance values are configurable placeholders, not historical measurements."
 tags = Array[StringName]([&"prepared_drink", &"service_item", &"wine", &"premium", &"imported", &"merchant_favourite", &"captain_favourite", &"officer_favourite"])
+inventory_icon = ExtResource("41_tex_full")
+world_texture = ExtResource("41_tex_full")
+carried_texture = ExtResource("41_tex_full")
 preferred_destination = 1
 base_sell_price = 18

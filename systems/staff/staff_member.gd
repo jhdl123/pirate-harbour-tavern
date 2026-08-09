@@ -181,6 +181,18 @@ var _serves_completed: int = 0
 var _cleans_completed: int = 0
 var _navigation_failure_total: int = 0
 var _stuck_recoveries: int = 0
+
+## Stuck recoveries and hard failures per destination label.
+##
+## `stuck_recoveries = 310` is a single number with nowhere to look. Keyed by
+## where the worker was heading, the same number reads "GrogCaskStack 180,
+## PortWineService 60" and points straight at the bad approach point. Every
+## navigation fault this project has hit took a bespoke probe to locate; this
+## makes the next one a line in the report.
+var _navigation_trouble_by_destination: Dictionary = {}
+
+## Label of the destination currently being walked to.
+var _current_destination_label: String = ""
 var _transfer_failures: int = 0
 var _idle_seconds: float = 0.0
 var _working_seconds: float = 0.0
@@ -1018,6 +1030,7 @@ func _navigate_to(
 ) -> void:
 	_navigation_target = world_position
 	_is_navigating = true
+	_current_destination_label = label
 
 	actor_navigation.move_to(
 		NavigationDestination.to_position(
@@ -1063,6 +1076,11 @@ func _on_destination_failed(
 	_is_navigating = false
 	_navigation_failures += 1
 	_navigation_failure_total += 1
+
+	_record_navigation_trouble(
+		"nowhere" if destination == null else destination.get_label(),
+		&"failed"
+	)
 
 	_set_state(State.RECOVERING, StaffTransitionReason.STUCK_RECOVERY)
 
@@ -1112,6 +1130,21 @@ func _on_recovery_started(
 	_attempt: int
 ) -> void:
 	_stuck_recoveries += 1
+	_record_navigation_trouble(_current_destination_label, &"stuck")
+
+
+## Counts one navigation problem against the place it happened.
+func _record_navigation_trouble(
+	label: String,
+	kind: StringName
+) -> void:
+	var key: String = label if not label.is_empty() else "<unknown>"
+	var entry: Dictionary = _navigation_trouble_by_destination.get(
+		key, {"stuck": 0, "failed": 0}
+	)
+
+	entry[String(kind)] = int(entry.get(String(kind), 0)) + 1
+	_navigation_trouble_by_destination[key] = entry
 
 
 # -----------------------------------------------------------------------------
@@ -1570,6 +1603,9 @@ func get_diagnostics_snapshot() -> Dictionary:
 		"recent_carried_events": _carried_events.duplicate(true),
 		"travel_seconds": _travel_seconds,
 		"stuck_recoveries": _stuck_recoveries,
+		"navigation_trouble_by_destination": (
+			_navigation_trouble_by_destination.duplicate(true)
+		),
 		"item_transfer_failures": _transfer_failures,
 		"idle_seconds": _idle_seconds,
 		"working_seconds": _working_seconds,
