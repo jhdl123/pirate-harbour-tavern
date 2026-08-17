@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://bx2xkcd7yeqs2"
+path="res://.godot/imported/16x16 circle.ase-368f9a8a4d2c01638f572e6019bbb7d1.res"
+
+[deps]
+
+source_file="res://assets/art/shapes/16x16 circle.ase"
+dest_files=["res://.godot/imported/16x16 circle.ase-368f9a8a4d2c01638f572e6019bbb7d1.res"]
+
+[params]
+

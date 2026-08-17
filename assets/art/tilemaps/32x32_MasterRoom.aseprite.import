@@ -1,0 +1,14 @@
+[remap]
+
+importer="aseprite_wizard.plugin.noop"
+type="PackedDataContainer"
+uid="uid://c4gefcmu3hpev"
+path="res://.godot/imported/32x32_MasterRoom.aseprite-c80a8bdf282b1684add60fd18e01b510.res"
+
+[deps]
+
+source_file="res://assets/art/tilemaps/32x32_MasterRoom.aseprite"
+dest_files=["res://.godot/imported/32x32_MasterRoom.aseprite-c80a8bdf282b1684add60fd18e01b510.res"]
+
+[params]
+
