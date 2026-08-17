@@ -1,31 +1,40 @@
 HOW TO APPLY
 ============
 1. Close Godot.
-2. Extract over your project root. SUPERSEDES nav-scan-and-backpressure.zip
-   and sprites-and-restock.zip - it contains both.
-3. Reopen.
+2. Extract over your project root. main.tscn is NOT touched - your doors,
+   walls and widened gangway are safe.
+3. Reopen. The bar should show seven slots.
 
-VERIFY
-------
-  godot --headless res://tests/nav_and_backpressure_probe.tscn -> 49 / 0
-  godot --headless res://tests/reachability_probe.tscn         -> 36 / 0
-  Startup should print: NAVIGATION SCAN: all seats, slots and props are
-  approachable.
+VERIFIED AGAINST YOUR LATEST COMMIT (421f910 "doors")
+------------------------------------------------------
+I reimported and re-ran everything on your new room layout:
 
-READ THIS - IT IS A LEVEL ISSUE, NOT A CODE ONE
------------------------------------------------
-Measured on your current main.tscn: there is NO walkable floor behind the
-bar. Walkable space starts at about y=132; the counter is at y=128 and the
-DEPOSIT-side slot points are at y=77, entirely off the mesh. The only
-walkable spot behind the counter is an isolated pocket near (521, 80) that
-connects to nothing.
+  NAVIGATION SCAN: all seats, slots and props are approachable.
+  nav_and_backpressure_probe  87 / 0
+  reachability_probe          36 / 0
+  restock_chain_probe         56 / 0
+  delivery_storeroom_probe    33 / 0
+  service_coverage_probe      30 / 0
+  drinks_system_probe         61 / 0
+  storeroom_props_probe       52 / 0
+  group_and_recovery_probe    34 / 0
+  navigation_stress_test      25 / 0
+  customer_identity_test      92 / 0
+  group loop / parity / milestone  0 failed
+  group_framework_test         2 failed  (SEATED cases, baseline)
+  group_keg_loop_test         27 / 5     (exact known set)
 
-That pocket is where "the barman ended up stuck on the wrong side of the
-bar" came from. The code now refuses to send anyone into it, so staff work
-the bar from the customer side and service works - but the two-sided
-BarCounter design (bartender deposits from behind, Tavern Hand collects from
-the front) cannot function until there is walkable floor behind the counter.
+YOUR GANGWAY WIDENING WORKED
+----------------------------
+Measured on 421f910: there is now walkable floor at y 84-92, behind the bar
+(counter at y=137, deposit points at y=86). All seven deposit stands resolve
+to themselves - 0px moved. The two-sided design is live: the bartender can
+stand behind the counter and deposit, the Tavern Hand collects from the front.
 
-If you want that design back, the room needs a staff-side gangway behind the
-bar wide enough to stand in - roughly 24px of clear floor, and connected to
-the rest of the room so staff can walk in and out.
+STILL OPEN
+----------
+  Two sprite gaps needing an art decision, not code:
+    1. Bottled drinks use an 8x16 bottle when full but a 16x16 wine mug when
+       empty/broken - no bottle_XX_empty/_broken art exists.
+    2. Cider, small beer and ale share one mug sprite.
+  serve_drink cancellations; group activity participation still 0.0%.

@@ -1,14 +1,20 @@
-Bar-side navigation fix (supersedes nav-scan-and-backpressure.zip)
-Diff against 9a8e682.
+Seven bar service slots — rebased onto 421f910 "doors"
 
-THE FIX
-  systems/navigation/navigation_service.gd
-        project_to_mesh_from() rewritten. It no longer biases toward the
-        worker - that dragged the bar's deposit-side stand across the counter.
-        It now samples around the object for a point that is INTERIOR (has
-        walkable clearance all round) AND REACHABLE from the actor, nearest
-        to the request. Points already standable are returned untouched.
+THREE FILES. Everything else from my previous zips is already in your repo
+(you committed it as 0274302 "bar-side-nav-fix"), so this is only the part
+that had not landed yet.
 
-EVERYTHING ELSE carried over from nav-scan-and-backpressure.zip:
-  startup navigation scan, per-destination nav telemetry, bar slot budget,
-  bottle-station thresholds, plus the sprites/restock work before it.
+  scenes/furniture/bar_counter.tscn
+        Slot4 / Slot5 / Slot6 added at local x 99, 127.3, 155.7 - the same
+        ~28px spacing as your existing four, each with Highlight, ItemSprite,
+        DepositPoint and CollectionPoint
+        InteractionArea widened 120 -> 200 local units and recentred to x=71.
+        Without this the new slots exist but are never offered to anyone.
+
+  scripts/Interactables/bar_counter.gd
+        service_slot_count default 4 -> 7
+
+  tests/nav_and_backpressure_probe.gd
+        + per-slot checks: marker exists, both access points exist, the marker
+        sits inside the interaction area, the collection stand is reachable,
+        and a stand does not depend on which side the worker approaches from

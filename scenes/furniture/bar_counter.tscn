@@ -8,7 +8,7 @@
 size = Vector2(423.875, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mel2l"]
-size = Vector2(120.333336, 40)
+size = Vector2(200, 40)
 
 [node name="BarCounter" type="StaticBody2D" unique_id=2047538336]
 scale = Vector2(0.75, 1)
@@ -28,7 +28,7 @@ script = ExtResource("2_interact")
 display_name = "Bar Counter"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea" unique_id=95804760]
-position = Vector2(29.166668, -21)
+position = Vector2(71, -21)
 shape = SubResource("RectangleShape2D_mel2l")
 
 [node name="ServiceSlots" type="Node2D" parent="." unique_id=1206575542]
@@ -110,4 +110,64 @@ position = Vector2(0, -10)
 position = Vector2(0, -30)
 
 [node name="CollectionPoint" type="Marker2D" parent="ServiceSlots/Slot3" unique_id=568091482]
+position = Vector2(0, 22)
+
+[node name="Slot4" type="Marker2D" parent="ServiceSlots"]
+position = Vector2(99, -21)
+
+[node name="Highlight" type="Polygon2D" parent="ServiceSlots/Slot4"]
+visible = false
+position = Vector2(1, -1)
+color = Color(1, 1, 1, 0.35000002)
+polygon = PackedVector2Array(-7, -10, 5, -10, 5, -1, -7, -1)
+
+[node name="ItemSprite" type="Sprite2D" parent="ServiceSlots/Slot4"]
+visible = false
+z_index = 5
+position = Vector2(0, -10)
+
+[node name="DepositPoint" type="Marker2D" parent="ServiceSlots/Slot4"]
+position = Vector2(0, -30)
+
+[node name="CollectionPoint" type="Marker2D" parent="ServiceSlots/Slot4"]
+position = Vector2(0, 22)
+
+[node name="Slot5" type="Marker2D" parent="ServiceSlots"]
+position = Vector2(127.333, -21)
+
+[node name="Highlight" type="Polygon2D" parent="ServiceSlots/Slot5"]
+visible = false
+position = Vector2(1, -1)
+color = Color(1, 1, 1, 0.35000002)
+polygon = PackedVector2Array(-7, -10, 5, -10, 5, -1, -7, -1)
+
+[node name="ItemSprite" type="Sprite2D" parent="ServiceSlots/Slot5"]
+visible = false
+z_index = 5
+position = Vector2(0, -10)
+
+[node name="DepositPoint" type="Marker2D" parent="ServiceSlots/Slot5"]
+position = Vector2(0, -30)
+
+[node name="CollectionPoint" type="Marker2D" parent="ServiceSlots/Slot5"]
+position = Vector2(0, 22)
+
+[node name="Slot6" type="Marker2D" parent="ServiceSlots"]
+position = Vector2(155.667, -21)
+
+[node name="Highlight" type="Polygon2D" parent="ServiceSlots/Slot6"]
+visible = false
+position = Vector2(1, -1)
+color = Color(1, 1, 1, 0.35000002)
+polygon = PackedVector2Array(-7, -10, 5, -10, 5, -1, -7, -1)
+
+[node name="ItemSprite" type="Sprite2D" parent="ServiceSlots/Slot6"]
+visible = false
+z_index = 5
+position = Vector2(0, -10)
+
+[node name="DepositPoint" type="Marker2D" parent="ServiceSlots/Slot6"]
+position = Vector2(0, -30)
+
+[node name="CollectionPoint" type="Marker2D" parent="ServiceSlots/Slot6"]
 position = Vector2(0, 22)

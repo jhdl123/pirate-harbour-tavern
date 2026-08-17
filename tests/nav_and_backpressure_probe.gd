@@ -23,6 +23,7 @@ func _ready() -> void:
 	_check_slot_budget()
 	_check_telemetry()
 	_check_bar_sides()
+	_check_bar_capacity()
 
 	print("RESULT %d passed, %d failed" % [passed, failed])
 	get_tree().quit(1 if failed > 0 else 0)
@@ -140,6 +141,72 @@ func _check_slot_budget() -> void:
 	var pending: int = coordinator.call("_count_prepare_tasks_for", counter)
 	_ok("prepare tasks in flight never exceed free slots",
 		pending <= free, "%d pending for %d slots" % [pending, free])
+
+
+## Every service slot must be real, reachable and usable.
+##
+## Raising service_slot_count alone does not add a slot: each one needs its own
+## Slot<N> marker with a DepositPoint and CollectionPoint, and the counter's
+## InteractionArea has to actually cover it or the slot exists but nothing can
+## be put in it.
+func _check_bar_capacity() -> void:
+	var counter: BarCounter = null
+
+	for node in get_tree().get_nodes_in_group(&"bar_counters"):
+		counter = node as BarCounter
+		break
+
+	if counter == null:
+		_ok("a bar counter exists", false)
+		return
+
+	var container: ItemContainer = counter.get_service_container()
+
+	_ok("the bar has seven service slots",
+		container != null and container.get_slot_count() == 7,
+		"got %d" % (0 if container == null else container.get_slot_count()))
+
+	var area: Area2D = counter.get_node_or_null(^"InteractionArea")
+	var shape_node: CollisionShape2D = (
+		null if area == null else area.get_node_or_null(^"CollisionShape2D")
+	)
+	var rect: RectangleShape2D = (
+		null if shape_node == null else shape_node.shape as RectangleShape2D
+	)
+
+	for index: int in range(container.get_slot_count()):
+		var marker: Node2D = counter.get_service_slot_marker(index)
+
+		_ok("slot %d has a marker" % index, marker != null)
+
+		if marker == null:
+			continue
+
+		_ok("slot %d has both access points" % index,
+			marker.get_node_or_null(^"DepositPoint") != null
+			and marker.get_node_or_null(^"CollectionPoint") != null)
+
+		# The marker must sit inside the interaction area, or the player can
+		# never be offered that slot.
+		if rect != null:
+			var local: Vector2 = (
+				marker.global_position - shape_node.global_position
+			) / counter.scale
+
+			_ok("slot %d is inside the interaction area" % index,
+				absf(local.x) <= rect.size.x * 0.5 + 1.0,
+				"local x %.1f vs half-width %.1f" % [local.x, rect.size.x * 0.5])
+
+		# And a staff member must be able to stand at its collection point.
+		var collect: Vector2 = counter.get_slot_access_position(
+			index, BarCounter.SlotAccess.COLLECT
+		)
+		var stand: Vector2 = NavigationService.project_to_mesh_from(
+			_map(), collect, Vector2(600, 400)
+		)
+
+		_ok("slot %d has a reachable collection stand" % index,
+			_is_standable(stand, Vector2(600, 400)), "got %s" % str(stand))
 
 
 ## A computed stand must never end up on the opposite side of the counter.

@@ -32,8 +32,16 @@ extends StaticBody2D
 
 @export_category("Service Slots")
 
+## How many finished drinks can wait on the counter at once.
+##
+## Every slot needs a matching Slot<N> marker under ServiceSlots with its own
+## DepositPoint and CollectionPoint, or the counter warns and that slot is
+## unusable. Raising this alone is not enough.
+##
+## Four was a bottleneck: the bar filled, prepare tasks stopped being viable,
+## and the bartender idled while drinks queued.
 @export_range(1, 10, 1)
-var service_slot_count: int = 4
+var service_slot_count: int = 7
 
 
 @export_category("Interaction")
