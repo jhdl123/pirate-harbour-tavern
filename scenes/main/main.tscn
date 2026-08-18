@@ -45,8 +45,8 @@
 [ext_resource type="Script" uid="uid://r6alj8fajejv" path="res://systems/staff/tavern_task_coordinator.gd" id="41_task_coordinator"]
 [ext_resource type="Script" uid="uid://cyaud0jeg8ygl" path="res://systems/communication/stock_alert_coordinator.gd" id="42_stock_alerts"]
 [ext_resource type="Script" uid="uid://dvdslntfmm3xa" path="res://systems/staff/diagnostics/staff_report_manager.gd" id="43_staff_report"]
-[ext_resource type="Script" path="res://systems/diagnostics/diagnostic_run_exporter.gd" id="44_diag_export"]
 [ext_resource type="PackedScene" uid="uid://dmecv26e4ygey" path="res://scenes/staff/bartender.tscn" id="44_bartender"]
+[ext_resource type="Script" uid="uid://odoy2yjgfyuc" path="res://systems/diagnostics/diagnostic_run_exporter.gd" id="44_diag_export"]
 [ext_resource type="Script" uid="uid://bqjflnscjloo7" path="res://systems/customer_ai/identity/visit_intent_config.gd" id="60_7hhev"]
 [ext_resource type="Script" uid="uid://um7xjbue1v5x" path="res://systems/customer_ai/identity/visit_intent_registry.gd" id="61_ia3vs"]
 [ext_resource type="Resource" uid="uid://cfo167rq6i6et" path="res://resources/CustomerTypes/local_worker.tres" id="64_5biqi"]
@@ -851,7 +851,6 @@ downstairs_arrival_path = NodePath("../Markers/DownstairsArrival")
 upstairs_arrival_path = NodePath("../UpstairsFloor/Environment/Stairs/Markers/UpstairsArrival")
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=1290313818 node_paths=PackedStringArray("economy_manager")]
-visible = false
 script = ExtResource("7_yyfjg")
 economy_manager = NodePath("../Managers/EconomyManager")
 
@@ -1062,20 +1061,19 @@ stock_storage = NodePath("../../Environment/StockStorage")
 [node name="StaffReportManager" type="Node" parent="Managers" unique_id=1939219445]
 script = ExtResource("43_staff_report")
 
-[node name="DiagnosticRunExporter" type="Node" parent="Managers" node_paths=PackedStringArray("customer_ai_report_manager", "staff_report_manager")]
+[node name="DiagnosticRunExporter" type="Node" parent="Managers" unique_id=386868230 node_paths=PackedStringArray("customer_ai_report_manager", "staff_report_manager")]
 script = ExtResource("44_diag_export")
 customer_ai_report_manager = NodePath("../CustomerAIReportManager")
 staff_report_manager = NodePath("../StaffReportManager")
 
 [node name="BarManagementMenu" parent="." unique_id=1560950072 node_paths=PackedStringArray("game_manager", "economy_manager", "statistics_tracker") instance=ExtResource("27_62atk")]
-visible = false
 game_manager = NodePath("../Managers/GameManager")
 economy_manager = NodePath("../Managers/EconomyManager")
 statistics_tracker = NodePath("../Managers/StatisticsTracker")
 
 [node name="CommunicationUI" parent="." unique_id=1147168794 instance=ExtResource("40_communication_ui")]
 
-[node name="StockDevPanel" parent="." unique_id=1149986686 node_paths=PackedStringArray("economy_manager", "order_manager", "staff_report_manager", "task_coordinator", "communication_ui", "customer_ai_report_manager", "game_manager", "diagnostic_run_exporter") instance=ExtResource("31_stock_dev")]
+[node name="StockDevPanel" parent="." unique_id=1149986686 node_paths=PackedStringArray("economy_manager", "order_manager", "staff_report_manager", "task_coordinator", "communication_ui", "customer_ai_report_manager", "diagnostic_run_exporter", "game_manager") instance=ExtResource("31_stock_dev")]
 economy_manager = NodePath("../Managers/EconomyManager")
 order_manager = NodePath("../Managers/OrderManager")
 item_registry = ExtResource("33_item_registry")
@@ -1083,8 +1081,8 @@ staff_report_manager = NodePath("../Managers/StaffReportManager")
 task_coordinator = NodePath("../Managers/TavernTaskCoordinator")
 communication_ui = NodePath("../CommunicationUI")
 customer_ai_report_manager = NodePath("../Managers/CustomerAIReportManager")
-game_manager = NodePath("../Managers/GameManager")
 diagnostic_run_exporter = NodePath("../Managers/DiagnosticRunExporter")
+game_manager = NodePath("../Managers/GameManager")
 
 [node name="Node" type="Node" parent="." unique_id=1058371443]
 script = ExtResource("9_b1x3f")
