@@ -49,6 +49,29 @@ func _check_wiring() -> void:
 	_ok("it observes the staff report manager",
 		exporter.staff_report_manager != null)
 
+	# The gap that shipped a broken button: the exporter node existed and the
+	# probe was happy, but the F10 panel's reference to it was never checked.
+	# Verifying a node exists is not verifying it is WIRED to its caller.
+	var panel: Node = main.get_node_or_null(^"StockDevPanel")
+
+	_ok("the dev panel is in the scene", panel != null)
+
+	if panel != null:
+		_ok("the dev panel holds the exporter",
+			panel.diagnostic_run_exporter != null,
+			"F10 would report 'No DiagnosticRunExporter assigned'")
+		_ok("the dev panel points at the real exporter",
+			panel.diagnostic_run_exporter == exporter)
+
+		# And every other node_path on the panel, since one silently-null
+		# reference is exactly as invisible as the next.
+		for property: String in [
+			"economy_manager", "order_manager", "staff_report_manager",
+			"task_coordinator", "customer_ai_report_manager", "game_manager",
+		]:
+			_ok("the dev panel has %s wired" % property,
+				panel.get(property) != null)
+
 	# It must never keep its own copy of game state.
 	var git: Dictionary = exporter._get_git_info()
 	print("  git branch=%s short=%s" % [git["branch"], git["short"]])
@@ -164,6 +187,16 @@ func _check_export() -> void:
 	exporter.test_purpose = "Automated probe"
 	exporter.developer_notes = "Written by diagnostic_export_probe."
 	exporter.record_stock_event(&"DELIVERY", "Probe Cask", 96, "probe")
+
+	# Drive the F10 button itself, not just export_run() - the button is what
+	# reported "No DiagnosticRunExporter assigned".
+	var panel: Node = main.get_node_or_null(^"StockDevPanel")
+
+	if panel != null:
+		panel._export_diagnostic_run()
+		_ok("the F10 button exports rather than reporting a missing exporter",
+			not String(panel.status.text).contains("No DiagnosticRunExporter"),
+			panel.status.text)
 
 	var archive: String = exporter.export_run()
 

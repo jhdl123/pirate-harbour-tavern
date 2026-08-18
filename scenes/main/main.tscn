@@ -1070,7 +1070,6 @@ staff_report_manager = NodePath("../StaffReportManager")
 [node name="BarManagementMenu" parent="." unique_id=1560950072 node_paths=PackedStringArray("game_manager", "economy_manager", "statistics_tracker") instance=ExtResource("27_62atk")]
 visible = false
 game_manager = NodePath("../Managers/GameManager")
-diagnostic_run_exporter = NodePath("../Managers/DiagnosticRunExporter")
 economy_manager = NodePath("../Managers/EconomyManager")
 statistics_tracker = NodePath("../Managers/StatisticsTracker")
 
@@ -1085,6 +1084,7 @@ task_coordinator = NodePath("../Managers/TavernTaskCoordinator")
 communication_ui = NodePath("../CommunicationUI")
 customer_ai_report_manager = NodePath("../Managers/CustomerAIReportManager")
 game_manager = NodePath("../Managers/GameManager")
+diagnostic_run_exporter = NodePath("../Managers/DiagnosticRunExporter")
 
 [node name="Node" type="Node" parent="." unique_id=1058371443]
 script = ExtResource("9_b1x3f")
