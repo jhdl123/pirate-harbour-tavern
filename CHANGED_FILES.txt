@@ -1,28 +1,36 @@
-Diagnostic report accuracy fixes — three files
+Wrong-side bar approach + bottled stock pricing
+Diff against c3dd137.
 
-Your first committed run (dd2331b) exposed three defects in MY reporting.
-The gameplay was fine; the tool was lying.
+BUG 1 — staff working the bar from the wrong side
+  scripts/Interactables/drinks_station.gd
+        get_interaction_point() still used my OLD worker-biased algorithm -
+        the one I replaced in NavigationService weeks ago but never removed
+        here. It probed 72px TOWARD the approaching actor, so the answer
+        depended on where the worker happened to be standing.
 
-  systems/diagnostics/diagnostic_run_exporter.gd
-    1. The stock report called count_item() with a CONTENT id where a STOCK
-       ITEM id is wanted. It silently returned 0 and reported every healthy
-       display as "FAIL — authoritative and displayed quantities disagree",
-       while RUN_SUMMARY said Storage PASS. It now resolves the stock item
-       (grog_barrel, small_beer_cask, port_wine_crate...) and prints it, and
-       treats "more stored than the pile can show" as PASS rather than a
-       mismatch.
-    2. Days always read 0 — it looked for a `current_day` property; WorldTime
-       exposes get_day(). Now reads 1 correctly.
+        Measured before: approaching from the front resolved every station to
+        y=139-157 (the CUSTOMER side) while the stations sit at y=28-80 behind
+        the bar - up to 71px apart depending on approach direction. Same code
+        path serves restocking, which is why both symptoms appeared together.
 
-  systems/staff/diagnostics/staff_report_manager.gd
-    3. get_summary() read TaskBoard's report under a "totals" key that does
-       not exist, so tasks_created / completed / cancelled were all 0 while
-       the same report's summary line said "125 done". It now returns
-       TaskBoard's own "summary" section wholesale, so a metric added there
-       appears here with no second naming scheme to drift.
+        Now delegates to NavigationService.project_to_mesh_from(), which
+        samples rings around the STATION for an interior, reachable point.
+        Verified: 0px difference whether approached from front or behind.
 
-  tests/diagnostic_export_probe.gd
-       + _check_reports_agree(): stocks every storeroom prop, then asserts the
-       stock report contains no FAIL and that staff metrics resolve. 59
-       assertions. This is the check that was missing — two reports disagreeing
-       about one fact is exactly what this system exists to catch.
+BUG 3 — bottled stock unaffordable
+  Data/items/stock/{madeira,port_wine,canary_wine,brandy}_crate.tres
+  Data/suppliers/harbour_supplies.tres   (unit_price_override must match, or
+                                          the resource price never reaches
+                                          the player)
+
+        A crate is 96 measures = 12 bottle servings. Old prices returned about
+        2x cost, while a grog barrel returns ~8x - so bottled stock was both
+        unaffordable up front and the worst margin in the game.
+
+           madeira      120 -> 80    (sell 40)
+           port wine    130 -> 88    (sell 44)
+           canary wine  140 -> 95    (sell 47)
+           brandy       220 -> 150   (sell 75)
+
+        Now a consistent ~3x return: still the premium tier, no longer a trap.
+        A first-night crate is affordable without the F10 money button.

@@ -36,7 +36,7 @@ script = ExtResource("2_entry")
 shape = 1
 container_id = &"crate"
 content_id = &"port_wine"
-unit_price_override = 130
+unit_price_override = 88
 maximum_order_quantity = 6
 destination_storage_tags = Array[StringName]([&"locked_storage"])
 
@@ -45,7 +45,7 @@ script = ExtResource("2_entry")
 shape = 1
 container_id = &"crate"
 content_id = &"canary_wine"
-unit_price_override = 140
+unit_price_override = 95
 maximum_order_quantity = 6
 destination_storage_tags = Array[StringName]([&"locked_storage"])
 
@@ -54,7 +54,7 @@ script = ExtResource("2_entry")
 shape = 1
 container_id = &"crate"
 content_id = &"madeira"
-unit_price_override = 120
+unit_price_override = 80
 maximum_order_quantity = 6
 destination_storage_tags = Array[StringName]([&"locked_storage"])
 
@@ -63,7 +63,7 @@ script = ExtResource("2_entry")
 shape = 1
 container_id = &"crate"
 content_id = &"brandy"
-unit_price_override = 220
+unit_price_override = 150
 maximum_order_quantity = 6
 destination_storage_tags = Array[StringName]([&"locked_storage"])
 

@@ -1,22 +1,22 @@
 HOW TO APPLY
 ============
 1. Close Godot.
-2. Extract over your project root (three files; debug/ untouched).
-3. Reopen, F10 → Export Diagnostic Run.
-
-WHAT SHOULD CHANGE IN THE NEXT RUN
-----------------------------------
-  stock_report.txt   every display should read PASS, with a "Stock item:" line
-                     naming grog_barrel / small_beer_cask / port_wine_crate etc.
-  RUN_SUMMARY.md     Days: 1 rather than 0
-                     tasks_created / completed / cancelled with real numbers
-                     rather than three zeroes
-
-TIP
----
-Set "Test purpose" and "Developer notes" on Managers/DiagnosticRunExporter in
-the inspector before exporting — your first run has them as "(not set)".
+2. Extract over your project root (6 files; main.tscn and debug/ untouched).
+3. Reopen.
 
 VERIFY
 ------
-  godot --headless res://tests/diagnostic_export_probe.tscn   -> 59 / 0
+  godot --headless res://tests/nav_and_backpressure_probe.tscn  -> 87 / 0
+  godot --headless res://tests/reachability_probe.tscn          -> 36 / 0
+  godot --headless res://tests/restock_chain_probe.tscn         -> 56 / 0
+  godot --headless res://tests/service_coverage_probe.tscn      -> 30 / 0
+  godot --headless res://tests/diagnostic_export_probe.tscn     -> 59 / 0
+
+WATCH IN THE NEXT RUN
+---------------------
+  The bartender should approach every station from the same place regardless
+  of where he starts. NOTE: on your current layout most stations still resolve
+  to the FRONT of the bar - see the message. That is a level issue, not this
+  fix.
+
+BUG 2 (keg not returned) IS NOT FIXED - diagnosed only. See the message.
