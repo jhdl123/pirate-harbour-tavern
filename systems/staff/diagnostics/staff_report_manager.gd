@@ -186,6 +186,22 @@ func _build_transition_section() -> Dictionary:
 # Writing
 # -----------------------------------------------------------------------------
 
+## Task totals for the run, without writing a file.
+##
+## Reads the same TaskBoard section the JSON export uses, so the summary in
+## RUN_SUMMARY.md and the full report can never disagree.
+func get_summary() -> Dictionary:
+	var tasks: Dictionary = TaskBoard.build_report_section()
+	var totals: Dictionary = tasks.get("totals", {})
+
+	return {
+		"tasks_created": totals.get("created", 0),
+		"tasks_claimed": totals.get("claimed", 0),
+		"tasks_completed": totals.get("completed", 0),
+		"tasks_cancelled": totals.get("cancelled", 0),
+	}
+
+
 ## Writes the report and returns the path, or an empty string on failure.
 ##
 ## Always writes when asked, even if nothing interesting happened: a developer

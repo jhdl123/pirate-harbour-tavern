@@ -39,6 +39,9 @@ extends CanvasLayer
 ## CustomerAIDiagnosticsConfig.export_enabled has been off all session.
 @export var customer_ai_report_manager: CustomerAIReportManager
 
+## Writes the committable debug/ report set - see DiagnosticRunExporter.
+@export var diagnostic_run_exporter: Node
+
 ## Phase 2B.1: for "Serve All Drinks" - reads the existing active-customer
 ## roster rather than searching the tree for a new group.
 @export var game_manager: GameManager
@@ -96,6 +99,7 @@ func _build_ui() -> void:
 
 	_add_section(rows, "Customer AI")
 	_add_button(rows, "Export Customer AI report", _export_customer_ai_report)
+	_add_button(rows, "Export Diagnostic Run", _export_diagnostic_run)
 	_add_button(rows, "Enable/disable tavern activities", _toggle_tavern_activities)
 	_add_button(rows, "Force first customer to socialise", _force_first_customer_to_socialise)
 	_add_button(rows, "Force first customer to use darts", _force_first_customer_to_darts)
@@ -268,6 +272,24 @@ func _complete_next() -> void:
 func _complete_all() -> void:
 	var count := order_manager.complete_all_deliveries() if order_manager != null else 0
 	status.text = "Completed %d deliveries." % count
+
+## Writes the full diagnostic run into debug/latest and debug/archive.
+##
+## The one action that produces a committable record: it validates every
+## drink's service chain, compares authoritative stock against what the
+## storeroom is showing, and stamps the Git commit that produced the result.
+func _export_diagnostic_run() -> void:
+	if diagnostic_run_exporter == null:
+		status.text = "No DiagnosticRunExporter assigned to the dev panel."
+		return
+
+	var path: String = diagnostic_run_exporter.export_run()
+
+	status.text = (
+		"Diagnostic run written to %s (and debug/latest)." % path if path != ""
+		else "Could not write the diagnostic run - see the Output panel."
+	)
+
 
 func _export_customer_ai_report() -> void:
 	if customer_ai_report_manager == null:

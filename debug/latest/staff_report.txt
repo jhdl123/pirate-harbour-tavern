@@ -1,0 +1,19 @@
+STAFF REPORT
+
+Tasks: 0 open, 0 done, 0 failed. Alerts: 0 active. Issues: 0.
+
+NAVIGATION TROUBLE BY DESTINATION
+
+tavern_hand_01
+  state           IDLE
+  carrying        
+  stuck           0
+  nav failures    0
+  recoveries      0
+
+bartender_02
+  state           IDLE
+  carrying        
+  stuck           0
+  nav failures    0
+  recoveries      0

@@ -1,0 +1,233 @@
+DRINK INTEGRITY REPORT
+Generated 2026-08-18 08:41:49
+
+=== SMALL_BEER ===
+
+drink_id               small_beer
+display_name           Small Beer
+customer_price         3
+serving_format         mug
+service_station        SmallBeer_station
+content_id             small_beer
+restock_item           small_beer_cask
+orderable              YES
+purchase_price         30
+storage                storeroom_small_beer
+physical_display       SmallBeerCaskStack
+bar_shelf              none
+storeroom_units_held   0
+storeroom_units_shown  0
+restock_source         SmallBeerCaskStack
+bar_slots              7
+
+Drink definition               PASS
+Customer order                 PASS
+Service station                PASS
+Station content                PASS
+Restock item                   PASS
+Order catalogue                PASS
+Authoritative storage          PASS
+Physical display               PASS
+Staff replenishment            PASS
+BarCounter                     PASS
+Customer consumption           PASS
+
+RESULT: PASS
+
+=== GROG ===
+
+drink_id               grog
+display_name           Grog
+customer_price         5
+serving_format         mug
+service_station        Grog_station
+content_id             kill_devil
+restock_item           grog_barrel
+orderable              YES
+purchase_price         60
+storage                storeroom_kill_devil
+physical_display       GrogCaskStack
+bar_shelf              none
+storeroom_units_held   0
+storeroom_units_shown  0
+restock_source         GrogCaskStack
+bar_slots              7
+
+Drink definition               PASS
+Customer order                 PASS
+Service station                PASS
+Station content                PASS
+Restock item                   PASS
+Order catalogue                PASS
+Authoritative storage          PASS
+Physical display               PASS
+Staff replenishment            PASS
+BarCounter                     PASS
+Customer consumption           PASS
+
+RESULT: PASS
+
+=== CIDER ===
+
+drink_id               cider
+display_name           Cider
+customer_price         6
+serving_format         mug
+service_station        Cider_station
+content_id             cider
+restock_item           cider_cask
+orderable              YES
+purchase_price         45
+storage                storeroom_cider
+physical_display       CiderCaskStack
+bar_shelf              none
+storeroom_units_held   0
+storeroom_units_shown  0
+restock_source         CiderCaskStack
+bar_slots              7
+
+Drink definition               PASS
+Customer order                 PASS
+Service station                PASS
+Station content                PASS
+Restock item                   PASS
+Order catalogue                PASS
+Authoritative storage          PASS
+Physical display               PASS
+Staff replenishment            PASS
+BarCounter                     PASS
+Customer consumption           PASS
+
+RESULT: PASS
+
+=== MADEIRA ===
+
+drink_id               madeira
+display_name           Madeira Wine
+customer_price         18
+serving_format         bottle_serving
+service_station        MadeiraService
+content_id             madeira
+restock_item           madeira_crate
+orderable              YES
+purchase_price         120
+storage                storeroom_madeira
+physical_display       WineCrate3
+bar_shelf              MadeiraShelf
+storeroom_units_held   0
+storeroom_units_shown  0
+restock_source         MadeiraShelf
+bar_slots              7
+
+Drink definition               PASS
+Customer order                 PASS
+Service station                PASS
+Station content                PASS
+Restock item                   PASS
+Order catalogue                PASS
+Authoritative storage          PASS
+Physical display               PASS
+Staff replenishment            PASS
+BarCounter                     PASS
+Customer consumption           PASS
+
+RESULT: PASS
+
+=== BRANDY ===
+
+drink_id               brandy
+display_name           French Brandy
+customer_price         35
+serving_format         bottle_serving
+service_station        BrandyService
+content_id             brandy
+restock_item           brandy_crate
+orderable              YES
+purchase_price         220
+storage                storeroom_brandy
+physical_display       WineCrate4
+bar_shelf              BrandyShelf
+storeroom_units_held   0
+storeroom_units_shown  0
+restock_source         BrandyShelf
+bar_slots              7
+
+Drink definition               PASS
+Customer order                 PASS
+Service station                PASS
+Station content                PASS
+Restock item                   PASS
+Order catalogue                PASS
+Authoritative storage          PASS
+Physical display               PASS
+Staff replenishment            PASS
+BarCounter                     PASS
+Customer consumption           PASS
+
+RESULT: PASS
+
+=== PORT_WINE ===
+
+drink_id               port_wine
+display_name           Port Wine
+customer_price         20
+serving_format         bottle_serving
+service_station        PortWineService
+content_id             port_wine
+restock_item           port_wine_crate
+orderable              YES
+purchase_price         130
+storage                storeroom_port_wine
+physical_display       WineCrate1
+bar_shelf              PortWineShelf
+storeroom_units_held   0
+storeroom_units_shown  0
+restock_source         PortWineShelf
+bar_slots              7
+
+Drink definition               PASS
+Customer order                 PASS
+Service station                PASS
+Station content                PASS
+Restock item                   PASS
+Order catalogue                PASS
+Authoritative storage          PASS
+Physical display               PASS
+Staff replenishment            PASS
+BarCounter                     PASS
+Customer consumption           PASS
+
+RESULT: PASS
+
+=== CANARY_WINE ===
+
+drink_id               canary_wine
+display_name           Canary Wine
+customer_price         22
+serving_format         bottle_serving
+service_station        CanaryWineService
+content_id             canary_wine
+restock_item           canary_wine_crate
+orderable              YES
+purchase_price         140
+storage                storeroom_canary_wine
+physical_display       WineCrate2
+bar_shelf              CanaryWineShelf
+storeroom_units_held   0
+storeroom_units_shown  0
+restock_source         CanaryWineShelf
+bar_slots              7
+
+Drink definition               PASS
+Customer order                 PASS
+Service station                PASS
+Station content                PASS
+Restock item                   PASS
+Order catalogue                PASS
+Authoritative storage          PASS
+Physical display               PASS
+Staff replenishment            PASS
+BarCounter                     PASS
+Customer consumption           PASS
+
+RESULT: PASS

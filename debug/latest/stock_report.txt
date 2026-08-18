@@ -1,0 +1,63 @@
+STOCK REPORT
+
+PHYSICAL DISPLAY VALIDATION
+
+Display:              GrogCaskStack
+Expected content:     kill_devil
+Authoritative units:  0
+Displayed units:      0
+Stored measures:      0
+Capacity:             10
+Result:               PASS
+
+Display:              SmallBeerCaskStack
+Expected content:     small_beer
+Authoritative units:  0
+Displayed units:      0
+Stored measures:      0
+Capacity:             7
+Result:               PASS
+
+Display:              CiderCaskStack
+Expected content:     cider
+Authoritative units:  0
+Displayed units:      0
+Stored measures:      0
+Capacity:             7
+Result:               PASS
+
+Display:              WineCrate1
+Expected content:     port_wine
+Authoritative units:  0
+Displayed units:      0
+Stored measures:      0
+Capacity:             3
+Result:               PASS
+
+Display:              WineCrate2
+Expected content:     canary_wine
+Authoritative units:  0
+Displayed units:      0
+Stored measures:      0
+Capacity:             3
+Result:               PASS
+
+Display:              WineCrate3
+Expected content:     madeira
+Authoritative units:  0
+Displayed units:      0
+Stored measures:      0
+Capacity:             3
+Result:               PASS
+
+Display:              WineCrate4
+Expected content:     brandy
+Authoritative units:  0
+Displayed units:      0
+Stored measures:      0
+Capacity:             3
+Result:               PASS
+
+STOCK CHANGE EVENTS
+
+08:41:49  DELIVERY         Probe Cask               +96  probe

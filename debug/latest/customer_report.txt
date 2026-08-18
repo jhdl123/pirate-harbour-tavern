@@ -1,0 +1,11 @@
+CUSTOMER REPORT
+
+customers_spawned        0
+completed_visits         0
+total_drinks_ordered     0
+total_drinks_consumed    0
+tasks_created            0
+tasks_completed          0
+tasks_cancelled          0
+
+Full per-visit detail remains in the JSON export (Export Customer AI Report).

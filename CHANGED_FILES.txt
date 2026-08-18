@@ -1,20 +1,23 @@
-Seven bar service slots — rebased onto 421f910 "doors"
+Git-friendly diagnostic run system
+Diff against f59bf51.
 
-THREE FILES. Everything else from my previous zips is already in your repo
-(you committed it as 0274302 "bar-side-nav-fix"), so this is only the part
-that had not landed yet.
+NEW
+  systems/diagnostics/service_chain_validator.gd
+        Walks Drink → Order → Station → Content → Restock item → Catalogue →
+        Storage → Physical display → Staff replenishment → BarCounter →
+        Consumption for every orderable drink. Reports exactly where it breaks.
+  systems/diagnostics/diagnostic_run_exporter.gd
+        Writes debug/latest and debug/archive/<stamp>, reads the Git commit
+        straight from .git (no Git binary needed), logs stock events.
+  tests/diagnostic_export_probe.{gd,tscn}   40 assertions, incl. fault injection
+  debug/README.md, debug/latest/*           a first real run, committable
 
-  scenes/furniture/bar_counter.tscn
-        Slot4 / Slot5 / Slot6 added at local x 99, 127.3, 155.7 - the same
-        ~28px spacing as your existing four, each with Highlight, ItemSprite,
-        DepositPoint and CollectionPoint
-        InteractionArea widened 120 -> 200 local units and recentred to x=71.
-        Without this the new slots exist but are never offered to anyone.
-
-  scripts/Interactables/bar_counter.gd
-        service_slot_count default 4 -> 7
-
-  tests/nav_and_backpressure_probe.gd
-        + per-slot checks: marker exists, both access points exist, the marker
-        sits inside the interaction area, the collection stand is reachable,
-        and a stand does not depend on which side the worker approaches from
+MODIFIED
+  systems/customer_ai/diagnostics/customer_ai_report_manager.gd
+        + get_summary() / get_group_summary() / get_solo_summary() — read the
+          same builder the JSON export uses, so they cannot disagree
+  systems/staff/diagnostics/staff_report_manager.gd
+        + get_summary() reading TaskBoard's own report section
+  scripts/UI/stock_dev_panel.gd   + "Export Diagnostic Run" button
+  scenes/main/main.tscn           DiagnosticRunExporter node, wired to both
+                                  existing managers and to the F10 panel

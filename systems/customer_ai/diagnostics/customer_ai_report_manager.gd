@@ -527,6 +527,33 @@ func report_issue(
 	_issues.append(issue)
 
 
+## The run's headline numbers, without writing a file.
+##
+## Exposed so DiagnosticRunExporter can put real metrics in RUN_SUMMARY.md
+## while the JSON export stays the full record. Both read the same builder, so
+## the two can never disagree.
+func get_summary() -> Dictionary:
+	return _build_report_dictionary().get("summary", {})
+
+
+## Group outcomes for the run.
+func get_group_summary() -> Dictionary:
+	var balance: Dictionary = _build_report_dictionary().get(
+		"balance_summary", {}
+	)
+
+	return balance.get("groups", {})
+
+
+## Solo customer outcomes for the run.
+func get_solo_summary() -> Dictionary:
+	var balance: Dictionary = _build_report_dictionary().get(
+		"balance_summary", {}
+	)
+
+	return balance.get("solo", {})
+
+
 ## Writes the full report to user://customer_ai_reports/ and returns the
 ## path written, or "" on failure. Safe to call even when export is
 ## disabled - it still writes (manual generation should not silently do
