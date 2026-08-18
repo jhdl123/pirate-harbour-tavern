@@ -1,23 +1,28 @@
-Git-friendly diagnostic run system
-Diff against f59bf51.
+Diagnostic report accuracy fixes — three files
 
-NEW
-  systems/diagnostics/service_chain_validator.gd
-        Walks Drink → Order → Station → Content → Restock item → Catalogue →
-        Storage → Physical display → Staff replenishment → BarCounter →
-        Consumption for every orderable drink. Reports exactly where it breaks.
+Your first committed run (dd2331b) exposed three defects in MY reporting.
+The gameplay was fine; the tool was lying.
+
   systems/diagnostics/diagnostic_run_exporter.gd
-        Writes debug/latest and debug/archive/<stamp>, reads the Git commit
-        straight from .git (no Git binary needed), logs stock events.
-  tests/diagnostic_export_probe.{gd,tscn}   40 assertions, incl. fault injection
-  debug/README.md, debug/latest/*           a first real run, committable
+    1. The stock report called count_item() with a CONTENT id where a STOCK
+       ITEM id is wanted. It silently returned 0 and reported every healthy
+       display as "FAIL — authoritative and displayed quantities disagree",
+       while RUN_SUMMARY said Storage PASS. It now resolves the stock item
+       (grog_barrel, small_beer_cask, port_wine_crate...) and prints it, and
+       treats "more stored than the pile can show" as PASS rather than a
+       mismatch.
+    2. Days always read 0 — it looked for a `current_day` property; WorldTime
+       exposes get_day(). Now reads 1 correctly.
 
-MODIFIED
-  systems/customer_ai/diagnostics/customer_ai_report_manager.gd
-        + get_summary() / get_group_summary() / get_solo_summary() — read the
-          same builder the JSON export uses, so they cannot disagree
   systems/staff/diagnostics/staff_report_manager.gd
-        + get_summary() reading TaskBoard's own report section
-  scripts/UI/stock_dev_panel.gd   + "Export Diagnostic Run" button
-  scenes/main/main.tscn           DiagnosticRunExporter node, wired to both
-                                  existing managers and to the F10 panel
+    3. get_summary() read TaskBoard's report under a "totals" key that does
+       not exist, so tasks_created / completed / cancelled were all 0 while
+       the same report's summary line said "125 done". It now returns
+       TaskBoard's own "summary" section wholesale, so a metric added there
+       appears here with no second naming scheme to drift.
+
+  tests/diagnostic_export_probe.gd
+       + _check_reports_agree(): stocks every storeroom prop, then asserts the
+       stock report contains no FAIL and that staff metrics resolve. 59
+       assertions. This is the check that was missing — two reports disagreeing
+       about one fact is exactly what this system exists to catch.

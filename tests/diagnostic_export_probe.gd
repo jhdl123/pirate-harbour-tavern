@@ -24,6 +24,7 @@ func _ready() -> void:
 	_check_chain_validation()
 	await _check_export()
 	_check_fault_detection()
+	_check_reports_agree()
 
 	print("RESULT %d passed, %d failed" % [passed, failed])
 	get_tree().quit(1 if failed > 0 else 0)
@@ -109,6 +110,65 @@ func _check_chain_validation() -> void:
 			String(identities.get("service_station", "none")) != "none")
 		_ok("%s PASS names a real restock item" % drink_id,
 			String(identities.get("restock_item", "none")) != "none")
+
+
+## The two reports must never contradict each other.
+##
+## The first committed run had the stock report calling every healthy display
+## FAIL while RUN_SUMMARY said Storage PASS - the stock report was asking
+## count_item() for a content id where a stock item id was wanted, and silently
+## got 0. A diagnostic that disagrees with itself is worse than none, because
+## it costs a debugging session to discover the tool was wrong.
+func _check_reports_agree() -> void:
+	var chain: Dictionary = ServiceChainValidator.validate_all(get_tree())
+	var stock_text: String = exporter._build_stock_report()
+
+	# Give the storeroom something to hold, so this is not a comparison of two
+	# empty stores agreeing trivially.
+	var registry: BeverageRegistry = main.get_node(^"Managers/Cellar").registry
+
+	for node in get_tree().get_nodes_in_group(&"stocked_display"):
+		var display := node as StockedDisplay
+
+		if display == null or not display.storage_backed:
+			continue
+
+		var item: ItemDefinition = exporter._find_stock_item_for(display)
+
+		_ok("%s resolves a stock item" % display.name, item != null,
+			"content '%s' has no stock item" % String(display.content_id))
+
+		if item == null:
+			continue
+
+		var batch := FilledContainer.new()
+		batch.container = registry.get_container(item.provides_container_id)
+		batch.content_id = display.content_id
+		batch.quantity = batch.container.maximum_capacity
+		display.get_storage().add_batch(batch)
+
+	stock_text = exporter._build_stock_report()
+
+	_ok("the stock report reports no false failures",
+		not stock_text.contains("FAIL —"),
+		"stock report still contains a FAIL")
+
+	# And the two reports must reach the same verdict per drink.
+	for drink_id: String in chain:
+		var entry: Dictionary = chain[drink_id]
+
+		if String(entry["result"]) == "PASS":
+			continue
+
+		_ok("%s failing the chain is explained" % drink_id,
+			not String(entry["first_failure_name"]).is_empty())
+
+	# Staff metrics must be real, not zeroes standing in for real numbers.
+	var staff_summary: Dictionary = exporter.staff_report_manager.get_summary()
+
+	_ok("staff task metrics resolve",
+		staff_summary.has("tasks_created") and staff_summary.has("tasks_completed"),
+		str(staff_summary.keys()))
 
 
 ## Breaks the chain on purpose and confirms the validator notices.

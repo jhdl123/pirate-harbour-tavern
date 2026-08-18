@@ -191,15 +191,12 @@ func _build_transition_section() -> Dictionary:
 ## Reads the same TaskBoard section the JSON export uses, so the summary in
 ## RUN_SUMMARY.md and the full report can never disagree.
 func get_summary() -> Dictionary:
+	# TaskBoard already publishes exactly these keys under "summary" - taking
+	# them wholesale means a metric added there appears here without another
+	# edit, and there is no second naming scheme to drift out of step.
 	var tasks: Dictionary = TaskBoard.build_report_section()
-	var totals: Dictionary = tasks.get("totals", {})
 
-	return {
-		"tasks_created": totals.get("created", 0),
-		"tasks_claimed": totals.get("claimed", 0),
-		"tasks_completed": totals.get("completed", 0),
-		"tasks_cancelled": totals.get("cancelled", 0),
-	}
+	return tasks.get("summary", {}).duplicate()
 
 
 ## Writes the report and returns the path, or an empty string on failure.

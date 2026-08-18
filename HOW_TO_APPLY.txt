@@ -1,38 +1,22 @@
 HOW TO APPLY
 ============
 1. Close Godot.
-2. Extract over your project root (diff against f59bf51).
-3. Reopen.
+2. Extract over your project root (three files; debug/ untouched).
+3. Reopen, F10 → Export Diagnostic Run.
 
-HOW TO USE IT
--------------
-Play a test day, then press F10 and click "Export Diagnostic Run".
-It writes debug/latest/ and debug/archive/YYYY-MM-DD-HHMM/, then commit them.
+WHAT SHOULD CHANGE IN THE NEXT RUN
+----------------------------------
+  stock_report.txt   every display should read PASS, with a "Stock item:" line
+                     naming grog_barrel / small_beer_cask / port_wine_crate etc.
+  RUN_SUMMARY.md     Days: 1 rather than 0
+                     tasks_created / completed / cancelled with real numbers
+                     rather than three zeroes
 
-Before exporting you can set Test purpose / Developer notes / Expected result
-on Managers/DiagnosticRunExporter in the inspector - they appear in
-RUN_SUMMARY.md. No new UI was built for this, as requested.
-
-REVIEW ORDER
-------------
-  1. RUN_SUMMARY.md          overall PASS/WARN/FAIL + which system broke
-  2. drinks_report.txt       full chain per drink
-  3. stock_report.txt        authoritative vs displayed, plus stock events
-  4. staff_report.txt        tasks + navigation trouble by destination
-  5. customer_report.txt
-  6. system_diagnostics.txt  navigation scan + station stock plans
+TIP
+---
+Set "Test purpose" and "Developer notes" on Managers/DiagnosticRunExporter in
+the inspector before exporting — your first run has them as "(not set)".
 
 VERIFY
 ------
-  godot --headless res://tests/diagnostic_export_probe.tscn   -> 40 / 0
-
-NOTE ON res://
---------------
-Reports are written under res://debug so they land in the repository. That is
-editor-only by design; an exported build cannot write there and will log a
-clear error rather than failing silently. Players never write diagnostics.
-
-CURRENT RESULT ON YOUR BUILD
-----------------------------
-  All seven orderable drinks PASS the full chain.
-  Groups report N/A because the probe runs no groups - play a day first.
+  godot --headless res://tests/diagnostic_export_probe.tscn   -> 59 / 0

@@ -523,20 +523,30 @@ func _build_stock_report() -> String:
 
 		var stored: int = display.get_stored_measures()
 		var shown: int = display.get_visible_units()
-		var per_unit: int = display.count_item(
-			display.content_id
+		var stock_item: ItemDefinition = _find_stock_item_for(display)
+		var held: int = (
+			0 if stock_item == null
+			else display.count_item(stock_item.item_id)
 		)
+		var capacity: int = display.get_unit_capacity()
+
+		# A prop holding more than it can draw is correct, not broken: the
+		# pile shows what fits and the rest is still in storage.
+		var expected: int = mini(held, capacity)
 
 		lines.append("Display:              %s" % display.name)
 		lines.append("Expected content:     %s" % String(display.content_id))
-		lines.append("Authoritative units:  %d" % per_unit)
+		lines.append("Stock item:           %s" % (
+			"UNRESOLVED" if stock_item == null else String(stock_item.item_id)
+		))
+		lines.append("Authoritative units:  %d" % held)
 		lines.append("Displayed units:      %d" % shown)
 		lines.append("Stored measures:      %d" % stored)
-		lines.append("Capacity:             %d" % display.get_unit_capacity())
+		lines.append("Capacity:             %d" % capacity)
 		lines.append("Result:               %s" % (
-			"PASS" if per_unit == shown or (per_unit > display.get_unit_capacity()
-				and shown == display.get_unit_capacity())
-			else "FAIL — authoritative and displayed quantities disagree"
+			"FAIL — no stock item declares this content" if stock_item == null
+			else "PASS" if expected == shown
+			else "FAIL — %d units stored but %d shown" % [expected, shown]
 		))
 		lines.append("")
 
@@ -555,6 +565,23 @@ func _build_stock_report() -> String:
 	lines.append("")
 
 	return "\n".join(lines)
+
+
+## The stock item whose content this display holds.
+##
+## count_item() keys on the STOCK ITEM id, not the content id - passing the
+## content silently returns 0.
+func _find_stock_item_for(display: StockedDisplay) -> ItemDefinition:
+	var registry: ItemRegistry = load("res://Data/items/item_registry.tres")
+
+	if registry == null:
+		return null
+
+	for item: ItemDefinition in registry.definitions:
+		if item != null and item.provides_content_id == display.content_id:
+			return item
+
+	return null
 
 
 func _build_staff_report() -> String:
@@ -700,10 +727,10 @@ func _get_key_metrics() -> Dictionary:
 func _get_day_number() -> int:
 	var world_time: Node = get_node_or_null(^"/root/WorldTime")
 
-	if world_time == null or not ("current_day" in world_time):
+	if world_time == null or not world_time.has_method(&"get_day"):
 		return 0
 
-	return int(world_time.current_day)
+	return int(world_time.call(&"get_day"))
 
 
 func _format_duration() -> String:
