@@ -609,6 +609,61 @@ func _build_staff_report() -> String:
 		lines.append("%s" % staff.staff_id)
 		lines.append("  state           %s" % snapshot.get("state", "?"))
 		lines.append("  carrying        %s" % snapshot.get("carrying", "nothing"))
+
+		# Utilisation. StaffMember has accumulated working / idle / travel
+		# seconds in _process() all along and the report never printed any of
+		# it, so "are we understaffed" could only ever be guessed at from a
+		# head count. Busy% is the number that decides it: a worker pinned
+		# near 100% while customers give up waiting means hire someone, and a
+		# worker idling while a queue builds means the task dispatch is at
+		# fault and another hire will not help.
+		var working: float = float(snapshot.get("working_seconds", 0.0))
+		var idle: float = float(snapshot.get("idle_seconds", 0.0))
+		var travel: float = float(snapshot.get("travel_seconds", 0.0))
+		var total: float = working + idle
+
+		if total > 0.0:
+			lines.append("  busy            %s%%  (%ss working, %ss idle)" % [
+				snappedf((working / total) * 100.0, 0.1),
+				snappedf(working, 0.1),
+				snappedf(idle, 0.1),
+			])
+			# Travel is NOT a subset of working time - _travel_seconds
+			# accumulates whenever the worker is navigating, including while
+			# it holds no task at all (returning to post, repositioning). An
+			# earlier version of this line divided travel by working and
+			# printed 127.9%, which is how the overlap was noticed. Percent of
+			# the whole run is the only honest denominator.
+			lines.append("  walking         %s%% of run  (%ss)" % [
+				snappedf((travel / total) * 100.0, 0.1),
+				snappedf(travel, 0.1),
+			])
+
+		lines.append("  tasks done      %s" % snapshot.get(
+			"tasks_completed", 0
+		))
+
+		# Break down by ACTUAL task type. Printing "0 serves, 0 cleans" for a
+		# bartender described a role boundary, not a failure - a bartender can
+		# only hold prepare_drink and refill_station - and it was read here as
+		# a broken worker. Show each role its own work.
+		var by_type: Dictionary = snapshot.get("tasks_completed_by_type", {})
+		var type_keys: Array = by_type.keys()
+		type_keys.sort()
+
+		for type_key: Variant in type_keys:
+			lines.append("      %-26s %s" % [type_key, by_type[type_key]])
+
+		var capabilities: Array = snapshot.get("capabilities", [])
+		if not capabilities.is_empty():
+			var names: PackedStringArray = []
+			for capability: Variant in capabilities:
+				names.append(String(capability))
+			lines.append("  can do          %s" % ", ".join(names))
+
+		lines.append("  no work found   %s times" % snapshot.get(
+			"empty_evaluations", 0
+		))
 		lines.append("  stuck           %s" % snapshot.get("stuck_recoveries", 0))
 		lines.append("  nav failures    %s" % snapshot.get("navigation_failures", 0))
 		lines.append("  recoveries      %s" % snapshot.get(
@@ -693,9 +748,45 @@ func _build_customer_report() -> String:
 	lines.append("    ---")
 	lines.append("    not a free choice     %s  (the three above)" % forced_total)
 
+	# Realised visit length, split by outcome. This is the churn question:
+	# rolled durations are well spread (roughly 15-110 minutes), but a visit
+	# cut short by impatience never reaches its rolled length, so the room can
+	# read as constant turnover while the intended spread looks fine.
+	var durations: Dictionary = (
+		customer_ai_report_manager.get_visit_duration_stats()
+	)
+
+	lines.append("")
+	lines.append("REALISED VISIT LENGTH (game minutes actually stayed)")
+	lines.append("")
+	lines.append("  %-14s %6s %8s %8s %8s %8s" % [
+		"", "count", "min", "median", "mean", "max"
+	])
+
+	for label: String in ["all", "stayed", "gave_up"]:
+		var stats: Dictionary = durations.get(label, {})
+		var display: String = {
+			"all": "all visits",
+			"stayed": "stayed",
+			"gave_up": "gave up",
+		}[label]
+
+		lines.append("  %-14s %6s %8s %8s %8s %8s" % [
+			display,
+			stats.get("count", 0),
+			stats.get("min", 0.0),
+			stats.get("median", 0.0),
+			stats.get("mean", 0.0),
+			stats.get("max", 0.0),
+		])
+
+	lines.append("")
+	lines.append("  'stayed' = ran their visit out or left with their group.")
+	lines.append("  'gave up' = patience expired. Compare its mean against")
+	lines.append("  'stayed' - a large gap means churn is service, not design.")
+
 	lines.append("")
 	lines.append("LINGERING AND ACTIVITY")
-	lines.append("")
 	lines.append("  relax activities        %s" % summary.get(
 		"total_relax_activities", 0
 	))

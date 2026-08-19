@@ -836,6 +836,9 @@ position = Vector2(552, 234)
 [node name="Bartender" parent="Entities" unique_id=745256854 instance=ExtResource("44_bartender")]
 position = Vector2(551, 138)
 
+[node name="TavernHand2" parent="Entities" unique_id=745256855 instance=ExtResource("39_tavern_hand")]
+position = Vector2(551, 186)
+
 [node name="Markers" type="Node2D" parent="." unique_id=1069500628]
 
 [node name="CustomerDoor" parent="Markers" unique_id=1979632710 instance=ExtResource("12_nvumn")]

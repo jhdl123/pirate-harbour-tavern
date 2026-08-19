@@ -178,6 +178,9 @@ var _tasks_completed: int = 0
 var _tasks_released: int = 0
 var _tasks_failed: int = 0
 var _serves_completed: int = 0
+## Completed task count keyed by task type, so the report can show each role
+## doing its own job rather than scoring every role against serve/clean.
+var _tasks_completed_by_type: Dictionary = {}
 var _cleans_completed: int = 0
 var _navigation_failure_total: int = 0
 var _stuck_recoveries: int = 0
@@ -915,6 +918,21 @@ func _complete_task() -> void:
 	_tasks_completed += 1
 
 	if was_performed_by_this_worker:
+		# Per-type tally alongside the two named counters.
+		#
+		# _serves_completed and _cleans_completed only ever move for
+		# SERVE_DRINK and CLEAN_SEAT, which are tavern hand capabilities. A
+		# bartender can only hold prepare_drink and refill_station, so its
+		# serve and clean counts are structurally zero - and a report showing
+		# "0 serves, 0 cleans" for a bartender reads as a broken worker when
+		# it is describing a role boundary. Counting by actual task type
+		# means the report can show each worker doing its own job instead of
+		# scoring every role against one role's tasks.
+		var type_key: String = String(task_type)
+		_tasks_completed_by_type[type_key] = int(
+			_tasks_completed_by_type.get(type_key, 0)
+		) + 1
+
 		match task_type:
 			TavernTaskTypes.SERVE_DRINK:
 				_serves_completed += 1
@@ -1593,6 +1611,10 @@ func get_diagnostics_snapshot() -> Dictionary:
 		"tasks_failed": _tasks_failed,
 		"serves_completed": _serves_completed,
 		"cleans_completed": _cleans_completed,
+		"tasks_completed_by_type": _tasks_completed_by_type.duplicate(true),
+		"capabilities": (
+			[] if definition == null else definition.capabilities.duplicate()
+		),
 		"navigation_failures": _navigation_failure_total,
 		"empty_evaluations": _empty_evaluations,
 		"task_switches": _task_switches,

@@ -554,6 +554,71 @@ func get_solo_summary() -> Dictionary:
 	return balance.get("solo", {})
 
 
+## Realised visit lengths in game minutes, split by how the visit ended.
+##
+## The distinction that matters is realised vs rolled. A customer rolls an
+## intended visit duration at spawn, and those are healthily varied - roughly
+## 15 to 110 minutes. What the player actually sees is how long people STAYED,
+## which is a different distribution: a visit cut short by impatience never
+## reaches its rolled length, so a room can read as constant churn while the
+## intended durations look perfectly well spread.
+##
+## Splitting by outcome is what makes the two separable. "Stayed their time"
+## lengths say whether the intended spread is right; "gave up" lengths say how
+## much of the churn is service rather than design.
+func get_visit_duration_stats() -> Dictionary:
+	var completed: Array[float] = []
+	var gave_up: Array[float] = []
+	var ran_full: Array[float] = []
+
+	for record: VisitRecord in _completed_visit_records:
+		if record.departure_game_time_minutes < 0.0:
+			continue
+
+		var duration: float = (
+			record.departure_game_time_minutes
+			- record.spawn_game_time_minutes
+		)
+
+		if duration < 0.0:
+			continue
+
+		completed.append(duration)
+
+		if record.patience_expired:
+			gave_up.append(duration)
+		else:
+			ran_full.append(duration)
+
+	return {
+		"all": _summarise_durations(completed),
+		"gave_up": _summarise_durations(gave_up),
+		"stayed": _summarise_durations(ran_full),
+	}
+
+
+func _summarise_durations(
+	durations: Array[float]
+) -> Dictionary:
+	if durations.is_empty():
+		return {"count": 0, "min": 0.0, "max": 0.0, "mean": 0.0, "median": 0.0}
+
+	var sorted: Array[float] = durations.duplicate()
+	sorted.sort()
+
+	var total: float = 0.0
+	for value: float in sorted:
+		total += value
+
+	return {
+		"count": sorted.size(),
+		"min": snappedf(sorted[0], 0.1),
+		"max": snappedf(sorted[sorted.size() - 1], 0.1),
+		"mean": snappedf(total / float(sorted.size()), 0.1),
+		"median": snappedf(sorted[sorted.size() / 2], 0.1),
+	}
+
+
 ## Writes the full report to user://customer_ai_reports/ and returns the
 ## path written, or "" on failure. Safe to call even when export is
 ## disabled - it still writes (manual generation should not silently do

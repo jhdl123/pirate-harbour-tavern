@@ -1,0 +1,15 @@
+SYSTEM DIAGNOSTICS
+
+NAVIGATION SCAN
+
+All seats, slots and props are approachable.
+
+STATION CONFIGURATION
+
+Grog_station           Grog_station: kill_devil <- Grog Barrel (72 servings/unit)
+Cider_station          Cider_station: cider <- Cider Cask (36 servings/unit)
+SmallBeer_station      SmallBeer_station: small_beer <- Small Beer Cask (36 servings/unit)
+MadeiraService         MadeiraService: madeira <- Madeira Crate (12 servings/unit)
+CanaryWineService      CanaryWineService: canary_wine <- Canary Wine Crate (12 servings/unit)
+BrandyService          BrandyService: brandy <- Brandy Crate (12 servings/unit)
+PortWineService        PortWineService: port_wine <- Port Wine Crate (12 servings/unit)
