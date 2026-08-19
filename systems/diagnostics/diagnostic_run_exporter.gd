@@ -666,18 +666,32 @@ func _build_customer_report() -> String:
 	))
 	lines.append("")
 	lines.append("  DEPARTURE REASON")
-	lines.append("    visit time ended      %s" % summary.get(
-		"total_visit_time_departures", 0
-	))
-	lines.append("    chose to leave        %s" % summary.get(
+
+	# total_forced_departures is a SUPERSET, not a sibling category:
+	# record_departure() increments it for patience_expired and
+	# visit_time_expired as well as for everything that is not
+	# utility_decision. Printing the four side by side double-counts and
+	# makes "forced" look like a huge separate failure mode. Only
+	# utility_decision is the customer actually choosing, so the useful
+	# split is: chose / ran out of time / ran out of patience / everything
+	# else forced.
+	var forced_total: int = int(summary.get("total_forced_departures", 0))
+	var by_patience: int = int(summary.get("total_patience_departures", 0))
+	var by_visit_time: int = int(summary.get("total_visit_time_departures", 0))
+	var by_choice: int = int(summary.get(
 		"total_normal_utility_departures", 0
 	))
-	lines.append("    out of patience       %s" % summary.get(
-		"total_patience_departures", 0
-	))
-	lines.append("    forced                %s" % summary.get(
-		"total_forced_departures", 0
-	))
+	var other_forced: int = maxi(
+		0, forced_total - by_patience - by_visit_time
+	)
+
+	lines.append("    chose to leave        %s" % by_choice)
+	lines.append("    visit time ended      %s" % by_visit_time)
+	lines.append("    out of patience       %s" % by_patience)
+	lines.append("    other forced          %s" % other_forced)
+	lines.append("      (out of money, tavern closing, group departure)")
+	lines.append("    ---")
+	lines.append("    not a free choice     %s  (the three above)" % forced_total)
 
 	lines.append("")
 	lines.append("LINGERING AND ACTIVITY")

@@ -1,85 +1,37 @@
-PHASE A - PART 2: DIAGNOSTIC REPORTING + GROUP ACTIVITY GUARD
-Built against commit eb58990. 5 files. Extract over the project root.
+PHASE A - PART 2b: DEPARTURE BREAKDOWN FIX
+One file. Extract over the project root. Base commit a6b6b38.
 
-WHY THIS IS MOSTLY REPORTING
-----------------------------
-You asked for one large pass, then a strong debug pass, then balancing.
-This delivery is the instrument for the debug pass, plus one behavioural
-change. That is deliberate: while investigating, two of the things I told
-you were broken turned out not to be, and I could only tell because I built
-measurement first. Shipping more behaviour on top of numbers I could not
-read would have been guessing.
+WHAT WAS WRONG
+--------------
+The DEPARTURE REASON block I shipped in part 2 was misleading, and your long
+run is what exposed it.
 
-WHAT CHANGED
-------------
-1. customer_report.txt now contains the run, not a summary of it.
+record_departure() increments _total_forced_departures for patience_expired
+and visit_time_expired AS WELL AS for everything that is not
+utility_decision. It is a SUPERSET, not a fourth sibling category. Printing
+the four side by side double-counted, and made "forced 97" read as a huge
+separate failure mode sitting alongside the others.
 
-   CustomerAIReportManager was already computing departure reasons, relax /
-   socialise / tavern activity counts, solo service rate, patience-departure
-   rate, group success rate, group activity participation, member drink rate
-   and slot recoveries - and then throwing all of it away. The committed
-   report carried seven lines; everything else lived only in the uncommitted
-   JSON export, which is why neither of us could answer "did the last
-   change work" from a committed run.
+Your run actually meant: 98 completed visits, 97 of which did not end by the
+customer's own choice. Within those 97 - 30 ran out of visit time, 21 ran out
+of patience, and 46 ended for some other forced reason (out of money, tavern
+closing, group departure) that the old layout gave you no way to see at all.
 
-   It now also prints task cancellation REASONS. TaskBoard has tallied them
-   all along without ever printing them.
+NOW PRINTS
+----------
+    chose to leave        1
+    visit time ended      30
+    out of patience       21
+    other forced          46
+      (out of money, tavern closing, group departure)
+    ---
+    not a free choice     97  (the three above)
 
-2. CustomerGroup.allow_activities_while_drinking: false -> true.
+The "other forced" line is new information - it was invisible before, and at
+46 of 98 visits it is the largest single bucket.
 
-   GroupManager._offer_leisure_activity() returns immediately when the
-   shared keg is non-empty. A keg holds eight servings and a crew drinks it
-   slowly, so that guard was active for almost the whole of a group's life.
-   Making activities reachable by group members in part 1 (is_settled) did
-   nothing while this stayed false: they became eligible and were still
-   never offered.
-
-   Cohesion is still bounded by maximum_away_fraction (at most half a crew
-   away at once) plus the leisure roll, rather than by a blanket ban.
-
-   HONEST STATUS: this did NOT move group activity participation off 0.0%.
-   The guard was genuinely blocking the path, but there is a second blocker
-   downstream that I have not found. The change is correct in itself and
-   reversible - flip it back in systems/groups/customer_group.gd if you want
-   the old behaviour. See the chat report for where I would look next.
-
-3. tests/service_latency_probe.tscn - new.
-
-   Reports task cancellation reasons, time in the order queue, queue depth,
-   and how many customers were never served. Also triggers a real diagnostic
-   export at the end, so you can check customer_report.txt against a live
-   session rather than the export probe's synthetic empty one.
-
-CORRECTIONS TO WHAT I TOLD YOU EARLIER
---------------------------------------
-- "35% of tasks cancelled" is NOT a service failure. Measured, the reasons
-  are no_longer_required (24) and customer_no_longer_waiting (5) - mostly
-  redundant-task churn.
-
-- "Two thirds of customers never get a drink" was inflated by run length.
-  On a 180s probe it was 27/40; on 240s it was 17/47, because customers
-  still queuing when a short probe ends count as never served. Solo service
-  rate measures around 53-70%.
-
-REGRESSIONS - ALL AT BASELINE
------------------------------
-  group_loop_test           38 passed, 0 failed
-  group_parity_test         49 passed, 0 failed
-  group_milestone_test      43 passed, 0 failed
-  group_and_recovery_probe  34 passed, 0 failed
+VERIFIED
+--------
   diagnostic_export_probe   59 passed, 0 failed
-  customer_identity_test    92 passed, 0 failed
-  group_framework_test      47 passed, 2 failed  <-- BASELINE (the two
-                            SEATED cases, expected while
-                            standing_places_only is on)
-
-VERIFY IT
----------
-  godot --headless res://tests/service_latency_probe.tscn
-
-Then read debug/latest/customer_report.txt. It should have VISIT OUTCOMES,
-LINGERING AND ACTIVITY, SOLO CUSTOMERS, GROUPS and TASK CANCELLATION
-REASONS sections with real numbers in them.
-
-NOTE: that probe overwrites debug/latest/. Commit anything you want to keep
-first.
+  live run via tests/service_latency_probe.tscn - arithmetic checks out
+  (2 + 7 + 3 + 24 = 34 = the forced total)
