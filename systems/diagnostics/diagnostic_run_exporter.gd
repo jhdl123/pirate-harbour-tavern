@@ -642,6 +642,138 @@ func _build_customer_report() -> String:
 	for key: String in _get_key_metrics():
 		lines.append("%-24s %s" % [key, _get_key_metrics()[key]])
 
+	# Everything below was already being computed by
+	# CustomerAIReportManager and then discarded - the committed report
+	# carried seven summary lines while every behavioural number lived only
+	# in the uncommitted JSON export. That made a committed run unable to
+	# answer "are customers lingering, socialising and re-ordering", which
+	# is the whole question Phase A is trying to move.
+	var summary: Dictionary = customer_ai_report_manager.get_summary()
+	var solo: Dictionary = customer_ai_report_manager.get_solo_summary()
+	var groups: Dictionary = customer_ai_report_manager.get_group_summary()
+
+	lines.append("")
+	lines.append("VISIT OUTCOMES")
+	lines.append("")
+	lines.append("  active at report time   %s" % summary.get(
+		"active_visits_at_report_time", 0
+	))
+	lines.append("  game minutes elapsed    %s" % summary.get(
+		"game_time_duration_minutes", 0
+	))
+	lines.append("  peak active customers   %s" % summary.get(
+		"maximum_active_customers_observed", 0
+	))
+	lines.append("")
+	lines.append("  DEPARTURE REASON")
+	lines.append("    visit time ended      %s" % summary.get(
+		"total_visit_time_departures", 0
+	))
+	lines.append("    chose to leave        %s" % summary.get(
+		"total_normal_utility_departures", 0
+	))
+	lines.append("    out of patience       %s" % summary.get(
+		"total_patience_departures", 0
+	))
+	lines.append("    forced                %s" % summary.get(
+		"total_forced_departures", 0
+	))
+
+	lines.append("")
+	lines.append("LINGERING AND ACTIVITY")
+	lines.append("")
+	lines.append("  relax activities        %s" % summary.get(
+		"total_relax_activities", 0
+	))
+	lines.append("  socialise activities    %s" % summary.get(
+		"total_socialise_activities", 0
+	))
+	lines.append("  tavern activities       %s" % summary.get(
+		"total_tavern_activities", 0
+	))
+	lines.append("  failed activity starts  %s" % summary.get(
+		"total_failed_activity_starts", 0
+	))
+	lines.append("  reservation failures    %s" % summary.get(
+		"total_activity_reservation_failures", 0
+	))
+	lines.append("  return-to-seat failures %s" % summary.get(
+		"total_return_to_seat_failures", 0
+	))
+
+	lines.append("")
+	lines.append("SOLO CUSTOMERS")
+	lines.append("")
+	lines.append("  completed visits        %s" % solo.get(
+		"completed_visits", 0
+	))
+	lines.append("  drinks ordered          %s" % solo.get(
+		"drinks_ordered", 0
+	))
+	lines.append("  drinks served           %s" % solo.get("drinks_served", 0))
+	lines.append("  service rate            %s%%" % solo.get(
+		"service_rate_percent", 0.0
+	))
+	lines.append("  patience departures     %s (%s%%)" % [
+		solo.get("patience_departures", 0),
+		solo.get("patience_departure_rate_percent", 0.0),
+	])
+
+	lines.append("")
+	lines.append("GROUPS")
+	lines.append("")
+	lines.append("  total groups            %s" % groups.get(
+		"total_groups", 0
+	))
+	lines.append("  successful              %s (%s%%)" % [
+		groups.get("successful_groups", 0),
+		groups.get("success_rate_percent", 0.0),
+	])
+	lines.append("  without drinks          %s" % groups.get(
+		"groups_without_drinks", 0
+	))
+	lines.append("  with activities         %s (%s%%)" % [
+		groups.get("groups_with_activities", 0),
+		groups.get("activity_participation_rate_percent", 0.0),
+	])
+	lines.append("  members                 %s" % groups.get(
+		"group_members", 0
+	))
+	lines.append("  members who drank       %s (%s%%)" % [
+		groups.get("members_who_drank", 0),
+		groups.get("member_drink_rate_percent", 0.0),
+	])
+	lines.append("  slot recoveries         %s (%s per group)" % [
+		groups.get("slot_recoveries", 0),
+		groups.get("recoveries_per_group", 0.0),
+	])
+
+	# Cancellation REASONS, not just the count. A bare "19 cancelled" reads
+	# as 19 failures; the reasons are what say whether it was churn or lost
+	# service, and TaskBoard has tallied them all along without printing.
+	var task_board: Node = get_node_or_null("/root/TaskBoard")
+	if task_board != null and task_board.has_method(
+		"get_cancellation_reason_counts"
+	):
+		var reasons: Dictionary = task_board.get_cancellation_reason_counts()
+		lines.append("")
+		lines.append("TASK CANCELLATION REASONS")
+		lines.append("")
+
+		if reasons.is_empty():
+			lines.append("  (none recorded)")
+		else:
+			var reason_keys: Array = reasons.keys()
+			reason_keys.sort_custom(
+				func(a: Variant, b: Variant) -> bool:
+					return int(reasons[a]) > int(reasons[b])
+			)
+
+			for reason_key: Variant in reason_keys:
+				lines.append("  %-30s %s" % [
+					reason_key, reasons[reason_key]
+				])
+
 	lines.append("")
 	lines.append(
 		"Full per-visit detail remains in the JSON export "

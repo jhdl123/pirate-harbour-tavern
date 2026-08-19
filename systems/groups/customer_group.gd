@@ -235,9 +235,22 @@ var maximum_away_fraction: float = 0.5
 
 ## Whether members may start activities while the keg still has portions.
 ##
-## Off for this pass: drinking is the point of the visit, and a member at the
-## darts board is a member not taking its turn at the cask.
-@export var allow_activities_while_drinking: bool = false
+## ON as of Phase A. It was off for the group-loop pass, on the reasoning that
+## drinking is the point of the visit and a member at the darts board is a
+## member not taking its turn at the cask. That reasoning is what produced
+## "group activity participation 0.0%" in every run since: a keg holds eight
+## servings and a crew drinks it slowly, so shared_serving is non-empty for
+## almost the whole of a group's life and the guard in
+## GroupManager._offer_leisure_activity() returned before any member was ever
+## considered. Making optional activities reachable by group members
+## (is_settled) did nothing while this stayed false - they became eligible and
+## were still never offered.
+##
+## Cohesion is still bounded, by maximum_away_fraction rather than by a blanket
+## ban: at most half a crew can be away at once, and the leisure roll still has
+## to pass. A crew that never sends anyone to the darts board is the thing
+## Phase A is trying to stop.
+@export var allow_activities_while_drinking: bool = true
 
 ## World minutes members are given to come back before departure starts.
 @export_range(1, 120, 1)
