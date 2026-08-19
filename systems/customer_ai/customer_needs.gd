@@ -220,12 +220,40 @@ func seed_from(
 	remaining_visit_minutes = visit_duration_minutes
 
 
-## Starts the visit-time clock. Call once, when the customer actually sits
-## down (Customer.arrive_at_seat()) - not at spawn, so walking to the table
-## does not eat into the intended visit length.
+## Starts the visit-time clock. Call once, when the customer actually settles
+## - seated ([method Customer.arrive_at_seat]) or standing in a group
+## formation slot ([code]Customer._on_reached_group_slot()[/code]) - not at
+## spawn, so walking to the table does not eat into the intended visit length.
+##
+## Restarts the clock unconditionally. Use [method ensure_visit_clock_started]
+## from any path that might run more than once per visit.
 func start_visit_clock(current_world_minutes: float) -> void:
 	_visit_started_at_minutes = current_world_minutes
 	remaining_visit_minutes = visit_duration_minutes
+
+
+## Whether this visit's clock has begun counting down yet.
+##
+## Exists because "never started" and "expired" both read
+## [member remaining_visit_minutes] == 0.0, which is not a distinction any
+## caller can make from the value alone - and the two want opposite
+## behaviour from every visit-time gate.
+func has_visit_clock_started() -> bool:
+	return _visit_started_at_minutes > 0.0
+
+
+## Starts the visit clock only if it has not already started.
+##
+## A group member can reach its formation slot several times in one visit -
+## after a delivery step-back, after darts, after a reform - and each arrival
+## runs the same settle path. Calling [method start_visit_clock] there
+## directly would hand that member a fresh full-length visit every time it
+## sat back down, so it would never leave.
+func ensure_visit_clock_started(current_world_minutes: float) -> void:
+	if has_visit_clock_started():
+		return
+
+	start_visit_clock(current_world_minutes)
 
 
 ## Refreshes [member remaining_visit_minutes] against elapsed world time.
@@ -233,7 +261,20 @@ func start_visit_clock(current_world_minutes: float) -> void:
 ## explicitly asks to avoid that) - this is plain elapsed-time arithmetic,
 ## cheap enough to call every time CustomerBrain builds a decision context,
 ## which is the only time the value needs to be current.
+##
+## A customer whose clock has not started yet reports its FULL duration
+## rather than zero. Previously the subtraction ran against
+## _visit_started_at_minutes = 0.0, so remaining collapsed to zero once the
+## world clock passed the rolled duration - within the first game-hour of a
+## session. Every unsettled customer then looked like it was out of time:
+## Visit Tavern Activity was gated out (it needs 8 minutes left),
+## leave_end_of_visit_pressure was maxed, and every visit-time scoring
+## condition read 0. That was 68% of all customer-samples.
 func update_remaining_visit_time(current_world_minutes: float) -> void:
+	if not has_visit_clock_started():
+		remaining_visit_minutes = visit_duration_minutes
+		return
+
 	remaining_visit_minutes = maxf(
 		0.0,
 		visit_duration_minutes

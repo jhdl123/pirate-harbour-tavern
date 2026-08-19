@@ -1,36 +1,45 @@
-Wrong-side bar approach + bottled stock pricing
-Diff against c3dd137.
+PHASE A - PART 1  |  base commit b1e36ba  |  14 files
 
-BUG 1 — staff working the bar from the wrong side
-  scripts/Interactables/drinks_station.gd
-        get_interaction_point() still used my OLD worker-biased algorithm -
-        the one I replaced in NavigationService weeks ago but never removed
-        here. It probed 72px TOWARD the approaching actor, so the answer
-        depended on where the worker happened to be standing.
+MODIFIED (5)
+------------
+scripts/Entities/customer.gd
+    + is_settled domain flag in get_activity_flags()
+    + starts the visit clock from _on_reached_group_slot() and from the
+      group branch of arrive_at_seat(), both via the idempotent variant
 
-        Measured before: approaching from the front resolved every station to
-        y=139-157 (the CUSTOMER side) while the stations sit at y=28-80 behind
-        the bar - up to 71px apart depending on approach direction. Same code
-        path serves restocking, which is why both symptoms appeared together.
+systems/customer_ai/customer_needs.gd
+    + has_visit_clock_started()
+    + ensure_visit_clock_started()  (idempotent - a member reaches its slot
+      several times per visit and must not get a fresh visit each time)
+    ~ update_remaining_visit_time() now reports the FULL duration when the
+      clock has not started, instead of collapsing to zero
 
-        Now delegates to NavigationService.project_to_mesh_from(), which
-        samples rings around the STATION for an interior, reachable point.
-        Verified: 0px difference whether approached from front or behind.
+Data/customer_ai/activities/visit_tavern_activity.tres   is_seated -> is_settled,
+                                                         + group cohesion conditions
+Data/customer_ai/activities/socialise_at_seat.tres       is_seated -> is_settled
+Data/customer_ai/activities/relax_at_seat.tres           is_seated -> is_settled,
+                                                         not_currently_ordering ->
+                                                         not_transacting_at_bar,
+                                                         base_utility 6.0 -> 7.5
 
-BUG 3 — bottled stock unaffordable
-  Data/items/stock/{madeira,port_wine,canary_wine,brandy}_crate.tres
-  Data/suppliers/harbour_supplies.tres   (unit_price_override must match, or
-                                          the resource price never reaches
-                                          the player)
+NEW - CONDITIONS (3)
+--------------------
+Data/customer_ai/conditions/is_settled.tres
+Data/customer_ai/conditions/group_has_away_capacity.tres
+Data/customer_ai/conditions/group_not_drinking_scoring.tres
 
-        A crate is 96 measures = 12 bottle servings. Old prices returned about
-        2x cost, while a grog barrel returns ~8x - so bottled stock was both
-        unaffordable up front and the worst margin in the game.
+NEW - TESTS (6)
+---------------
+tests/phase_a_gate_audit.gd / .gd.uid / .tscn
+    Drives main.tscn and, every second, builds a real ActivityContext from
+    each live customer's own brain and evaluates every activity's conditions
+    INDIVIDUALLY, tallying which condition blocked what. Also reports state
+    occupancy, drinks per customer, remaining-visit buckets and visit-clock
+    state. This is the tool that found both root causes.
 
-           madeira      120 -> 80    (sell 40)
-           port wine    130 -> 88    (sell 44)
-           canary wine  140 -> 95    (sell 47)
-           brandy       220 -> 150   (sell 75)
+tests/phase_a_audit_probe.gd / .gd.uid / .tscn
+    Narrower behaviour-mix sampler.
 
-        Now a consistent ~3x return: still the premium tier, no longer a trap.
-        A first-night crate is affordable without the F10 money button.
+UNTOUCHED
+---------
+scenes/main/main.tscn is NOT in this package.

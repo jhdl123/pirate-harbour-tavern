@@ -1,22 +1,83 @@
+PHASE A - PART 1: VISIT CLOCK + ACTIVITY ELIGIBILITY
+Built against commit b1e36ba ("fix"). 14 files.
+
 HOW TO APPLY
-============
-1. Close Godot.
-2. Extract over your project root (6 files; main.tscn and debug/ untouched).
-3. Reopen.
+------------
+1. Commit or stash nothing - just extract this zip over your project root,
+   keeping the folder structure. It only adds files and overwrites the five
+   listed as MODIFIED in CHANGED_FILES.txt.
 
-VERIFY
-------
-  godot --headless res://tests/nav_and_backpressure_probe.tscn  -> 87 / 0
-  godot --headless res://tests/reachability_probe.tscn          -> 36 / 0
-  godot --headless res://tests/restock_chain_probe.tscn         -> 56 / 0
-  godot --headless res://tests/service_coverage_probe.tscn      -> 30 / 0
-  godot --headless res://tests/diagnostic_export_probe.tscn     -> 59 / 0
+2. Open the project in the editor once so the three new .tres conditions and
+   the two new test scenes resolve.
 
-WATCH IN THE NEXT RUN
----------------------
-  The bartender should approach every station from the same place regardless
-  of where he starts. NOTE: on your current layout most stations still resolve
-  to the FRONT of the bar - see the message. That is a level issue, not this
-  fix.
+3. Sanity check, in this order:
 
-BUG 2 (keg not returned) IS NOT FIXED - diagnosed only. See the message.
+     godot --headless res://tests/customer_identity_test.tscn
+       expect: 92 passed, 0 failed
+
+     godot --headless res://tests/phase_a_gate_audit.tscn
+       expect: a ~3 minute run ending in "=== END GATE AUDIT ==="
+
+WHAT IS IN HERE
+---------------
+Two root causes, both measured live rather than read from source:
+
+  1. The visit clock never started for standing group members.
+     _on_reached_group_slot() never called start_visit_clock(), and
+     update_remaining_visit_time() then subtracted against a start time of
+     0.0 - so remaining_visit_minutes collapsed to zero as soon as the world
+     clock passed the rolled duration, within the first game-hour. Every
+     unsettled customer looked like it was out of time: darts was gated out
+     (it needs 8 minutes left), leave pressure was maxed, and every
+     visit-time scoring condition read 0.
+
+  2. Optional activities were gated on is_seated, which is
+     reserved_chair != null. A group member stands at a formation slot and
+     never holds a chair, so darts, relaxing and socialising were
+     permanently unavailable to group members - and IN_GROUP is the single
+     largest state bucket in the tavern. That is the whole of the "group
+     activity participation 0.0%" symptom: those activities were never
+     candidates, so they never failed, so nothing was ever logged.
+
+  New condition is_settled.tres covers both cases (holds a chair, OR is
+  IN_GROUP). order_drink deliberately still uses is_seated - groups order
+  through the shared keg path and must not gain an individual fallback.
+
+  Third, smaller: relax_at_seat was never migrated to the split bar
+  conditions from the August activity-balancing pass. It still gated on
+  has_ordered_drink, which is true from ordering until the drink is
+  FINISHED, so a customer could not relax while waiting for or drinking a
+  drink. Moved to not_transacting_at_bar and base_utility 6.0 -> 7.5.
+
+MEASURED RESULT
+---------------
+  relax_at_seat eligibility        45.1% -> 52.0%
+  visit_tavern_activity (darts)    36.8% -> 38.4% eligible, and non-zero
+                                   occupancy where it was 0.0%
+  visit clock never started        now only ever in the seven genuine
+                                   pre-settle states (ENTERING,
+                                   WALKING_TO_STAGING, MOVING_TO_SEAT,
+                                   MOVING_TO_GROUP_SLOT, and the three
+                                   GROUP_* entry states). No settled state
+                                   appears in that list any more.
+  repeat orders                    happening - 12 to 16 customers per run
+                                   reach 2 drinks, 3 reach 3
+
+REGRESSIONS - ALL AT BASELINE
+-----------------------------
+  customer_identity_test    92 passed, 0 failed
+  group_loop_test           38 passed, 0 failed
+  group_parity_test         49 passed, 0 failed
+  group_milestone_test      43 passed, 0 failed
+  group_and_recovery_probe  34 passed, 0 failed
+  group_framework_test      47 passed, 2 failed  <-- BASELINE, NOT A
+                            REGRESSION. Both failures are the SEATED cases
+                            ("place is standing", "split across 0 tables"),
+                            which are expected while standing_places_only
+                            disables seated groups.
+
+  Reminder: the group suites print "  FAIL  <label>" (two spaces, no
+  brackets). Grepping for [FAIL] finds nothing and looks like a clean run.
+  Read the passed/failed lines.
+
+NOT DONE YET - see the chat report for the rest of Phase A.

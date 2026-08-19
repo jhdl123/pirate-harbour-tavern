@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cs48yy71d2h1v" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://gpped54gxq3u" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
-[ext_resource type="Resource" path="res://Data/customer_ai/conditions/is_seated.tres" id="3_seated"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/is_settled.tres" id="3_seated"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/free_to_leave_seat.tres" id="4_not_ordering"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/visit_activity_availability.tres" id="5_availability"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/visit_activity_min_time_remaining.tres" id="6_min_time"]
@@ -11,6 +11,8 @@
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/visit_activity_satisfaction_scoring.tres" id="9_satisfaction"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/visit_activity_thirst_scoring.tres" id="10_thirst"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/decision_variance.tres" id="11_variance"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/group_has_away_capacity.tres" id="13_away_capacity"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/group_not_drinking_scoring.tres" id="14_cohesion"]
 [ext_resource type="Resource" path="res://Data/customer_ai/behaviours/visit_tavern_activity.tres" id="12_behaviour"]
 
 [resource]
@@ -18,7 +20,7 @@ script = ExtResource("1_script")
 activity_id = &"visit_tavern_activity"
 display_name = "Visit Tavern Activity"
 base_utility = 8.5
-conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_seated"), ExtResource("4_not_ordering"), ExtResource("5_availability"), ExtResource("6_min_time"), ExtResource("7_distance"), ExtResource("8_decay"), ExtResource("9_satisfaction"), ExtResource("10_thirst"), ExtResource("11_variance")])
+conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_seated"), ExtResource("4_not_ordering"), ExtResource("5_availability"), ExtResource("6_min_time"), ExtResource("7_distance"), ExtResource("8_decay"), ExtResource("9_satisfaction"), ExtResource("10_thirst"), ExtResource("11_variance"), ExtResource("13_away_capacity"), ExtResource("14_cohesion")])
 destination_tag = &"darts"
 behaviour = ExtResource("12_behaviour")
 minimum_commitment_minutes = 5.0

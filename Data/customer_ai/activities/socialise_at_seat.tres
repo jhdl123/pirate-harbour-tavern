@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cs48yy71d2h1v" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://gpped54gxq3u" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
-[ext_resource type="Resource" path="res://Data/customer_ai/conditions/is_seated.tres" id="3_seated"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/is_settled.tres" id="3_seated"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/not_transacting_at_bar.tres" id="4_not_ordering"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/has_social_partner.tres" id="5_partner"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/socialise_repeat_decay.tres" id="6_decay"]

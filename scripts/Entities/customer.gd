@@ -1317,6 +1317,14 @@ func arrive_at_seat() -> void:
 		patience_bar.hide_bar()
 		_set_state(State.IN_GROUP)
 		next_group_drink_minutes = _get_world_minutes() + randi_range(0, 2)
+
+		# Settling into a formation slot IS this member's equivalent of
+		# arriving at a seat, so the visit clock starts here too. Most
+		# members settle via _on_reached_group_slot() instead; both call
+		# the idempotent variant so whichever runs first wins.
+		if needs != null:
+			needs.ensure_visit_clock_started(WorldTime.get_total_minutes())
+
 		return
 
 	if needs != null:
@@ -2421,6 +2429,25 @@ func get_activity_flags() -> Dictionary:
 
 	return {
 		&"is_seated": reserved_chair != null,
+
+		# "Has a stationary position it is committed to", which is what the
+		# optional-activity gates actually meant by is_seated.
+		#
+		# is_seated is reserved_chair != null. A group member stands at a
+		# formation slot and never holds a chair, so gating darts, relaxing
+		# and socialising on is_seated made every optional activity
+		# permanently unavailable to group members - and group members are
+		# ~49% of all customer time. That is the whole of the "group activity
+		# participation 0.0%" symptom: the activities were never candidates,
+		# so they never failed, so nothing was ever logged.
+		#
+		# IN_GROUP rather than a non-zero group_slot_position on purpose: a
+		# member still walking to its slot is not settled yet, and offering
+		# it darts mid-approach is how members used to abandon the formation.
+		&"is_settled": (
+			reserved_chair != null
+			or (not group_id.is_empty() and current_state == State.IN_GROUP)
+		),
 		&"has_ordered_drink": ordered_drink != null,
 		&"has_drink_to_consume": _has_drink_to_consume,
 		&"under_drink_limit": drinks_consumed_this_visit < limit,
@@ -2741,6 +2768,18 @@ func assign_group_chair(chair: Node) -> void:
 
 func _on_reached_group_slot() -> void:
 	_set_state(State.IN_GROUP)
+
+	# A standing group member never calls arrive_at_seat(), so this was the
+	# only settle path that never started the visit clock - and IN_GROUP is
+	# the single largest state bucket in the tavern. See
+	# CustomerNeeds.update_remaining_visit_time() for what an unstarted
+	# clock did to every visit-time gate.
+	#
+	# Idempotent on purpose: this runs again after a delivery step-back,
+	# after darts, and after a reform, and restarting the clock each time
+	# would give the member an endless visit.
+	if needs != null:
+		needs.ensure_visit_clock_started(_get_world_minutes())
 
 	# Face roughly toward the group, not exactly - see GroupFormation.
 	var facing: Vector2 = GroupFormation.get_facing(
