@@ -82,7 +82,7 @@ focused commit in Git.
 3. `GAME_DESIGN.md` — design direction.
 4. `CURRENT_STATE.md` — verified summary.
 5. Other system documentation.
-6. Old chats and `PHASE_*.md` reports — history, not authority.
+6. Old chats and `docs/history/` reports — history, not authority.
 
 ## Claude Code prompt pattern
 

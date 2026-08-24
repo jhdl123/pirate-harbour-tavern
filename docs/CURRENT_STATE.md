@@ -134,8 +134,8 @@ factions · weather · save/load.
 8. Pre-existing GDScript warnings (shadowed names, integer division, unused
    `order_placed` signal). See the editor log.
 
-`KNOWN_ISSUES.md` in the repository root holds a longer, older static-audit list
-from the Phase 3A cleanup pass; parts of it are now stale.
+`docs/history/KNOWN_ISSUES.md` holds a longer, older static-audit list from
+an early cleanup pass; parts of it are now stale.
 
 ## Diagnostic lessons that keep recurring
 

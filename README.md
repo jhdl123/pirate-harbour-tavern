@@ -2,19 +2,12 @@
 
 A desktop-first 2D tavern management game being built in Godot 4.7.1.
 
-The project currently focuses on a small but expandable service loop: customers enter, choose seats, order drinks, wait for service, drink, pay, leave a dirty glass, and exit. The player serves drinks and cleans tables while managing time, movement and money.
-
-## Current playable loop
-
-1. Customers spawn and queue at the tavern door.
-2. A customer enters and reserves an available chair.
-3. The customer orders a drink according to their `CustomerType`.
-4. The player collects the correct drink from a drinks station.
-5. The player serves the customer.
-6. The customer drinks, pays and leaves.
-7. The chair receives an empty-glass cleaning task.
-8. Cleaning can produce broken glass and an economy penalty.
-9. The chair becomes available again after cleaning is completed.
+Customers spawn, queue, enter, are seated (solo or in groups), order and are
+served drinks by the player or by staff, socialise, pay and leave; cleaning,
+stock and staff task assignment run alongside. See
+[`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) for verified status per
+system, [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md) for the intended
+experience, and [`docs/ROADMAP.md`](docs/ROADMAP.md) for what's next.
 
 ## Controls
 
@@ -28,6 +21,8 @@ The project currently focuses on a small but expandable service loop: customers 
 | F2 | Pause / resume the simulation |
 | F3 | Cycle time speed |
 | F4 | Skip to the next hour |
+| M | Open the bar management menu |
+| F10 | Open the stock/diagnostics dev panel (debug builds) — see `CLAUDE.md` |
 | Mouse wheel / configured zoom inputs | Camera zoom |
 | Mouse | Menus and UI |
 
@@ -106,9 +101,9 @@ scenes/                       Godot scenes
 scripts/                      Gameplay scripts, components and domain resources
 systems/                      Reusable action, economy, item, inventory and time systems
 tests/                        Technical validation scenes, not part of gameplay
-                              (see phase_3a_smoke_test.tscn for the automated
-                              staff-loop check)
-docs/                         Project documentation
+                              (see CLAUDE.md's Testing and evidence section)
+docs/                         Project documentation (docs/history/ holds
+                              superseded, dated reports — historical only)
 assets/                       Art and other game assets
 ```
 
@@ -119,45 +114,13 @@ assets/                       Art and other game assets
 3. Allow Godot to import assets.
 4. Run the main scene with F6/F5 as appropriate.
 
-To run the automated Phase 3A check without opening the editor:
+To run a test headlessly without opening the editor:
 
 ```text
-godot --headless --fixed-fps 60 res://tests/phase_3a_smoke_test.tscn
+godot --headless res://tests/<name>.tscn
 ```
 
-It loads the real main scene, plays the part of the player, and exits non-zero
-if the staff loop, the alert lifecycle or the Phase 2C regressions fail.
-
-## Current development status
-
-Completed foundations include:
-
-- player movement and interaction;
-- customer spawning, queueing, seating and navigation;
-- configurable customer types;
-- configurable drink definitions;
-- serving, patience, payment and tips;
-- cleaning tasks and broken-glass complications;
-- generic timed actions with movement blocking and cancellation;
-- centralised economy and HUD updates;
-- configurable navigation and debugging values;
-- a generic item, slot, container and transfer foundation;
-- a reusable carrier component replacing drink-specific carrying;
-- a 12-slot personal inventory component, ready but not yet used;
-- a bar counter with three working service slots;
-- a reusable interaction framework covering detection, selection,
-  highlighting, prompts and execution;
-- a reusable actor navigation framework covering movement, steering,
-  avoidance, arrival and recovery;
-- a generic reservation system shared by seats and future workstations;
-- a world time framework with a single authoritative clock and a scheduler
-  that survives pausing, speed changes and skipped time;
-- a simulation state framework that decides centrally what may update;
-- a customer AI foundation (needs, personality, data-driven activities and
-  a think/choose/reserve/perform brain) that today's order-drink-and-leave
-  loop now runs on top of, ready for future activities to plug into.
-
-The next planned foundations are chair service slots, storage containers and
-drink stock. See [Item System](docs/ITEM_SYSTEM.md) for how those should
-connect, and [Interaction System](docs/INTERACTION_SYSTEM.md) for migrating
-the chair and customer off the legacy interaction fallback.
+Each test prints `[PASS]`/`[FAIL]` lines and ends with a result count. See
+`CLAUDE.md`'s Testing and evidence section for the full pattern, known
+baseline results, and pitfalls (watch the assertion count, not just the
+failure count).

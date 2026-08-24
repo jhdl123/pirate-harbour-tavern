@@ -33,9 +33,9 @@ System-specific docs (`ITEM_SYSTEM`, `NAVIGATION_SYSTEM`, `STAFF_TASK_SYSTEM`,
 `INTERACTION_SYSTEM`, `SIMULATION_SYSTEM`, `COMMUNICATION_SYSTEM`) — read only
 when working in that system.
 
-The `PHASE_*.md` and `GROUP_*.md` files in the repository root are historical
-change reports. They record what a past pass did, not necessarily current state.
-Treat them as history; prefer `CURRENT_STATE.md`.
+`docs/history/` holds dated change reports and patch notes (`PHASE_*.md`,
+`GROUP_*.md` and similar). They record what a past pass did, not necessarily
+current state. Treat them as history; prefer `CURRENT_STATE.md`.
 
 ## Architecture anchors
 
@@ -130,7 +130,8 @@ Known baseline results (not regressions):
 
 ## Diagnostics
 
-Press **F10** in a debug build → **Export Diagnostic Run**. This writes
+Press **F10** in a debug build to open the stock/diagnostics dev panel, then
+choose **Export Diagnostic Run**. This writes
 `debug/latest/` and `debug/archive/YYYY-MM-DD-HHMM/`, each stamped with the Git
 commit that produced it. Review order: `RUN_SUMMARY.md`, `drinks_report.txt`,
 `stock_report.txt`, `staff_report.txt`, `customer_report.txt`,
