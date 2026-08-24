@@ -101,8 +101,9 @@ func _build_ui() -> void:
 	_add_button(rows, "Export Customer AI report", _export_customer_ai_report)
 	_add_button(rows, "Export Diagnostic Run", _export_diagnostic_run)
 	_add_button(rows, "Enable/disable tavern activities", _toggle_tavern_activities)
-	_add_button(rows, "Force first customer to socialise", _force_first_customer_to_socialise)
-	_add_button(rows, "Force first customer to use darts", _force_first_customer_to_darts)
+	_add_button(rows, "Select next customer", _select_next_customer)
+	_add_button(rows, "Force selected customer to socialise", _force_first_customer_to_socialise)
+	_add_button(rows, "Force selected customer to use darts", _force_first_customer_to_darts)
 	_add_button(rows, "Release all activity reservations", _release_all_activity_reservations)
 	_add_button(rows, "Show activity reservations", _show_activity_reservations)
 
@@ -325,12 +326,29 @@ func _toggle_tavern_activities() -> void:
 
 ## "Selected customer" - there is no in-game customer-picker yet, so this
 ## (and the Darts equivalent below) act on the first entry in
-## GameManager.active_customers as a documented simplification. See
-## docs/CUSTOMER_AI_SYSTEM.md's Phase 2C developer-tools note.
+## GameManager.active_customers, at whichever index _select_next_customer()
+## last chose - previously always index 0 with no way to pick another
+## customer at all. See docs/CUSTOMER_AI_SYSTEM.md's Phase 2C developer-tools
+## note.
+var _selected_customer_index: int = 0
+
 func _get_first_active_customer() -> Node:
 	if game_manager == null or game_manager.active_customers.is_empty():
 		return null
-	return game_manager.active_customers[0]
+	var customers: Array = game_manager.active_customers
+	return customers[_selected_customer_index % customers.size()]
+
+func _select_next_customer() -> void:
+	if game_manager == null or game_manager.active_customers.is_empty():
+		status.text = "No active customers to select."
+		return
+	var customers: Array = game_manager.active_customers
+	_selected_customer_index = (_selected_customer_index + 1) % customers.size()
+	var customer: Node = customers[_selected_customer_index]
+	status.text = (
+		"Selected %s (%d/%d)."
+		% [customer.name, _selected_customer_index + 1, customers.size()]
+	)
 
 func _force_first_customer_to_socialise() -> void:
 	var customer := _get_first_active_customer()

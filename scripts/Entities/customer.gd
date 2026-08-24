@@ -2814,6 +2814,11 @@ func get_diagnostics_snapshot() -> Dictionary:
 			if social_partner != null and is_instance_valid(social_partner)
 			else -1
 		),
+		"activity_partner_customer_id": (
+			_activity_partner.runtime_customer_id
+			if _activity_partner != null and is_instance_valid(_activity_partner)
+			else -1
+		),
 	}
 
 

@@ -53,6 +53,11 @@ var selected_activity_point_id: String = ""
 ## Socialise at Seat and a partner was found - -1 otherwise.
 var social_partner_customer_id: int = -1
 
+## The other customer's runtime id if this decision started (or joined) a
+## shared multi-participant activity like two-player Darts - -1 otherwise.
+## Mirrors social_partner_customer_id's shape for a second kind of partner.
+var activity_partner_customer_id: int = -1
+
 ## Phase 2C: whether the selected activity will send this customer back to
 ## reserved_chair once finished (true for anything using a
 ## TavernActivityPoint with return_to_seat_after_use, and implicitly for
@@ -91,6 +96,7 @@ func to_dictionary() -> Dictionary:
 		"utility_contributions": utility_contributions,
 		"selected_activity_point_id": selected_activity_point_id,
 		"social_partner_customer_id": social_partner_customer_id,
+		"activity_partner_customer_id": activity_partner_customer_id,
 		"return_to_seat_required": return_to_seat_required,
 		"engagement": engagement,
 		"recent_activity_history": recent_activity_history,

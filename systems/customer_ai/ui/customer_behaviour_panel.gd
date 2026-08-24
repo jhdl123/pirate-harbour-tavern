@@ -40,6 +40,10 @@ extends Node
 ## recoveries and whether organic movement actually reached each actor.
 @export var export_navigation_key: Key = KEY_N
 
+## Cycles which live customer P/L/verbose scoring targets. Previously both
+## always meant "customer 0" - there was no in-game customer-picker at all.
+@export var cycle_customer_key: Key = KEY_I
+
 ## Where the behaviour report is written.
 @export var report_path: String = "user://customer_behaviour_report.json"
 
@@ -55,6 +59,7 @@ var deterministic: bool = false
 var verbose_scoring: bool = false
 
 var _selected_type_index: int = 0
+var _selected_customer_index: int = 0
 var _report: CustomerBehaviourReport = null
 
 
@@ -112,6 +117,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_run_stress_test()
 		export_navigation_key:
 			_export_navigation_report()
+		cycle_customer_key:
+			_cycle_customer()
 		_:
 			return
 
@@ -125,6 +132,7 @@ func _print_help() -> void:
 	print("  F11 cycle type   F12 force spawn   K deterministic")
 	print("  L verbose scores  P print profile   O export report")
 	print("  U mixed-type stress test   N navigation report")
+	print("  I cycle inspected customer (targets L and P)")
 
 
 func _cycle_type() -> void:
@@ -202,45 +210,101 @@ func _toggle_deterministic() -> void:
 	)
 
 
+## Targets only the inspected customer (see _cycle_customer()) rather than
+## every customer in the room - a per-decision score dump for one customer
+## is readable; one for the whole tavern at once is a firehose nobody reads.
 func _toggle_verbose() -> void:
 	verbose_scoring = not verbose_scoring
 
-	var count: int = 0
+	var customers: Array[Node] = get_tree().get_nodes_in_group(&"navigation_customers")
 
-	for customer: Node in get_tree().get_nodes_in_group(&"navigation_customers"):
+	for customer: Node in customers:
 		var brain: Variant = customer.get(&"_brain")
 
 		if brain == null:
 			continue
 
-		brain.set(&"verbose_scoring", verbose_scoring)
 		brain.set(&"deterministic_decisions", deterministic)
-		count += 1
+
+	var inspected: Node = _get_selected_customer(customers)
+
+	if inspected == null:
+		print("[CustomerBehaviour] no customers in the tavern.")
+		return
+
+	var brain: Variant = inspected.get(&"_brain")
+
+	if brain != null:
+		brain.set(&"verbose_scoring", verbose_scoring)
 
 	print(
-		"[CustomerBehaviour] verbose scoring %s on %d customers"
-		% [("ON" if verbose_scoring else "off"), count]
+		"[CustomerBehaviour] verbose scoring %s on %s"
+		% [("ON" if verbose_scoring else "off"), inspected.name]
 	)
 
 
-## Dumps one live customer's full behaviour profile - identity, traits,
-## intent, current action and cooldowns. The first customer found, because
-## selecting one would need click handling this panel deliberately avoids.
-func _print_selected_profile() -> void:
+## Moves which customer P (profile) and L (verbose scoring) target. There is
+## no click-to-select in this deliberately keyboard-only panel - cycling is
+## the whole "picker".
+func _cycle_customer() -> void:
 	var customers: Array[Node] = get_tree().get_nodes_in_group(&"navigation_customers")
 
 	if customers.is_empty():
 		print("[CustomerBehaviour] no customers in the tavern.")
 		return
 
-	var customer: Node = customers[0]
+	_selected_customer_index = (_selected_customer_index + 1) % customers.size()
+
+	print(
+		"[CustomerBehaviour] inspecting %s (%d/%d)"
+		% [
+			customers[_selected_customer_index].name,
+			_selected_customer_index + 1, customers.size(),
+		]
+	)
+
+	if verbose_scoring:
+		# Move the live filter along with the selection, rather than leaving
+		# it on whichever customer happened to hold it before.
+		for customer: Node in customers:
+			var brain: Variant = customer.get(&"_brain")
+
+			if brain != null:
+				brain.set(&"verbose_scoring", false)
+
+		var brain: Variant = customers[_selected_customer_index].get(&"_brain")
+
+		if brain != null:
+			brain.set(&"verbose_scoring", true)
+
+
+## Wraps the selection index defensively - the roster can shrink (customers
+## leave) between a selection and the next key press.
+func _get_selected_customer(customers: Array[Node]) -> Node:
+	if customers.is_empty():
+		return null
+
+	return customers[_selected_customer_index % customers.size()]
+
+
+## Dumps one live customer's full behaviour profile - identity, traits,
+## intent, current action and cooldowns. The customer currently selected via
+## _cycle_customer() (I), defaulting to the first one found.
+func _print_selected_profile() -> void:
+	var customers: Array[Node] = get_tree().get_nodes_in_group(&"navigation_customers")
+	var customer: Node = _get_selected_customer(customers)
+
+	if customer == null:
+		print("[CustomerBehaviour] no customers in the tavern.")
+		return
+
 	var identity: Variant = customer.get(&"identity")
 
 	if identity == null:
 		print("[CustomerBehaviour] that customer has no identity.")
 		return
 
-	print("\n=== Customer Behaviour Profile ===")
+	print("\n=== Customer Behaviour Profile: %s ===" % customer.name)
 	print(JSON.stringify(identity.get_diagnostics(), "\t"))
 
 	var brain: Variant = customer.get(&"_brain")
@@ -263,6 +327,12 @@ func _print_selected_profile() -> void:
 				needs.get(&"wealth"), needs.get(&"thirst"),
 				needs.get(&"mood"), needs.get(&"remaining_visit_minutes"),
 			]
+		)
+
+	if customer.has_method("get_diagnostics_snapshot"):
+		print(
+			"snapshot: %s"
+			% JSON.stringify(customer.call("get_diagnostics_snapshot"))
 		)
 
 

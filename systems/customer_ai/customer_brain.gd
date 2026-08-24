@@ -774,6 +774,9 @@ func _report_decision(
 		record.social_partner_customer_id = snapshot.get(
 			"social_partner_customer_id", -1
 		)
+		record.activity_partner_customer_id = snapshot.get(
+			"activity_partner_customer_id", -1
+		)
 		record.return_to_seat_required = (
 			record.selected_activity_point_id != ""
 		)
