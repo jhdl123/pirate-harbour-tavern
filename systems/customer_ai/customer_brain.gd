@@ -99,6 +99,10 @@ var state: State = State.THINKING
 var _current_activity: ActivityDefinition = null
 var _current_destination: Reservable = null
 
+## The activity_id this actor was last in during this visit, stamped by
+## _exit_current() - see ActivityContext.last_activity_id's doc comment.
+var _last_activity_id: StringName = &""
+
 ## This customer's identity - type, personality, visit intention. Optional:
 ## a null identity leaves every score exactly as it was before identities
 ## existed, so an unconfigured test harness still behaves.
@@ -579,6 +583,9 @@ func _exit_current(completed: bool) -> void:
 	)
 
 	var finished: ActivityDefinition = _current_activity
+
+	_last_activity_id = finished.activity_id
+
 	var context: ActivityContext = _build_context()
 
 	if finished.behaviour != null:
@@ -616,6 +623,7 @@ func _build_context() -> ActivityContext:
 
 	context.identity = identity
 	context.world_minutes = WorldTime.get_total_minutes()
+	context.last_activity_id = _last_activity_id
 
 	return context
 

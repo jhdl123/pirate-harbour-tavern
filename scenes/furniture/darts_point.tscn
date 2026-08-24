@@ -3,19 +3,37 @@
 [ext_resource type="Script" uid="uid://blxh5unjin7kl" path="res://systems/tavern_activities/tavern_activity_point.gd" id="1_point_script"]
 [ext_resource type="Texture2D" uid="uid://cvku25b8wdeps" path="res://assets/art/furniture/32x32_dartboard.png" id="2_0mthd"]
 [ext_resource type="Script" uid="uid://cakp4dldxby6s" path="res://systems/reservation/reservable.gd" id="2_reservable_script"]
+[ext_resource type="Script" path="res://systems/tavern_activities/tavern_activity_slot.gd" id="3_slot_script"]
 
 [node name="DartsPoint" type="Node2D" unique_id=2034469874]
 script = ExtResource("1_point_script")
 activity_id = &"darts"
 display_name = "Darts"
+repeat_count_need_id = &"darts_count"
+capacity = 2
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1415719512]
 position = Vector2(-1, -53)
 texture = ExtResource("2_0mthd")
 
-[node name="Reservable" type="Node" parent="." unique_id=896076098]
+[node name="Slot0" type="Node2D" parent="." unique_id=2896076098]
+position = Vector2(-10, 0)
+script = ExtResource("3_slot_script")
+
+[node name="Reservable" type="Node" parent="Slot0" unique_id=2896076099]
 script = ExtResource("2_reservable_script")
 reservation_tags = Array[StringName]([&"darts"])
 
-[node name="UsePosition" type="Marker2D" parent="." unique_id=1913066976]
+[node name="UsePosition" type="Marker2D" parent="Slot0" unique_id=2913066976]
+position = Vector2(0, 6)
+
+[node name="Slot1" type="Node2D" parent="." unique_id=2996076098]
+position = Vector2(10, 0)
+script = ExtResource("3_slot_script")
+
+[node name="Reservable" type="Node" parent="Slot1" unique_id=2996076099]
+script = ExtResource("2_reservable_script")
+reservation_tags = Array[StringName]([&"darts"])
+
+[node name="UsePosition" type="Marker2D" parent="Slot1" unique_id=2913066977]
 position = Vector2(0, 6)

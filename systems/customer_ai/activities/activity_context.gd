@@ -76,3 +76,12 @@ var identity: CustomerIdentity = null
 ## by CustomerBrain from the existing world clock rather than an independent
 ## timer, per the single-authoritative-clock rule.
 var world_minutes: float = 0.0
+
+
+## The activity_id this actor was last in during this visit, or &"" if none
+## yet. Set by CustomerBrain._exit_current() - the one place every activity
+## exit already passes through - and read by PreviousActivityAffinityCondition
+## so "just finished drinking" can nudge socialising, "just finished darts"
+## can nudge another drink, and so on, without CustomerBrain itself knowing
+## anything about specific activities.
+var last_activity_id: StringName = &""

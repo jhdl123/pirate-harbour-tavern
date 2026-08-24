@@ -9,21 +9,20 @@ extends Node2D
 ## a different child scene for visuals. Nothing here knows what a customer
 ## is; [VisitTavernActivityBehaviour] is the only thing that reads this
 ## class, and it reads it entirely through this exported data plus the
-## [Reservable] child every other reservable thing in the project already
-## uses (chairs, stations) - no new reservation system, per the brief.
+## [TavernActivitySlot] children every other reservable thing in the project
+## already uses the same [Reservable] primitive for (chairs, stations) - no
+## new reservation system, per the brief.
 ##
-## [b]Capacity.[/b] This phase's darts instance proves the pattern with a
-## single [Reservable] (capacity effectively 1). [member capacity] is
-## exposed now so a future multi-slot point (e.g. a four-seat card table)
-## has a place to record its intent, but actually supporting more than one
-## simultaneous user needs more than one [Reservable]/use position child and
-## is not implemented this phase - see docs/CUSTOMER_AI_SYSTEM.md's Phase 2C
-## "Known limitations".
+## [b]Capacity.[/b] One [TavernActivitySlot] child per simultaneous user -
+## Darts has two, so two customers can play at once. [member capacity] is
+## just a declared expectation checked against [member slots].size() in
+## [method _ready] (a mismatch is a scene-authoring mistake, not a runtime
+## state); [member slots].size() is what every method here actually reads.
 
 
 @export_category("Identity")
 
-## Matches a [Reservable] tag on this node's [member reservable] child, and
+## Matches the [Reservable] tag on each [TavernActivitySlot] child, and
 ## the [code]destination_tag[/code] on whichever [ActivityDefinition] visits
 ## this point - e.g. [code]&"darts"[/code].
 @export var activity_id: StringName = &""
@@ -38,7 +37,8 @@ extends Node2D
 
 @export_category("Capacity")
 
-## See the class doc comment - not yet functionally more than 1.
+## See the class doc comment - checked against the actual
+## [TavernActivitySlot] child count in [method _ready].
 @export_range(1, 4, 1)
 var capacity: int = 1
 
@@ -78,6 +78,16 @@ var cooldown_minutes: float = 0.0
 ## Empty means any [CustomerType] may use this point.
 @export var allowed_customer_types: Array[CustomerType] = []
 
+## [CustomerNeeds] field incremented by 1 each time a customer finishes using
+## this point, e.g. [code]&"darts_count"[/code] - empty means no repeat-count
+## tracking for this point. Generalizes what used to be a hard-coded
+## [code]if activity_id == &"darts"[/code] check in
+## [code]Customer._on_activity_use_finished()[/code]; a future cards table
+## just sets this to its own need id (which [CustomerNeeds] must already
+## define - see its [code]adjust()[/code]/[code]get_need()[/code] match
+## statements).
+@export var repeat_count_need_id: StringName = &""
+
 ## A customer below this satisfaction, or above this intoxication, is not
 ## offered this point - read by [method is_available_for].
 @export_range(0.0, 1.0, 0.01)
@@ -96,13 +106,59 @@ var maximum_intoxication: float = 1.0
 @export var show_debug_visual: bool = false
 
 
-@onready var reservable: Reservable = $Reservable
-@onready var use_position: Marker2D = $UsePosition
+## Every [TavernActivitySlot] child, in child order. Populated once in
+## [method _ready] - not expected to change at runtime.
+var slots: Array[TavernActivitySlot] = []
+
+## The first slot's [Reservable]/use position, kept as computed properties
+## so every existing single-slot caller (this class's own methods,
+## [VisitTavernActivityBehaviour]'s solo path) keeps working unchanged.
+var reservable: Reservable:
+	get: return slots[0].reservable if not slots.is_empty() else null
+var use_position: Marker2D:
+	get: return slots[0].use_position if not slots.is_empty() else null
 
 
 func _ready() -> void:
+	for child: Node in get_children():
+		var slot: TavernActivitySlot = child as TavernActivitySlot
+
+		if slot != null:
+			slots.append(slot)
+
+	if slots.is_empty():
+		_synthesize_legacy_slot()
+
+	if slots.size() != capacity:
+		push_warning(
+			"TavernActivityPoint '" + String(activity_id)
+			+ "' declares capacity " + str(capacity)
+			+ " but has " + str(slots.size()) + " TavernActivitySlot children."
+		)
+
 	_apply_enabled_state()
 	set_process(show_debug_visual)
+
+
+## Compatibility path for a point built without [TavernActivitySlot]
+## children - e.g. tests/group_parity_test.gd's [code]_build_activity_point()[/code],
+## which predates this class and adds a bare [Reservable]/[Marker2D]
+## directly under the point, the shape every darts point used to have.
+## Wraps whatever it finds in one in-code [TavernActivitySlot] (never added
+## to the tree - it is only ever read as plain data) so a point built either
+## way ends up with exactly the same [member slots] shape.
+func _synthesize_legacy_slot() -> void:
+	var bare_reservable: Reservable = get_node_or_null("Reservable")
+
+	if bare_reservable == null:
+		return
+
+	var slot := TavernActivitySlot.new()
+
+	slot.reservable = bare_reservable
+	slot.use_position = get_node_or_null("UsePosition")
+
+	slots.append(slot)
 
 
 func _process(_delta: float) -> void:
@@ -116,30 +172,33 @@ func _draw() -> void:
 	if not show_debug_visual:
 		return
 
-	var state_colour: Color = Color.DIM_GRAY
+	for slot: TavernActivitySlot in slots:
+		var state_colour: Color = Color.DIM_GRAY
 
-	if not enabled:
-		state_colour = Color.DIM_GRAY
-	elif reservable != null and reservable.is_free():
-		state_colour = Color.GREEN
-	else:
-		state_colour = Color.RED
+		if not enabled:
+			state_colour = Color.DIM_GRAY
+		elif slot.reservable != null and slot.reservable.is_free():
+			state_colour = Color.GREEN
+		else:
+			state_colour = Color.RED
 
-	draw_circle(Vector2.ZERO, 14.0, state_colour)
+		var local_position: Vector2 = to_local(slot.global_position)
 
-	if use_position != null:
-		draw_line(
-			Vector2.ZERO,
-			to_local(use_position.global_position),
-			Color.YELLOW,
-			2.0
-		)
+		draw_circle(local_position, 14.0, state_colour)
+
+		if slot.use_position != null:
+			draw_line(
+				local_position,
+				to_local(slot.use_position.global_position),
+				Color.YELLOW,
+				2.0
+			)
 
 
 ## Runtime on/off switch (the F10 "Enable/Disable Tavern Activities"
-## developer action uses this). Implemented by having this point reserve
+## developer action uses this). Implemented by having every slot reserve
 ## itself when disabled, rather than teaching [Reservable]/[DestinationBroker]
-## a second "is this actually available" concept - a disabled point is
+## a second "is this actually available" concept - a disabled slot is
 ## simply never free, which is a state those classes already handle
 ## correctly with no changes to either of them.
 func set_enabled(value: bool) -> void:
@@ -148,21 +207,43 @@ func set_enabled(value: bool) -> void:
 
 
 func _apply_enabled_state() -> void:
-	if reservable == null:
-		return
+	for slot: TavernActivitySlot in slots:
+		if slot.reservable == null:
+			continue
 
-	if enabled:
-		if reservable.get_holder() == self:
-			reservable.release(self)
-	else:
-		reservable.reserve(self)
+		if enabled:
+			if slot.reservable.get_holder() == self:
+				slot.reservable.release(self)
+		else:
+			slot.reservable.reserve(self)
 
 
 func get_use_position() -> Vector2:
-	if use_position != null:
-		return use_position.global_position
+	if not slots.is_empty():
+		return slots[0].get_use_position()
 
 	return global_position
+
+
+## The first slot whose [Reservable] is currently free, or null if every
+## slot is taken.
+func get_free_slot() -> TavernActivitySlot:
+	for slot: TavernActivitySlot in slots:
+		if slot.reservable != null and slot.reservable.is_free():
+			return slot
+
+	return null
+
+
+## Reverse lookup: which slot owns [param slot_reservable], e.g. so a
+## behaviour that already holds the [Reservable] [DestinationBroker] handed
+## it (which could be any slot's) can find that slot's use position.
+func get_slot_for(slot_reservable: Reservable) -> TavernActivitySlot:
+	for slot: TavernActivitySlot in slots:
+		if slot.reservable == slot_reservable:
+			return slot
+
+	return null
 
 
 func is_available_for(customer_type: CustomerType) -> bool:

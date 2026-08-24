@@ -67,6 +67,24 @@ extends Resource
 @export var behaviour: ActivityBehaviour
 
 
+@export_category("Participants")
+
+## How many actors must be participating for this activity to run. 1 for
+## every activity that only ever involves the one customer choosing it
+## (the default, preserving existing behaviour exactly).
+@export_range(1, 4, 1)
+var min_participants: int = 1
+
+## How many actors this activity can involve at once. 1 means solo-only;
+## a value greater than [member min_participants] means the initiator's
+## [member behaviour] may co-opt more participants before starting (see
+## [VisitTavernActivityBehaviour] for how Darts uses 1-2). Not read by
+## [CustomerBrain]/[ActivityRegistry] at all - only by a behaviour that
+## itself knows how to find and start with extra participants.
+@export_range(1, 4, 1)
+var max_participants: int = 1
+
+
 ## Every condition satisfied - a hard "can this even be chosen" gate,
 ## checked before [method get_utility] is ever computed for this activity.
 func is_available(context: ActivityContext) -> bool:

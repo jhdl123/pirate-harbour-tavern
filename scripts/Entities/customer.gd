@@ -1742,8 +1742,8 @@ func _on_activity_use_finished() -> void:
 		if point.money_cost > 0:
 			needs.adjust(&"wealth", -float(point.money_cost))
 
-		if point.activity_id == &"darts":
-			needs.adjust(&"darts_count", 1.0)
+		if not point.repeat_count_need_id.is_empty():
+			needs.adjust(point.repeat_count_need_id, 1.0)
 
 	if _report_manager != null:
 		_report_manager.record_tavern_activity(
