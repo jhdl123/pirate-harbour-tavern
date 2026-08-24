@@ -95,6 +95,12 @@ Non-autoload authorities worth knowing:
 - Tests live in `tests/` as `<name>.gd` + `<name>.tscn` pairs. Run them with
   `godot --headless res://tests/<name>.tscn`. They print `[PASS]`/`[FAIL]` lines
   and end with `RESULT n passed, m failed`.
+- `docs/TEST_MAP.md` maps all 49 tests to the system/area each covers, and
+  says which mappings are verified (already stated elsewhere) versus inferred
+  from the test itself. Use it to pick relevant tests instead of guessing or
+  running everything. `tools/run_tests.ps1` runs one, several, or all tests
+  headlessly with an enforced timeout and a compact per-test result line —
+  see its own `-?`/comment-based help before invoking Godot by hand.
 - **Watch the assertion count, not just the failure count.** A script error
   mid-run can silently skip most assertions while still printing `0 failed`.
 - `godot --headless --check-only --script X.gd` gives false errors for files
@@ -116,6 +122,23 @@ Known baseline results (not regressions):
 - `group_keg_loop_test` — 27/5, and flaky: 27/5, 28/4 and 29/3 have all appeared
   on identical builds. Compare the failure **set**, not the count.
 - `group_keg_ordering_test` — 5 failures, unchanged since `0e1f3f1`.
+
+## Verification levels
+
+Match verification effort to the change; use the lowest sufficient level.
+
+1. **Docs/config/small change** — re-read the diff; check any doc links
+   resolve. No test run needed.
+2. **Local code/behaviour change** — run the relevant test(s) from
+   `docs/TEST_MAP.md`; review the diff.
+3. **Subsystem/feature change** — relevant subsystem tests plus tests for
+   systems it touches indirectly; a diagnostic run if empirical evidence is
+   needed.
+4. **Major milestone/release/baseline** — full suite (`tools\run_tests.ps1
+   -All`), a diagnostic run, and a check that `CURRENT_STATE.md` still holds.
+
+`/review` picks the level for a proposed change; `/verify` and `/commit`
+apply it. Do not default to Level 4 out of caution — that defeats the point.
 
 ## Standard implementation loop
 

@@ -36,6 +36,22 @@ reports. Not part of the normal build loop.
 6. Implement, test, diagnose, report, commit.
 7. Playtest, then return to design discussion if interpretation is needed.
 
+## ChatGPT → Claude Code handoff format
+
+What Claude Code needs from a design discussion — nothing more. Claude Code
+investigates the repository itself; do not pre-explain it.
+
+    Objective            what this should achieve, one or two sentences
+    Desired behaviour    what should happen, from the player's or system's
+                          perspective
+    Constraints          anything ruled out - performance, scope, systems not
+                          to touch, existing decisions to respect
+    Design decisions     choices already made that should not be re-opened
+    Acceptance criteria  how to tell the implementation is actually done
+
+Paste this as the brief to `/feature` (or into plain conversation) — see
+"Workflow commands" below.
+
 ## Standard bug workflow
 
 1. Reproduce.
@@ -83,6 +99,22 @@ focused commit in Git.
 4. `CURRENT_STATE.md` — verified summary.
 5. Other system documentation.
 6. Old chats and `docs/history/` reports — history, not authority.
+
+## Workflow commands
+
+`.claude/commands/` mechanizes the loops above so they don't need restating
+per request:
+
+    /status    repo health - branch, tree, last commits, Godot version
+    /review    inspect a proposed change before editing (step 5 above)
+    /test      run relevant/selected/all tests via tools/run_tests.ps1
+    /verify    pre-merge check at the verification level CLAUDE.md defines
+    /debug     the standard bug workflow above, systematically
+    /feature   take a handoff brief (above) through to a tested change
+    /commit    pre-commit report; never commits without explicit approval
+
+Verification levels are defined in `CLAUDE.md`, not here — `/review` picks
+the level for a change, `/verify` and `/commit` apply it.
 
 ## Claude Code prompt pattern
 
