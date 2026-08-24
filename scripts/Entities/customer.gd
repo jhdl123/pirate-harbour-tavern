@@ -255,6 +255,16 @@ var _social_engagement_gain: float = 0.0
 ## or travelling to/from - null the rest of the time.
 var _current_activity_point: TavernActivityPoint = null
 
+## Which slot on _current_activity_point this customer occupies, when the
+## point has more than one - null means "use the point's default slot 0",
+## which keeps every existing single-slot activity working unchanged.
+var _current_activity_slot: TavernActivitySlot = null
+
+## The other customer sharing this activity (e.g. a two-player darts match),
+## or null when playing/using it alone. Set on both participants -
+## symmetrical, unlike social_partner which only the initiator tracks.
+var _activity_partner: Customer = null
+
 ## Phase 2C: incremented on a failed activity-point journey or a failed
 ## return-to-seat journey, reported in VisitRecord - see
 ## get_diagnostics_snapshot().
@@ -1569,6 +1579,67 @@ func find_nearby_social_partner(range_pixels: float) -> Customer:
 	return best
 
 
+## Whether another customer may co-opt this one into a shared, timed
+## activity (e.g. a darts opponent) right now.
+##
+## Deliberately stricter than is_available_for_social(): that check allows
+## WAITING_TO_ORDER because a passive socialise partner never actually
+## changes state, so a pending order timer can never collide with it. Being
+## invited into darts genuinely moves this customer to MOVING_TO_ACTIVITY,
+## and WAITING_TO_ORDER's own scheduled _on_order_ready() would still fire
+## on top of that - so WAITING_TO_ORDER is excluded here even though
+## is_available_for_social() permits it.
+func is_available_for_activity_invitation() -> bool:
+	if has_group():
+		return (
+			current_state == State.IN_GROUP
+			or current_state == State.RELAXING
+			or current_state == State.SOCIALISING
+		)
+
+	return (
+		current_state == State.RELAXING
+		or current_state == State.SOCIALISING
+	)
+
+
+## Nearest customer available to co-opt as a second participant in a shared
+## activity (e.g. a darts opponent) - same search shape as
+## find_nearby_social_partner(), but filtered by
+## is_available_for_activity_invitation() instead - see its doc comment for
+## why. A group member already counts, since seated_customers includes group
+## members (arrive_at_seat() adds every customer to it before branching on
+## group membership), so this naturally prefers whoever is actually nearby,
+## group or not, with no separate group-first search.
+func find_nearby_activity_partner(range_pixels: float) -> Customer:
+	if not is_inside_tree():
+		return null
+
+	var best: Customer = null
+	var best_distance: float = range_pixels
+
+	for node: Node in get_tree().get_nodes_in_group(&"seated_customers"):
+		var other: Customer = node as Customer
+
+		if (
+			other == null
+			or other == self
+			or not is_instance_valid(other)
+			or not other.is_available_for_activity_invitation()
+		):
+			continue
+
+		var distance: float = global_position.distance_to(
+			other.global_position
+		)
+
+		if distance <= best_distance:
+			best_distance = distance
+			best = other
+
+	return best
+
+
 ## Phase 2C: called on the *partner* by SocialiseAtSeatBehaviour, purely so
 ## something is visibly true about them for debugging/future visuals - see
 ## the class doc comment on this phase's deliberately simple visual goal.
@@ -1685,14 +1756,50 @@ func _on_socialise_finished() -> void:
 ## VisitTavernActivityBehaviour once CustomerBrain has already reserved it.
 ## reserved_chair is left completely untouched - see the class-level note
 ## on chair retention in docs/CUSTOMER_AI_SYSTEM.md's Phase 2C section.
-func begin_visiting_activity(point: TavernActivityPoint) -> void:
+func begin_visiting_activity(
+	point: TavernActivityPoint,
+	slot: TavernActivitySlot = null
+) -> void:
 	_current_activity_point = point
+	_current_activity_slot = slot
+	_activity_partner = null
 	_set_state(State.MOVING_TO_ACTIVITY)
 
 	_travel_to(
-		point.get_use_position(),
+		slot.get_use_position() if slot != null else point.get_use_position(),
 		navigation_arrival_distance,
 		"activity: " + String(point.activity_id)
+	)
+
+
+## Co-opts this customer into an activity someone else already chose and
+## reserved a second slot for - e.g. the second player in a darts match.
+## Unlike begin_socialising()'s passive partner (which never leaves its own
+## state and keeps deciding independently), this customer genuinely
+## transitions to MOVING_TO_ACTIVITY/USING_ACTIVITY the same as the
+## initiator, so existing group bookkeeping (is_group_member_busy(), which
+## reads current_state, not activity) correctly counts it as away, and it
+## returns to its own decision point afterwards exactly like the initiator -
+## see VisitTavernActivityBehaviour's participant search.
+func begin_visiting_activity_as_partner(
+	point: TavernActivityPoint,
+	slot: TavernActivitySlot,
+	definition: ActivityDefinition,
+	initiator: Customer
+) -> void:
+	_current_activity_point = point
+	_current_activity_slot = slot
+	_activity_partner = initiator
+
+	if _brain != null:
+		_brain.assume_activity(definition, slot.reservable)
+
+	_set_state(State.MOVING_TO_ACTIVITY)
+
+	_travel_to(
+		slot.get_use_position(),
+		navigation_arrival_distance,
+		"activity: " + String(point.activity_id) + " (partner)"
 	)
 
 
@@ -1763,6 +1870,8 @@ func _on_activity_use_finished() -> void:
 		_brain.enter_activity(&"return_to_seat")
 	else:
 		_current_activity_point = null
+		_current_activity_slot = null
+		_activity_partner = null
 
 		if _brain != null:
 			_brain.think()
@@ -1776,6 +1885,8 @@ func _on_activity_use_finished() -> void:
 ## sense of heading back to the known-good chair).
 func begin_returning_to_seat() -> void:
 	_current_activity_point = null
+	_current_activity_slot = null
+	_activity_partner = null
 
 	if reserved_chair == null:
 		handle_invalid_destination()
@@ -3290,6 +3401,8 @@ func begin_group_socialise(
 ## to_seat() already branches on group membership.
 func begin_returning_to_group_slot() -> void:
 	_current_activity_point = null
+	_current_activity_slot = null
+	_activity_partner = null
 
 	release_group_activity_reservation()
 
@@ -3322,6 +3435,8 @@ func cancel_group_activity() -> void:
 
 	social_partner = null
 	_current_activity_point = null
+	_current_activity_slot = null
+	_activity_partner = null
 
 	order_icon.visible = false
 	order_icon.modulate = Color.WHITE

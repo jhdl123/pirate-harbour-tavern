@@ -557,6 +557,45 @@ func _enter(
 		definition.behaviour.on_enter(context)
 
 
+## Records that this actor is already participating in [param definition]
+## via [param reservable] - for a co-opted second participant (e.g. a darts
+## partner) who was invited directly rather than choosing this through
+## [method think]/[method _enter]. Deliberately does not call [param
+## definition]'s [member ActivityDefinition.behaviour] - the initiator's
+## own [code]on_enter()[/code] already ran and is what invited this actor;
+## calling it again here would re-run partner search recursively. Only sets
+## the same bookkeeping [method _enter] would have, so this actor's own
+## eventual [method _exit_current] still releases [param reservable] and
+## stamps [member _last_activity_id] correctly, the same as if it had
+## entered normally.
+func assume_activity(
+	definition: ActivityDefinition,
+	reservable: Reservable
+) -> void:
+	_current_activity = definition
+	_current_destination = reservable
+
+	var context: ActivityContext = _build_context()
+
+	_activity_entered_at_minutes = context.world_minutes
+	_activity_target_minutes = definition.roll_duration_minutes(
+		context, _get_rng()
+	)
+
+	if identity != null and identity.visit_intent != null:
+		_activity_target_minutes *= (
+			identity.visit_intent.visit_duration_multiplier
+		)
+
+	CustomerBehaviourEvents.emit_activity_started(
+		identity, definition.activity_id
+	)
+
+	state = State.LEAVING if definition.is_terminal else State.PERFORMING_ACTIVITY
+
+	activity_changed.emit(null, definition)
+
+
 ## Releases whatever destination reservation and behaviour the current
 ## activity holds, without entering a replacement or re-evaluating - for a
 ## caller (Customer, recovering from a failed journey to an activity point)
