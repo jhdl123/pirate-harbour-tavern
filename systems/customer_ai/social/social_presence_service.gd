@@ -184,12 +184,21 @@ func _expire_finished() -> void:
 	for key: String in _conversations:
 		var record: Dictionary = _conversations[key]
 
-		var a: Node = record["a"]
-		var b: Node = record["b"]
+		# Read as untyped Variant first. A freed Node stored in a Dictionary
+		# is a broken reference, and assigning it straight into a Node-typed
+		# variable trips "Trying to assign invalid previously freed instance"
+		# as a script error rather than just failing is_instance_valid() -
+		# fired 110 times in one 2-day run before this fix. Validate on the
+		# untyped Variant, only cast once confirmed alive.
+		var a_raw: Variant = record["a"]
+		var b_raw: Variant = record["b"]
 
-		if not is_instance_valid(a) or not is_instance_valid(b):
+		if not is_instance_valid(a_raw) or not is_instance_valid(b_raw):
 			doomed.append(key)
 			continue
+
+		var a: Node = a_raw
+		var b: Node = b_raw
 
 		# Either party wandering off, being served at the bar, or leaving
 		# ends it naturally.
@@ -476,8 +485,14 @@ func _end(key: String, reason: StringName) -> void:
 
 	_conversations.erase(key)
 
-	var a: Node = record["a"]
-	var b: Node = record["b"]
+	# Same freed-instance hazard as _expire_finished(): this can be reached
+	# for a key doomed because a participant was already freed, so a and b
+	# must be validated before they are cast to Node.
+	var a_raw: Variant = record["a"]
+	var b_raw: Variant = record["b"]
+
+	var a: Node = a_raw if is_instance_valid(a_raw) else null
+	var b: Node = b_raw if is_instance_valid(b_raw) else null
 
 	var now: float = WorldTime.get_total_minutes()
 	var duration: float = now - float(record["started_at_minutes"])

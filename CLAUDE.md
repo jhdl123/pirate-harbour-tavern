@@ -122,6 +122,22 @@ Known baseline results (not regressions):
 - `group_keg_loop_test` — 27/5, and flaky: 27/5, 28/4 and 29/3 have all appeared
   on identical builds. Compare the failure **set**, not the count.
 - `group_keg_ordering_test` — 5 failures, unchanged since `0e1f3f1`.
+- `group_live_test` — 18/5, all five explained: the SEATED sub-test hits the
+  same `standing_places_only` cause as `group_framework_test`, and that
+  redirected group leaving standing capacity occupied cascades into the
+  STANDING and VISIT sub-tests that run after it in the same live scene
+  (neither sub-test waits for real navigation/departure time before
+  checking). Not a live gameplay bug; the test predates `standing_places_only`
+  defaulting `true` and the three sub-tests were never made independent of
+  each other's leftover state.
+- `navigation_stress_test` — flaky, no numeric baseline yet: clean PASS 25/0
+  and FAIL 24/1 ("2 of 3 travelling actors stuck") have both been observed on
+  the same build. Needs several back-to-back runs to establish a range, the
+  same treatment as `group_keg_loop_test`.
+- `phase_4a_integration_test` — its `DOUBLE: two payments in one frame`
+  check is flaky (observed both passing and failing across identical-build
+  reruns); no plausible cause identified yet and nothing in this pass's
+  changes touches payment recording, so treat as pre-existing until traced.
 
 ## Verification levels
 

@@ -49,5 +49,12 @@ var maximum_spawn_delay_minutes: int = 10
 @export var show_item_debug_messages: bool = false
 
 @export var disable_patience: bool = false
+
+## Skips scheduling both the hard visit-length departure and the Phase A
+## leave-decision window. For a harness that fast-forwards world time to
+## isolate one subsystem, same rationale as disable_patience: test the
+## subsystem, not the visit clock racing it.
+@export var disable_visit_timer: bool = false
+
 @export var disable_broken_glass: bool = false
 @export var ignore_customer_limit: bool = false

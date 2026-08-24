@@ -234,9 +234,10 @@ static func format_summary(report: Dictionary) -> String:
 	lines.append("=== Navigation Report ===")
 	lines.append("Actors sampled: %d" % report["actors_sampled"])
 	lines.append(
-		"Path efficiency: %.2f  (~1.0 clean, >1.6 investigate;"
-		+ " slightly under 1.0 is the arrival radius, not a fault)"
-		% report["path_efficiency"]
+		(
+			"Path efficiency: %.2f  (~1.0 clean, >1.6 investigate;"
+			+ " slightly under 1.0 is the arrival radius, not a fault)"
+		) % report["path_efficiency"]
 	)
 	lines.append(
 		"Journeys: %d completed, %d failed"

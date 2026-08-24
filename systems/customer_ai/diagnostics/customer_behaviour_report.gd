@@ -268,7 +268,11 @@ func build_report() -> Dictionary:
 
 		var reason: String = String(visit["departure_reason"])
 
-		if reason == "patience" or reason == "patience_expired":
+		if (
+			reason == "patience"
+			or reason == "patience_expired"
+			or reason == "repeated_neglect"
+		):
 			patience_departures += 1
 		elif not reason.is_empty():
 			voluntary_departures += 1

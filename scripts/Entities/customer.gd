@@ -1339,41 +1339,53 @@ func arrive_at_seat() -> void:
 		# walking to the table never eats into the intended visit length.
 		needs.start_visit_clock(WorldTime.get_total_minutes())
 
-		_visit_time_event = WorldTime.schedule_in(
-			maxi(1, roundi(needs.visit_duration_minutes)),
-			_on_visit_time_expired,
-			&"customer_visit_time"
+		# Testing: mirrors disable_patience. A harness that fast-forwards
+		# world time to exercise one subsystem (e.g. phase_3a_harness testing
+		# the staff serve loop) can otherwise have a short-visit customer type
+		# (Local Worker: 12-30 world minutes, since Phase A's per-type bands)
+		# run out of intended visit time before a single scripted worker
+		# finishes serving it - failing on the visit clock racing the
+		# scenario, not on anything the harness is actually there to test.
+		var visit_timer_disabled: bool = (
+			game_config != null and game_config.disable_visit_timer
 		)
 
-		# Phase A: give the customer a chance to DECIDE to leave before the
-		# hard timer decides for it.
-		#
-		# leave.tres gains an end-of-visit pressure bonus over the final
-		# stretch of a visit, which should let leaving out-score relaxing and
-		# socialising near the end. It almost never did: think() only runs at
-		# lifecycle points, so a customer part-way through a six-minute
-		# socialise commitment does not re-evaluate at all during that window,
-		# and _on_visit_time_expired() fires first. The result was 4 chosen
-		# departures against 23 timed-out ones - the brief wants people
-		# leaving because they are done, not because a clock went off.
-		#
-		# One scheduled think() when the window opens is enough to fix that,
-		# and it stays event-driven rather than polling every customer.
-		var pressure_window: int = 30
-
-		if _balance_config != null:
-			pressure_window = _balance_config.leave_decision_window_minutes
-
-		var consider_at: int = roundi(
-			needs.visit_duration_minutes
-		) - pressure_window
-
-		if consider_at > 0:
-			_leave_decision_event = WorldTime.schedule_in(
-				consider_at,
-				_on_leave_decision_window_opened,
-				&"customer_leave_decision"
+		if not visit_timer_disabled:
+			_visit_time_event = WorldTime.schedule_in(
+				maxi(1, roundi(needs.visit_duration_minutes)),
+				_on_visit_time_expired,
+				&"customer_visit_time"
 			)
+
+			# Phase A: give the customer a chance to DECIDE to leave before the
+			# hard timer decides for it.
+			#
+			# leave.tres gains an end-of-visit pressure bonus over the final
+			# stretch of a visit, which should let leaving out-score relaxing and
+			# socialising near the end. It almost never did: think() only runs at
+			# lifecycle points, so a customer part-way through a six-minute
+			# socialise commitment does not re-evaluate at all during that window,
+			# and _on_visit_time_expired() fires first. The result was 4 chosen
+			# departures against 23 timed-out ones - the brief wants people
+			# leaving because they are done, not because a clock went off.
+			#
+			# One scheduled think() when the window opens is enough to fix that,
+			# and it stays event-driven rather than polling every customer.
+			var pressure_window: int = 30
+
+			if _balance_config != null:
+				pressure_window = _balance_config.leave_decision_window_minutes
+
+			var consider_at: int = roundi(
+				needs.visit_duration_minutes
+			) - pressure_window
+
+			if consider_at > 0:
+				_leave_decision_event = WorldTime.schedule_in(
+					consider_at,
+					_on_leave_decision_window_opened,
+					&"customer_leave_decision"
+				)
 
 	if _brain != null:
 		# A freshly seated customer always wants to order today - there is no
@@ -1833,6 +1845,29 @@ func _on_leave_decision_window_opened() -> void:
 	):
 		return
 
+	var step: int = 10
+
+	if _balance_config != null:
+		step = maxi(1, _balance_config.leave_decision_recheck_minutes)
+
+	# A customer already waiting on a placed order must not be pulled into
+	# some other activity by this. think() is unscoped competitive scoring,
+	# not "leave or keep doing exactly what you are doing" - it can enter
+	# anything in the registry, and only leave.tres itself carries the
+	# not_currently_ordering guard. Bug found via phase_3a_harness: this call
+	# was winning &"return_to_seat" for a customer mid-order, which abandoned
+	# a drink already placed in the service slot for it. Deferring instead of
+	# skipping outright means the decision point still happens once the order
+	# resolves, rather than being lost for the rest of the visit.
+	if is_awaiting_service():
+		_leave_decision_event = WorldTime.schedule_in(
+			step,
+			_on_leave_decision_window_opened,
+			&"customer_leave_decision"
+		)
+
+		return
+
 	# Deliberately a normal think(), not force_activity(). The customer is
 	# being given the OPPORTUNITY to decide it is done, weighed against
 	# everything else it could be doing - it is not being told to go. If
@@ -1859,11 +1894,6 @@ func _on_leave_decision_window_opened() -> void:
 
 	if remaining <= 1.0:
 		return
-
-	var step: int = 10
-
-	if _balance_config != null:
-		step = maxi(1, _balance_config.leave_decision_recheck_minutes)
 
 	if remaining <= float(step):
 		return

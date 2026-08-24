@@ -250,7 +250,7 @@ func _on_customer_departed(
 		return
 
 	match reason:
-		&"patience_expired":
+		&"patience_expired", &"repeated_neglect":
 			_stats().record_customer_lost(&"patience")
 
 		&"no_seating":

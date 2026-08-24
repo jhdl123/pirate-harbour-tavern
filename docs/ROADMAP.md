@@ -32,9 +32,16 @@ bought. That is the point at which this becomes a game worth showing someone.
 
 Before more features:
 
-- `DeliverGroupKegExecutor` validity check (worker stranded holding a keg).
-- Task cancellation rate (24–35%).
-- Group activity participation at 0.0%.
+- `DeliverGroupKegExecutor` validity check - status unclear, see
+  `CURRENT_STATE.md`'s Groups section; needs a live repro either way.
+- Task cancellation and group success, both re-measured worse than the
+  figures on record (see `CURRENT_STATE.md`) - re-measure at 1x speed
+  specifically, since speed itself moved these numbers a lot in every test
+  run so far.
+- Group activity participation at 0.0% - the code fix for this is likely
+  already in (see `CURRENT_STATE.md`), just never confirmed by a number.
+  Add `activity_participation_rate_percent` to an exported report so it can
+  be checked at all.
 - Behind-bar walkable strip too narrow for staff to hold position (level fix).
 - Call `record_stock_event()` from delivery and withdrawal so the diagnostic
   stock log stops being empty.

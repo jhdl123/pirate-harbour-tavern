@@ -1,0 +1,63 @@
+STAFF REPORT
+
+Tasks: 12 open, 188 done, 0 failed. Alerts: 5 active. Issues: 2.
+
+NAVIGATION TROUBLE BY DESTINATION
+
+tavern_hand_01
+  state           IDLE
+  carrying        
+  busy            25.6%  (119.5s working, 347.1s idle)
+  walking         28.9% of run  (135.0s)
+  tasks done      59
+      clean_seat                 24
+      deliver_group_keg          2
+      serve_drink                33
+  can do          serve_drinks, clean_seats, deliver_group_kegs
+  no work found   179 times
+  stuck           11
+  nav failures    0
+  recoveries      7
+    chairTop                       stuck 2, failed 0
+    chairBottom                    stuck 1, failed 0
+    group group_94321211           stuck 1, failed 0
+    Merchant39                     stuck 1, failed 0
+    BarCounter slot 1              stuck 4, failed 0
+    BarCounter slot 2              stuck 2, failed 0
+
+bartender_02
+  state           IDLE
+  carrying        
+  busy            37.8%  (176.3s working, 290.3s idle)
+  walking         41.8% of run  (195.2s)
+  tasks done      62
+      prepare_drink              62
+  can do          prepare_drinks, refill_stations
+  no work found   12 times
+  stuck           3
+  nav failures    0
+  recoveries      9
+    bar slot 1 (deposit side)      stuck 1, failed 0
+    Small Beer Station             stuck 2, failed 0
+
+tavern_hand_03
+  state           IDLE
+  carrying        
+  busy            29.9%  (139.4s working, 327.2s idle)
+  walking         33.5% of run  (156.2s)
+  tasks done      67
+      clean_seat                 26
+      deliver_group_keg          4
+      serve_drink                37
+  can do          serve_drinks, clean_seats, deliver_group_kegs
+  no work found   31 times
+  stuck           9
+  nav failures    0
+  recoveries      5
+    chairLeft                      stuck 1, failed 0
+    chairTop                       stuck 2, failed 0
+    BarCounter slot 1              stuck 2, failed 0
+    BarCounter slot 0              stuck 1, failed 0
+    Pirate58                       stuck 1, failed 0
+    Sailor69                       stuck 1, failed 0
+    ImpatientSailor79              stuck 1, failed 0

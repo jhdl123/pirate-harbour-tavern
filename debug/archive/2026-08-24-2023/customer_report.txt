@@ -1,0 +1,68 @@
+CUSTOMER REPORT
+
+customers_spawned        129
+completed_visits         121
+total_drinks_ordered     188
+total_drinks_consumed    91
+tasks_created            391
+tasks_completed          188
+tasks_cancelled          191
+
+VISIT OUTCOMES
+
+  active at report time   8
+  game minutes elapsed    1866.0
+  peak active customers   15
+
+  DEPARTURE REASON
+    chose to leave        19
+    visit time ended      46
+    out of patience       8
+    other forced          48
+      (out of money, tavern closing, group departure)
+    ---
+    not a free choice     102  (the three above)
+
+REALISED VISIT LENGTH (game minutes actually stayed)
+
+                  count      min   median     mean      max
+  all visits        121      0.0     66.0     69.5    183.0
+  stayed            113      0.0     63.0     67.5    183.0
+  gave up             8     65.0    110.0     98.3    135.0
+
+  'stayed' = ran their visit out or left with their group.
+  'gave up' = patience expired. Compare its mean against
+  'stayed' - a large gap means churn is service, not design.
+
+LINGERING AND ACTIVITY
+  relax activities        27
+  socialise activities    13
+  tavern activities       3
+  failed activity starts  0
+  reservation failures    0
+  return-to-seat failures 0
+
+SOLO CUSTOMERS
+
+  completed visits        74
+  drinks ordered          177
+  drinks served           67
+  service rate            37.9%
+  patience departures     8 (10.8%)
+
+GROUPS
+
+  total groups            16
+  successful              6 (37.5%)
+  without drinks          10
+  with activities         0 (0.0%)
+  members                 47
+  members who drank       16 (34.0%)
+  slot recoveries         21 (1.3 per group)
+
+TASK CANCELLATION REASONS
+
+  no_longer_required             113
+  customer_no_longer_waiting     78
+
+Full per-visit detail remains in the JSON export (Export Customer AI Report).

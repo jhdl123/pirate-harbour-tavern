@@ -3,22 +3,22 @@
 ## Version
 
 Date: 2026-08-24
-Time: 21:56:01
+Time: 20:23:58
 Git branch: main
 Git commit: d51e6c801943b9992cf271ed8395f63346aea557
 Git short commit: d51e6c8
 Game version: 0.1.0-dev
-Diagnostic run ID: 2026-08-24-2156
+Diagnostic run ID: 2026-08-24-2023
 
 ## Test
 
 Test purpose: (not set)
-Duration: 6 min 27 sec
-Days: 2
+Duration: 5 min 4 sec
+Days: 3
 
 ## Overall Result
 
-WARN
+FAIL
 
 ## Systems
 
@@ -32,27 +32,26 @@ WARN
 | Restocking | PASS |  |
 | Bar | PASS |  |
 | Customers | PASS |  |
-| Staff | WARN | 39 stuck recoveries |
-| Groups | WARN | 60.0% group success |
+| Staff | WARN | 23 stuck recoveries |
+| Groups | FAIL | 37.5% group success |
 
 ## Critical Failures
 
-None.
+1. Groups — 37.5% group success
 
 ## Warnings
 
-1. Staff — 39 stuck recoveries
-2. Groups — 60.0% group success
+1. Staff — 23 stuck recoveries
 
 ## Key Metrics
 
-customers_spawned: 79
-completed_visits: 79
-total_drinks_ordered: 82
-total_drinks_consumed: 97
-tasks_created: 234
-tasks_completed: 163
-tasks_cancelled: 67
+customers_spawned: 129
+completed_visits: 121
+total_drinks_ordered: 188
+total_drinks_consumed: 91
+tasks_created: 391
+tasks_completed: 188
+tasks_cancelled: 191
 
 ## Drink Chain Results
 

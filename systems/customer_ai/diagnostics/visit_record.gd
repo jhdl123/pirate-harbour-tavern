@@ -56,11 +56,13 @@ var recent_activity_history: Array[String] = []
 var chair_id: String = ""
 var kept_same_chair_for_visit: bool = true
 
-## &"" while still active. One of &"patience_expired", &"visit_time_expired",
-## &"utility_decision", &"out_of_money", or &"unknown" once departed - see
-## Customer.departure_reason.
+## &"" while still active. One of &"patience_expired", &"repeated_neglect",
+## &"visit_time_expired", &"utility_decision", &"out_of_money", or &"unknown"
+## once departed - see Customer.departure_reason.
 var departure_reason: StringName = &""
 
+## True for &"repeated_neglect" as well as the legacy &"patience_expired" -
+## both are "gave up waiting to be served", just at different strike counts.
 var patience_expired: bool = false
 var visit_time_expired: bool = false
 var maximum_drinks_reached: bool = false

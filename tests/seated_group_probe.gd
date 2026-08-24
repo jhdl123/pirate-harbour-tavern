@@ -101,6 +101,14 @@ func _run(size: int) -> void:
 		await get_tree().create_timer(0.5).timeout
 		elapsed += 0.5
 
+		# The group can finish and free itself during the await above, so
+		# validity must be re-checked here too - the loop guard alone only
+		# proved it was valid before waiting. Fired as a real "Trying to
+		# assign invalid previously freed instance" script error in
+		# practice, not just a theoretical race.
+		if not is_instance_valid(group):
+			break
+
 		var diagnostics: Dictionary = group.get_diagnostics()
 		var state: String = String(diagnostics.get("state", ""))
 

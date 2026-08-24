@@ -438,7 +438,7 @@ func record_departure(
 	_active_customer_ids.erase(customer_id)
 
 	match reason:
-		&"patience_expired":
+		&"patience_expired", &"repeated_neglect":
 			_total_patience_departures += 1
 			_total_forced_departures += 1
 		&"visit_time_expired":
@@ -465,7 +465,9 @@ func record_departure(
 	record.departure_game_time_minutes = WorldTime.get_total_minutes()
 	record.is_completed = true
 	record.departure_reason = reason
-	record.patience_expired = (reason == &"patience_expired")
+	record.patience_expired = (
+		reason == &"patience_expired" or reason == &"repeated_neglect"
+	)
 	record.visit_time_expired = (reason == &"visit_time_expired")
 	record.maximum_drinks_reached = maximum_drinks_reached
 	record.ending_money = ending_money
@@ -819,7 +821,14 @@ func _build_balance_summary(
 			solo_orders += int(visit.get("drinks_ordered", 0))
 			solo_served += int(visit.get("drinks_served", 0))
 
-			if String(visit.get("departure_reason", "")) == "patience_expired":
+			var solo_departure_reason: String = String(
+				visit.get("departure_reason", "")
+			)
+
+			if (
+				solo_departure_reason == "patience_expired"
+				or solo_departure_reason == "repeated_neglect"
+			):
 				solo_patience_departures += 1
 
 			continue

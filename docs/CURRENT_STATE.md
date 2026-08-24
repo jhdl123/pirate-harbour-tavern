@@ -20,11 +20,17 @@ Repository: `jhdl123/pirate-harbour-tavern` · Godot **4.7.1**
 
 ## Core loop
 
-**Verified.** Spawning, entrance, navigation, seating and reservation, ordering,
-waiting, drink delivery, drinking, payment, departure and cleaning all run
-unattended for a full simulated day. The most recent committed diagnostic run
-(`debug/latest/`, commit `10dbfff`, 2 game days) reports every system PASS and
-all orderable drinks passing the full service chain.
+**Verified for solo customers.** Spawning, entrance, navigation, seating and
+reservation, ordering, waiting, drink delivery, drinking, payment, departure
+and cleaning all run unattended for a full simulated day. A fresh 3-day
+diagnostic run (`debug/archive/2026-08-24-2023/`, commit `d51e6c8`) reports
+Drinks/Stations/Ordering/Delivery/Storage/Restocking/Bar/Customers/Staff all
+PASS and all orderable drinks passing the full service chain - the same
+result the prior baseline (`debug/archive/2026-08-19-1514/`, commit
+`10dbfff`, 2 game days) showed, so the solo-customer core loop survived the
+undocumented Phase A customer AI change (see the Customer AI section below)
+intact. **Groups did not** - that same fresh run FAILs on group success; see
+the Groups section.
 
 Breakage handling exists (`CleaningTask`, break-chance on `DrinkDefinition`) —
 **built, lightly tested**.
@@ -63,16 +69,49 @@ scheduling. `Tavern` owns the day lifecycle; `TavernSchedule` and
 ### Groups — Verified
 `CustomerGroup`, `GroupManager`, `GroupOrderService`, `GroupKegStockService`,
 `DeliverGroupKegExecutor`, shared table cask ordering, leader-pays payment.
-Recent runs show 66–83% group success.
-**Known bug:** `DeliverGroupKegExecutor` has no validity check, so a worker
-keeps a task whose group has left and stands holding the keg indefinitely.
+The 66–83% group success figure is stale: a fresh 3-day run at commit
+`d51e6c8` (2026-08-24, `debug/archive/2026-08-24-2023/`) measured 37.5% at
+the game's own maximum player speed (4x). Speed matters a lot here — the
+same scenario at an unsupported 8x (no player can select this;
+`GameTimeConfig.available_speed_multipliers` tops out at 4.0) measured
+27–35%, because `WorldTime.set_speed()` only scales the world clock, not
+staff movement or `ActionDefinition` durations, so world-clock deadlines
+outrun real-time-paced service the higher the speed goes. True 1x-speed
+group success is still unmeasured; re-run before trusting any single number
+here.
+**`DeliverGroupKegExecutor` bug status unclear:** the code currently reads
+`_find_group()` every step and fails the task with `group_no_longer_waiting`
+if the group is gone, recovering the carried keg through the normal
+carried-item policy - this looks like it already handles the "group left
+mid-delivery" case the known-bug note below describes, and the file hasn't
+changed since 2026-08-06. Neither confirmed fixed (no live repro attempted)
+nor confirmed still broken - the note is kept until one or the other is
+demonstrated.
 
 ### Staff and tasks — Verified
 `TaskBoard` autoload, `TavernTask`, `StaffMember`, `StaffCapabilities`,
 executors, viability scoring, carried-item recovery with bounded attempts and a
 terminal give-up. Two roles: Tavern Hand (serve, clean, deliver group kegs) and
 Bartender (prepare, deposit, refill).
-**Open concern:** task cancellation ran 24–35% in recent runs.
+**Open concern:** the 24–35% task cancellation figure is stale for the same
+reason as group success above - the same fresh run measured 48.9% at 4x
+speed (was 90%+ at the unsupported 8x tested first). Re-measure at 1x before
+treating either number as current.
+
+### Customer AI — visit duration and departure (Phase A, undocumented until now)
+Customer types can carry a per-type visit-duration band
+(`CustomerType.visit_duration_minimum_minutes` / `_maximum_minutes`, 0 means
+"use the global range") so a quick-pint type and an all-night type are
+distinct populations rather than one stretched curve. A "leave decision
+window" (`CustomerAIBalanceConfig.leave_decision_window_minutes`, default 30)
+schedules one extra `think()` before the hard visit timer, giving the
+customer a real chance to choose to leave rather than always being timed out.
+Patience no longer ejects a customer on one slow serve: it takes
+`abandoned_orders_before_leaving` (default 3) misses before the departure
+reason becomes `&"repeated_neglect"` (`&"patience_expired"` is no longer
+ever assigned). This shipped in commit `4923617` without a commit-message
+disclosure or a doc entry; two bugs were found and fixed against it this
+pass (see Known issues).
 
 ### Beverage, stock and delivery — Verified
 `BeverageRegistry`, `ContainerDefinition`, `ServingFormatDefinition`,
@@ -117,9 +156,11 @@ factions · weather · save/load.
 
 ## Known issues
 
-1. `DeliverGroupKegExecutor` has no validity check — worker stranded holding a
-   keg when its group leaves.
-2. Task cancellation 24–35%.
+1. `DeliverGroupKegExecutor` validity-check status unclear — see the Groups
+   section above. Not confirmed broken, not confirmed fixed.
+2. Task cancellation and group success are both worse at the game's own
+   maximum speed (4x) than the stale 24–35% / 66–83% figures on record, and
+   unmeasured at 1x. See the Groups and Staff sections above.
 3. Most drink stations resolve their approach point to the customer side,
    because the walkable strip behind them is ~8px — narrower than the ~12px an
    actor needs to hold position. A level fix, not a code fix.
@@ -128,7 +169,16 @@ factions · weather · save/load.
 5. Sprite gaps: bottled drinks use an 8×16 bottle when full but a 16×16 wine mug
    when empty or broken; Cider, Small Beer and Ale share one mug sprite. Both
    need art, not code.
-6. Group activity participation reads 0.0%.
+6. Group activity participation reading 0.0% is likely already stale: commit
+   `a6b6b38` (2026-08-19, before the commit this file was last reconciled
+   against) fixed both causes its own comments describe
+   (`allow_activities_while_drinking` now defaults `true`;
+   `is_settled` now includes `IN_GROUP`). Never re-measured -
+   `activity_participation_rate_percent` isn't printed in any exported
+   report file (checked `drinks_report.txt`, `customer_report.txt`,
+   `system_diagnostics.txt`, `staff_report.txt` on a fresh run), so
+   confirming this needs either reading the exporter's in-memory dictionary
+   directly or adding it to a report.
 7. `grog` and `kill_devil` are two `DrinkDefinition`s sharing one content id —
    unreconciled duplication.
 8. Pre-existing GDScript warnings (shadowed names, integer division, unused

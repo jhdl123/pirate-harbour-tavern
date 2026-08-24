@@ -47,9 +47,12 @@ func _ready() -> void:
 	add_child(_main)
 
 	# Fast-forward a little so customers reach the ordering state in a few real
-	# seconds, and switch patience off. Patience is measured in world minutes,
-	# so at any speed above 1x it expires faster than a worker can physically
-	# walk across the room - which would test the clock, not the staff system.
+	# seconds, and switch patience and the visit clock off. Both are measured
+	# in world minutes, so at any speed above 1x they run out faster than a
+	# worker can physically walk across the room - which would test the
+	# clock, not the staff system. (Confirmed on a short-visit type: Local
+	# Worker's 12-30 minute Phase A band ran out mid-scenario often enough to
+	# fail step 5 before disable_visit_timer existed.)
 	WorldTime.set_speed(3.0)
 
 	var manager: Node = _main.get_node_or_null("Managers/GameManager")
@@ -59,6 +62,7 @@ func _ready() -> void:
 
 		if config != null:
 			config.disable_patience = true
+			config.disable_visit_timer = true
 
 
 func _process(

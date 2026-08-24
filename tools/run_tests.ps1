@@ -210,6 +210,20 @@ foreach ($name in $namesToRun) {
     $result.Seconds = [math]::Round($stopwatch.Elapsed.TotalSeconds, 1)
 
     if (-not $exited) {
+        # taskkill /T kills the whole process tree rooted at $proc.Id, not
+        # just that one PID. Needed because -GodotPath can resolve to a
+        # .cmd/.bat shim (as it does on a machine with no "godot" on PATH):
+        # Start-Process then tracks the launcher's PID, and a plain
+        # Stop-Process on timeout kills the shim while its real Godot engine
+        # child keeps running - orphaned, invisible to this script, and
+        # still burning CPU for every test that runs after it. Confirmed by
+        # a stress audit: nine such orphans survived a "Killed after 90s"
+        # verdict and one had over 1500 CPU-seconds by the time it was
+        # found, which is enough background load to push unrelated later
+        # tests past their own timeout too.
+        try {
+            & taskkill /PID $proc.Id /T /F 2>$null | Out-Null
+        } catch {}
         try { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } catch {}
         $result.Status = "TIMEOUT"
         $result.Note = "Killed after ${TimeoutSeconds}s (no exit)"
