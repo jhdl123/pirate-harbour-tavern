@@ -35,6 +35,8 @@ metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
 [resource]
 script = ExtResource("1_script")
+visit_duration_minimum_minutes = 60
+visit_duration_maximum_minutes = 160
 display_name = "Pirate"
 customer_texture = ExtResource("5_tex")
 spawn_weight = 5.0

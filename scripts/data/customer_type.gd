@@ -278,6 +278,27 @@ var conversation_join_willingness: float = 0.5
 @export_range(0.1, 3.0, 0.05)
 var conversation_duration_multiplier: float = 1.0
 
+## Shortest intended visit for this type, in world minutes. 0 means "use
+## CustomerAIBalanceConfig's global range".
+##
+## Phase A: a single global 20-90 range scaled by a per-personality multiplier
+## produced exactly one central band with a tail - realised lengths came out
+## min 29 / median 61 / max 156 with no short-visit population at all. A bar
+## wants distinct populations, not one curve: a dock worker in for a quick pint
+## and a pirate who stays all night are different KINDS of visit, and a
+## multiplier on a shared range cannot express that because it stretches both
+## ends together.
+##
+## Set both this and visit_duration_maximum_minutes to give a type its own
+## band. The personality multiplier still applies on top, so individuals inside
+## a type still vary.
+@export var visit_duration_minimum_minutes: int = 0
+
+## Longest intended visit for this type, in world minutes. 0 means "use
+## CustomerAIBalanceConfig's global range". See
+## visit_duration_minimum_minutes.
+@export var visit_duration_maximum_minutes: int = 0
+
 ## How strongly this type sticks to their own group socially.
 @export_range(0.0, 1.0, 0.05)
 var group_social_preference: float = 0.6

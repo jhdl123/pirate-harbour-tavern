@@ -1,0 +1,157 @@
+# Pirate Harbour Tavern — AI Working Instructions
+
+## Project
+
+Godot **4.7.1** 2D tavern management simulation set in a pirate/Caribbean port.
+
+The intended experience is a believable tavern, not a fast-food service line.
+Customers should spend meaningful time in the tavern, socialise, drink, join
+activities, and create an evolving management problem for the player.
+
+## Source of truth
+
+The Git repository is authoritative for what is implemented. Do not rely on
+remembered code, old chat context, ZIPs or pasted files when the repository can
+answer the question.
+
+Project-memory layer, in the order to consult it:
+
+| File | Holds |
+|---|---|
+| `CLAUDE.md` | this operating manual |
+| `docs/CURRENT_STATE.md` | verified implementation status per system |
+| `docs/DECISIONS.md` | durable decisions not to re-litigate |
+| `docs/GAME_DESIGN.md` | intended experience and design principles |
+| `docs/ROADMAP.md` | agreed future work |
+| `docs/AI_WORKFLOW.md` | how ChatGPT / Claude Code / Git / Godot fit together |
+| `docs/LEARNING_LOG.md` | Godot concepts learned + durable development lessons |
+| `docs/ARCHITECTURE.md` | system ownership and data flow |
+| `docs/CONFIGURATION_GUIDE.md` | where balance values live |
+
+System-specific docs (`ITEM_SYSTEM`, `NAVIGATION_SYSTEM`, `STAFF_TASK_SYSTEM`,
+`BEVERAGE_FRAMEWORK`, `CUSTOMER_AI_SYSTEM`, `GROUP_FRAMEWORK`,
+`INTERACTION_SYSTEM`, `SIMULATION_SYSTEM`, `COMMUNICATION_SYSTEM`) — read only
+when working in that system.
+
+The `PHASE_*.md` and `GROUP_*.md` files in the repository root are historical
+change reports. They record what a past pass did, not necessarily current state.
+Treat them as history; prefer `CURRENT_STATE.md`.
+
+## Architecture anchors
+
+Autoloads (from `project.godot`) are the authoritative owners:
+
+| Concern | Owner |
+|---|---|
+| Simulation state | `Simulation` — `systems/simulation/simulation_controller.tscn` |
+| World time / scheduling | `WorldTime` — `systems/time/world_time.tscn` |
+| Staff work | `TaskBoard` — `systems/staff/tasks/tavern_task_service.gd` |
+| Notifications / alerts | `Comms` — `systems/communication/communication_service.gd` |
+| Stacking modifiers | `Modifiers` — `systems/modifiers/modifier_service.gd` |
+| Day lifecycle | `Tavern` — `systems/tavern/tavern_lifecycle.gd` |
+| Customer behaviour events | `CustomerBehaviourEvents` |
+| Interaction menus | `InteractionMenu` |
+
+Scene-level owners (in `main.tscn` under `Managers`):
+
+| Concern | Owner |
+|---|---|
+| Money | `EconomyManager` |
+| Customer spawning / roster | `GameManager` (`customer_types`) |
+| Orders and deliveries | `OrderManager` |
+| Beverage stock (abstract) | `Cellar` (`BeverageStorage`) |
+| Task creation | `TavernTaskCoordinator` |
+| Diagnostics | `CustomerAIReportManager`, `StaffReportManager`, `DiagnosticRunExporter` |
+
+Non-autoload authorities worth knowing:
+
+- **Item movement** — `ItemTransferService`; never mutate slots directly.
+- **Navigation projection** — `NavigationService.project_to_mesh_from()`.
+- **Station → stock mapping** — `StationStockPlan`, derived from beverage
+  content, never from a hand-set `refill_item`.
+- **Physical stock display** — `StockedDisplay` observes storage; it is a view,
+  never an inventory.
+
+## Working rules
+
+1. Inspect before editing.
+2. For non-trivial work, identify affected systems and propose the approach
+   before broad edits.
+3. Prefer the smallest coherent change that solves the actual problem.
+4. Do not modify unrelated systems.
+5. Preserve the data-driven architecture.
+6. Reuse existing frameworks rather than creating parallel ones.
+7. Important state has one authoritative owner.
+8. Player and staff use the same gameplay APIs where mechanics are shared.
+9. Do not solve navigation problems by disabling navigation or avoidance.
+10. World progression uses `WorldTime`, not ad-hoc timers.
+11. Items move through `ItemTransferService`.
+12. Use the generic interaction framework, not object-specific player searches.
+13. Do not rename stable IDs used by resources or save data.
+14. UI observes gameplay state; it does not own it.
+
+## Testing and evidence
+
+- Tests live in `tests/` as `<name>.gd` + `<name>.tscn` pairs. Run them with
+  `godot --headless res://tests/<name>.tscn`. They print `[PASS]`/`[FAIL]` lines
+  and end with `RESULT n passed, m failed`.
+- **Watch the assertion count, not just the failure count.** A script error
+  mid-run can silently skip most assertions while still printing `0 failed`.
+- `godot --headless --check-only --script X.gd` gives false errors for files
+  using `class_name`. Only `--headless --editor --quit` is authoritative for
+  compilation.
+- `godot --headless --import` is what populates `.godot/imported`. Run it first
+  on a fresh clone or textures fail to load.
+- Do not call behaviour broken from one short run without checking stock,
+  staffing, run length, spawning and sample size.
+- Use comparable run lengths when comparing.
+- If a tuning change produces no meaningful movement twice, instrument instead
+  of tuning again.
+- State what evidence supports a conclusion and what would falsify it.
+
+Known baseline results (not regressions):
+
+- `group_framework_test` — 2 failures, both SEATED cases, expected while
+  `standing_places_only` is on.
+- `group_keg_loop_test` — 27/5, and flaky: 27/5, 28/4 and 29/3 have all appeared
+  on identical builds. Compare the failure **set**, not the count.
+- `group_keg_ordering_test` — 5 failures, unchanged since `0e1f3f1`.
+
+## Standard implementation loop
+
+1. Read this file and the relevant documentation.
+2. Inspect the current implementation.
+3. Identify intended behaviour and affected systems.
+4. Implement the smallest coherent change.
+5. Run targeted tests, then relevant regressions.
+6. Run diagnostics when empirical evidence is required.
+7. Report changed files, tests, results and remaining uncertainty.
+8. Commit a focused change.
+
+## Diagnostics
+
+Press **F10** in a debug build → **Export Diagnostic Run**. This writes
+`debug/latest/` and `debug/archive/YYYY-MM-DD-HHMM/`, each stamped with the Git
+commit that produced it. Review order: `RUN_SUMMARY.md`, `drinks_report.txt`,
+`stock_report.txt`, `staff_report.txt`, `customer_report.txt`,
+`system_diagnostics.txt`. See `debug/README.md`.
+
+A startup navigation scan runs in debug builds and prints either
+`NAVIGATION SCAN: all seats, slots and props are approachable` or a FAIL line
+per misplaced marker.
+
+## Git discipline
+
+- Start from a clean, committed state.
+- Use feature branches for significant work.
+- Keep commits focused and descriptive.
+- **Never use `git stash` as the only protection for uncommitted work** — it has
+  silently shelved an entire session's changes on this project.
+- Preserve unrelated user changes; re-patch rather than overwrite files the
+  developer has edited.
+- Prefer direct repository work over ZIP handoffs when repository access exists.
+
+## Documentation discipline
+
+Document durable facts, design intent, decisions, verified state and lessons.
+Do not duplicate the code. Do not record speculation as implemented behaviour.

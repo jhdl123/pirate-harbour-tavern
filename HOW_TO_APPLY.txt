@@ -1,81 +1,103 @@
-PHASE A - PART 4 (CORRECTED): SECOND TAVERN HAND + ROLE-AWARE STAFF REPORT
-                              + REALISED VISIT LENGTH
+PHASE A - PART 5: PATIENCE, PER-TYPE VISIT LENGTH, LEAVE DECISION
+Base commit 825add8. 17 files. Extract over the project root.
+Does NOT touch scenes/main/main.tscn.
 
-Base commit 10dbfff. 4 files. Extract over the project root.
-THIS SUPERSEDES phase-a-part4.zip - do not apply that one.
+Built against your three answers: waiting should not eject a customer, visit
+length should come from customer type, and people should leave because they
+decided to.
 
-*** TOUCHES scenes/main/main.tscn ***
+1. WAITING NO LONGER MAKES A CUSTOMER LEAVE  -- works, verified
+-------------------------------------------------------------
+_on_patience_expired() used to force &"leave" outright. It was the largest
+single departure path - 17 of 44 solo customers in one run.
 
-WHAT YOU CORRECTED
-------------------
-You were right. The bartender's job is prepare_drinks and refill_stations
-only - confirmed in Data/staff/bartender.tres. _serves_completed only
-increments on SERVE_DRINK and _cleans_completed only on CLEAN_SEAT, both
-tavern hand capabilities. So "0 serves, 0 cleans" for a bartender is
-structurally guaranteed, not a broken worker. I printed two counters that
-can only ever read zero for that role and then read the zeros as failure.
+Now a customer who gives up waiting abandons THAT order, takes the same mood
+hit as before, and goes back to ordinary seated behaviour through the brain,
+so relaxing, socialising or re-ordering all stay on their existing paths.
+Departure only happens after repeated neglect.
 
-The 23 stuck at the Cider Station was also run-specific noise. The next run
-showed 4 stuck at a bar slot and zero nav failures. I should not have called
-it out from one run.
+  CustomerAIBalanceConfig.abandoned_orders_before_leaving  (default 3)
+    Set to 1 to restore the old one-strike behaviour exactly.
 
-WHAT THE CORRECTED REPORT SHOWED
---------------------------------
-  tavern_hand_01   busy 91.6%   43 tasks   found no work  13 times
-  bartender_02     busy 17.3%    9 tasks   found no work 122 times
-  bartender_03     busy 16.9%   11 tasks   found no work 122 times
+  MEASURED: patience departures 38.6% -> 0.0%, across five separate runs.
 
-The tavern hand was saturated at 91.6% doing all 22 serves, 15 cleans and 6
-keg deliveries. The bartenders were idle. I had added the wrong role.
+New departure_reason &"repeated_neglect" replaces &"patience_expired" for the
+customers who do still leave over service.
 
-SWAPPED TO A SECOND TAVERN HAND - MEASURED RESULT
--------------------------------------------------
-                          before          after
-  solo service rate       59.3%           82.9%
-  patience departures     46.9%           17.4%
-  tavern_hand_01 busy     91.6%           67.6%
-  bartender_02 busy       17.3%           62.4%
-  tavern_hand_03 busy     -               60.6%
+2. VISIT LENGTH DRIVEN BY CUSTOMER TYPE  -- works, verified
+-----------------------------------------------------------
+CustomerType gains visit_duration_minimum_minutes and
+visit_duration_maximum_minutes. Both default to 0, meaning "use the global
+CustomerAIBalanceConfig range", so any type you leave alone is unchanged.
+The personality multiplier still applies on top, so individuals inside a type
+still vary.
 
-Load is now even across all three. The bartender got BUSIER, not less busy:
-unblocking the serving end means more drinks get ordered, so more
-prepare_drink work exists. The pipeline was throttled at one point.
+  local_worker      12-30      sailor            35-80
+  sailor_impatient  15-40      merchant          45-95
+  naval_officer     25-55      captain           50-110
+                               plantation_owner  50-120
+                               pirate            60-160
 
-Realised visit length also improved, because fewer visits are cut short:
-  stayed   median 69.0  mean 65.4  max 109.0   (was median 60.0, mean 55.2)
-  gave up  median 35.0  mean 35.3  max  40.0   (only 4 customers)
+A single global range scaled per personality could only ever stretch both ends
+together, which is why realised lengths came out as one central band. These
+are distinct populations.
 
-CHANGES
--------
-1. scenes/main/main.tscn
-     [node name="TavernHand2" parent="Entities" unique_id=745256855 instance=ExtResource("39_tavern_hand")]
-     position = Vector2(551, 186)
+  MEASURED: realised minimum 29 -> 23-24 minutes, and visits of 158 and 219
+  minutes appeared. Short and long populations now both exist.
 
-2. systems/staff/staff_member.gd
-   New _tasks_completed_by_type tally, plus tasks_completed_by_type and
-   capabilities in get_diagnostics_snapshot().
+3. LEAVING BY DECISION  -- partly works
+---------------------------------------
+Customers now get scheduled decision points across the end-of-visit window
+(_on_leave_decision_window_opened), re-weighing leaving every few minutes as
+the pressure bonus ramps, instead of being ejected by the hard timer.
 
-3. staff_report.txt now prints busy %, walking % of run, tasks broken down by
-   ACTUAL task type, and what each worker is allowed to do - so each role is
-   measured against its own job rather than against the tavern hand's.
+  CustomerAIBalanceConfig.leave_decision_window_minutes   (default 30)
+  CustomerAIBalanceConfig.leave_decision_recheck_minutes  (default 10)
+  leave_end_of_visit_pressure.tres  window 12 -> 30, bonus 8.0 -> 14.0
+  leave.tres                        base_utility 5.0 -> 7.0
 
-4. customer_report.txt gains REALISED VISIT LENGTH (count/min/median/mean/max,
-   split all / stayed / gave up) from
-   CustomerAIReportManager.get_visit_duration_stats().
+  MEASURED: chose-to-leave 4 of 35, up from 1 of 69. Better, NOT solved -
+  visit-time expiry is still the bigger path at 17.
 
-STILL UNEXPLAINED
+A BUG I INTRODUCED AND THEN FOUND
+---------------------------------
+I first "strengthened" leave_money_scoring from score_weight -0.3 to -3.0.
+wealth is the customer's RAW money, not a normalised 0-1 need, so a customer
+holding 15 coins got a -45 penalty against leaving - leave scored -42 against
+order_drink's +14 and could never win. That is why my tuning made things
+progressively worse (4 -> 2 -> 1 -> 0 chosen departures).
+
+Reverted to -0.3. If you want out-of-money to weigh more heavily, scale it
+against the actual coin range, not as though it were a 0-1 need.
+
+Found with the new tests/leave_decision_probe.tscn, which dumps leave's full
+utility breakdown next to the winning activity for every customer inside the
+window. Worth keeping.
+
+WHAT IS STILL IN THE WAY OF #3
+------------------------------
+The probe reports leave GATED 74 times by "flag 'has_ordered_drink' is true,
+needed false", and a mean score gap of 10.0 to the winner - almost always
+order_drink. Two things follow:
+
+  - A customer with an outstanding drink can never choose to leave. That is
+    defensible mid-drink but it also covers the whole wait.
+  - order_drink out-scores leave by about 10 even late in a visit. Ordering
+    probably needs to lose attractiveness as the visit winds down, rather
+    than leave being pushed up further. I did not change this - pushing leave
+    up is what caused the bug above, and I would rather measure first.
+
+REGRESSIONS - ALL AT BASELINE
+-----------------------------
+  customer_identity_test    92/0     diagnostic_export_probe   59/0
+  group_and_recovery_probe  34/0     reachability_probe        36/0
+  navigation_stress_test    25/0     nav_and_backpressure      88/0
+  drinks_system_probe       61/0     group_loop_test           38/0
+  group_parity_test         49/0     group_milestone_test      43/0
+  group_framework_test      47/2  <- baseline (the two SEATED cases)
+  group_keg_loop_test       27/5  <- baseline (known, one root cause)
+
+KNOWN, NOT CHASED
 -----------------
-Realised visit length previously showed a min of 0.0 - some visits recording
-zero length, possibly customers force-departed before settling. It did not
-appear in the last run (min 32.0). Not chased down.
-
-REGRESSIONS
------------
-  diagnostic_export_probe   59/0     customer_identity_test    92/0
-  group_loop_test           38/0     group_parity_test         49/0
-  group_milestone_test      43/0     group_and_recovery_probe  34/0
-  reachability_probe        36/0     navigation_stress_test    25/0
-  group_framework_test      47/2  <- BASELINE (the two SEATED cases)
-  nav_and_backpressure      88/0  <- was 87/0; one EXTRA assertion passes
-                                     with a third staff member. Update the
-                                     baseline, not a regression.
+A realised visit length of 0.0 minutes appeared in two runs. Rare, and I have
+not tracked it down. It makes the "min" column unreliable when it occurs.

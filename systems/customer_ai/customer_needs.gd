@@ -202,11 +202,35 @@ func seed_from(
 			1.0
 		)
 
+		# Per-type band first, global range only as the fallback. A type that
+		# leaves both at 0 behaves exactly as before.
+		var duration_floor: float = float(
+			balance.minimum_visit_duration_minutes
+		)
+		var duration_ceiling: float = float(
+			balance.maximum_visit_duration_minutes
+		)
+
+		if (
+			customer_type != null
+			and customer_type.visit_duration_minimum_minutes > 0
+			and customer_type.visit_duration_maximum_minutes > 0
+		):
+			duration_floor = float(
+				customer_type.visit_duration_minimum_minutes
+			)
+			duration_ceiling = float(
+				customer_type.visit_duration_maximum_minutes
+			)
+
+		if duration_ceiling < duration_floor:
+			duration_ceiling = duration_floor
+
 		visit_duration_minutes = maxf(
 			1.0,
 			randf_range(
-				float(balance.minimum_visit_duration_minutes),
-				float(balance.maximum_visit_duration_minutes)
+				duration_floor,
+				duration_ceiling
 			) * duration_multiplier
 		)
 	elif customer_type != null:

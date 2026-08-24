@@ -19,7 +19,7 @@
 script = ExtResource("1_script")
 activity_id = &"leave"
 display_name = "Leave"
-base_utility = 5.0
+base_utility = 7.0
 conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_not_ordering"), ExtResource("4_mood_scoring"), ExtResource("5_at_limit"), ExtResource("6_visit_time"), ExtResource("7_money"), ExtResource("8_intoxication"), ExtResource("9_thirst"), ExtResource("10_drinks"), ExtResource("11_engagement"), ExtResource("12_end_of_visit"), ExtResource("13_variance")])
 is_terminal = true
 behaviour = ExtResource("14_behaviour")

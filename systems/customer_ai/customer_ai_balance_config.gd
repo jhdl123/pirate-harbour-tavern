@@ -23,6 +23,23 @@ extends Resource
 @export_category("Visit Duration")
 
 ## World minutes, before Personality.visit_duration_multiplier is applied.
+## How many orders a customer may give up waiting for before it leaves.
+##
+## 1 reproduces the old behaviour, where a single slow serve ejected the
+## customer. Above 1, being ignored repeatedly still empties the room but one
+## slow pint does not.
+## World minutes before a visit ends at which the customer is given one
+## chance to decide it is done, rather than being ejected by the timer.
+## Should match leave_end_of_visit_pressure.tres's pressure_window_minutes.
+@export var leave_decision_window_minutes: int = 30
+
+## How often, in world minutes, the customer re-weighs leaving once inside the
+## end-of-visit window. The pressure bonus ramps as the visit runs out, so one
+## check at the start of the window is too early to change any decision.
+@export var leave_decision_recheck_minutes: int = 10
+
+@export var abandoned_orders_before_leaving: int = 3
+
 @export var minimum_visit_duration_minutes: int = 20
 @export var maximum_visit_duration_minutes: int = 90
 

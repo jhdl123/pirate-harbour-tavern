@@ -156,6 +156,10 @@ var _relax_event: ScheduledTimeEvent = null
 ## World minute the current patience window ends, for the bar.
 var _patience_end_minutes: float = 0.0
 var _patience_total_minutes: int = 0
+## Orders this customer gave up waiting for during this visit. Drives the
+## repeated-neglect departure, so one slow serve costs mood and this counter
+## rather than the customer.
+var _abandoned_orders: int = 0
 
 var _order_delay_minutes: int = 2
 var _patience_duration_minutes: int = 15
@@ -224,6 +228,9 @@ var _has_drink_to_consume: bool = false
 ## Phase 2B: scheduled once, at seating, for the mandatory visit-time
 ## departure - see begin_relaxing()'s sibling _on_visit_time_expired().
 var _visit_time_event: ScheduledTimeEvent = null
+## Fires when the end-of-visit leave pressure window opens, so the customer
+## gets one decision point before the hard visit timer fires.
+var _leave_decision_event: ScheduledTimeEvent = null
 
 ## Phase 2C scheduled events - same pattern as _relax_event: cancelled
 ## through the existing _cancel_all_scheduled() so leaving or being freed
@@ -1338,6 +1345,36 @@ func arrive_at_seat() -> void:
 			&"customer_visit_time"
 		)
 
+		# Phase A: give the customer a chance to DECIDE to leave before the
+		# hard timer decides for it.
+		#
+		# leave.tres gains an end-of-visit pressure bonus over the final
+		# stretch of a visit, which should let leaving out-score relaxing and
+		# socialising near the end. It almost never did: think() only runs at
+		# lifecycle points, so a customer part-way through a six-minute
+		# socialise commitment does not re-evaluate at all during that window,
+		# and _on_visit_time_expired() fires first. The result was 4 chosen
+		# departures against 23 timed-out ones - the brief wants people
+		# leaving because they are done, not because a clock went off.
+		#
+		# One scheduled think() when the window opens is enough to fix that,
+		# and it stays event-driven rather than polling every customer.
+		var pressure_window: int = 30
+
+		if _balance_config != null:
+			pressure_window = _balance_config.leave_decision_window_minutes
+
+		var consider_at: int = roundi(
+			needs.visit_duration_minutes
+		) - pressure_window
+
+		if consider_at > 0:
+			_leave_decision_event = WorldTime.schedule_in(
+				consider_at,
+				_on_leave_decision_window_opened,
+				&"customer_leave_decision"
+			)
+
 	if _brain != null:
 		# A freshly seated customer always wants to order today - there is no
 		# real alternative yet for CustomerBrain to weigh, so this is a direct
@@ -1787,6 +1824,57 @@ func abandon_activity_visit(issue_type: StringName) -> void:
 ## arrive_at_seat(). Mirrors _on_patience_expired()'s forced-transition
 ## pattern exactly - see CustomerBrain.force_activity()'s doc comment on
 ## why this does not compete through normal utility scoring.
+func _on_leave_decision_window_opened() -> void:
+	_leave_decision_event = null
+
+	if (
+		current_state == State.LEAVING_TO_DOOR
+		or current_state == State.EXITING
+	):
+		return
+
+	# Deliberately a normal think(), not force_activity(). The customer is
+	# being given the OPPORTUNITY to decide it is done, weighed against
+	# everything else it could be doing - it is not being told to go. If
+	# relaxing or another drink still scores higher, it stays, which is the
+	# point.
+	if _brain != null:
+		_brain.think()
+
+	# Re-check as the window closes rather than once at its start.
+	#
+	# leave_end_of_visit_pressure ramps its bonus as remaining time falls, so
+	# at the MOMENT the window opens the bonus is still near zero and leaving
+	# cannot out-score socialising or another drink. A single think() here
+	# therefore changed almost nothing. Asking again a few times across the
+	# window means the customer re-weighs the choice as leaving genuinely
+	# becomes more attractive, and decides on its own before the hard timer
+	# fires.
+	if needs == null:
+		return
+
+	needs.update_remaining_visit_time(WorldTime.get_total_minutes())
+
+	var remaining: float = needs.remaining_visit_minutes
+
+	if remaining <= 1.0:
+		return
+
+	var step: int = 10
+
+	if _balance_config != null:
+		step = maxi(1, _balance_config.leave_decision_recheck_minutes)
+
+	if remaining <= float(step):
+		return
+
+	_leave_decision_event = WorldTime.schedule_in(
+		step,
+		_on_leave_decision_window_opened,
+		&"customer_leave_decision"
+	)
+
+
 func _on_visit_time_expired() -> void:
 	_visit_time_event = null
 
@@ -1871,6 +1959,8 @@ func _cancel_all_scheduled() -> void:
 	WorldTime.cancel_scheduled(_patience_event)
 	WorldTime.cancel_scheduled(_relax_event)
 	WorldTime.cancel_scheduled(_visit_time_event)
+	WorldTime.cancel_scheduled(_leave_decision_event)
+	_leave_decision_event = null
 	WorldTime.cancel_scheduled(_social_event)
 	WorldTime.cancel_scheduled(_activity_use_event)
 
@@ -2361,14 +2451,8 @@ func _on_patience_expired() -> void:
 	order_icon.visible = false
 	patience_bar.hide_bar()
 
-	if should_show_debug_messages():
-		print(
-			name,
-			" ran out of patience and is leaving."
-		)
-
 	ordered_drink = null
-	departure_reason = &"patience_expired"
+	_abandoned_orders += 1
 
 	# Phase 3A: nobody is waiting any more, so any serve task for this
 	# customer describes work that no longer needs doing.
@@ -2380,15 +2464,89 @@ func _on_patience_expired() -> void:
 			-_balance_config.satisfaction_loss_on_patience_expiry
 		)
 
+	# Phase A: a slow serve no longer ejects the customer.
+	#
+	# This used to force &"leave" outright, and it was the single largest
+	# departure path - 17 of 44 solo customers in one run, 38.6%. That made
+	# sense while the tavern was a service game where the drink WAS the visit.
+	# It does not survive the tavern becoming a bar: a real drinker whose pint
+	# is slow gets annoyed, not gone. Someone waiting a bit too long once
+	# should give up on THAT drink, be less happy about it, and carry on with
+	# their evening.
+	#
+	# The mechanic keeps its teeth through repetition rather than through a
+	# single strike. Being ignored repeatedly still empties the room, which is
+	# the pressure the player is meant to feel - it just now takes sustained
+	# neglect rather than one slow serve. Everything the old path did to the
+	# order and to mood is unchanged; only the departure is conditional.
+	var neglect_limit: int = 3
+
+	if _balance_config != null:
+		neglect_limit = _balance_config.abandoned_orders_before_leaving
+
+	if _abandoned_orders < neglect_limit:
+		if should_show_debug_messages():
+			print(
+				name,
+				" gave up waiting for a drink (",
+				_abandoned_orders, " of ", neglect_limit,
+				") and is staying."
+			)
+
+		# Hand the customer back to normal decision-making rather than
+		# choosing for it. The brain already knows how to pick relaxing,
+		# socialising or ordering again from a seated customer, and routing
+		# through it means a re-order goes down the existing ordering path
+		# instead of a second one written here.
+		_return_to_seated_behaviour()
+		return
+
+	if should_show_debug_messages():
+		print(
+			name,
+			" has been ignored ", _abandoned_orders,
+			" times and is leaving."
+		)
+
+	departure_reason = &"repeated_neglect"
+
 	if _brain != null:
-		# Mandatory, not a normal decision: running out of patience must
-		# result in leaving, not compete with whatever else happens to be
-		# scoring well at that instant. See CustomerBrain.force_activity's
-		# doc comment and docs/CUSTOMER_AI_SYSTEM.md.
-		if not _brain.force_activity(&"leave", &"patience_expired"):
+		# Mandatory, not a normal decision: sustained neglect must result in
+		# leaving, not compete with whatever else happens to be scoring well
+		# at that instant. See CustomerBrain.force_activity's doc comment
+		# and docs/CUSTOMER_AI_SYSTEM.md.
+		if not _brain.force_activity(&"leave", &"repeated_neglect"):
 			begin_leaving()
 	else:
 		begin_leaving()
+
+
+## Puts a customer who abandoned an order back into ordinary seated behaviour.
+##
+## Deliberately does NOT pick an activity. It restores the state the brain
+## expects to think from and then asks it, so that relaxing, socialising and
+## re-ordering all stay on their existing paths.
+func _return_to_seated_behaviour() -> void:
+	_cancel_patience()
+
+	if reserved_chair != null:
+		current_state = State.RELAXING
+	elif group_controller != null:
+		current_state = State.IN_GROUP
+	else:
+		# No seat and no group - nothing sensible to hold onto, so the old
+		# behaviour of leaving is still the honest outcome.
+		departure_reason = &"repeated_neglect"
+
+		if _brain == null or not _brain.force_activity(
+			&"leave", &"repeated_neglect"
+		):
+			begin_leaving()
+
+		return
+
+	if _brain != null:
+		_brain.think()
 
 
 ## Read by CustomerBrain (via ActivityContext.domain_flags) so

@@ -202,3 +202,107 @@ Build the first real consumer of the time framework — tavern opening hours —
 which is two `schedule_daily` calls and a flag the customer spawner reads. It is
 the cheapest honest test of whether the scheduler is genuinely reusable or only
 looks it, and it exercises pausing, speed changes and skipped time in one go.
+
+---
+
+# Durable Development Lessons
+
+Everything above is Godot and engine learning from building the project.
+Everything below is process and debugging lessons — added when a discovery is
+likely to save future time. Add an entry when a diagnosis turns out to have been
+wrong in a way that could recur.
+
+## Evidence
+
+**One short simulation is not evidence of an AI fault.** Run length, customer
+count, staffing, stock and sample size all move the metrics. Establish
+prerequisites before judging behaviour.
+
+**Stock and staffing are confounds.** Several "customer AI is broken" reports
+turned out to be an empty storeroom or a single worker.
+
+**Instrument before tuning twice.** If a change produces no meaningful movement
+two attempts running, stop turning the dial and measure the state or transition
+directly.
+
+## Tests
+
+**A test can report `0 failed` while running a fraction of its assertions.** A
+script error mid-run silently skips the rest. Watch the assertion **count**.
+
+**Verify a suspected test-side break against a clean checkout first.** Test
+fixtures build their own miniature tavern and can legitimately need updating —
+but assuming that without checking has cost two cycles.
+
+**Compare the failure set, not the count.** `group_keg_loop_test` is flaky
+between 27/5, 28/4 and 29/3 on identical builds.
+
+## Static reading versus running
+
+**Static file reading has given the wrong answer repeatedly on this project.**
+Run the scene. Three separate navigation hypotheses derived from reading the
+files were disproved by a probe measuring the live navmesh.
+
+**`--check-only --script` gives false errors for `class_name` files.** Only
+`--headless --editor --quit` is authoritative for compilation.
+
+**`--headless --editor --quit` does not import textures.** `--headless --import`
+does. Run it first on a fresh clone.
+
+## Navigation
+
+**"On the navmesh" is not "can stand here".** `map_get_closest_point()` returns
+a point on the polygon *edge* for anything outside it. An actor cannot hold a
+boundary point — avoidance nudges it off, arrival never satisfies, and the
+executor reissues the same move forever.
+
+**Never bias an approach point toward the approaching actor.** It makes the
+answer depend on where the worker happens to be, and sent the bartender to the
+customer side of his own bar.
+
+**An isolated walkable pocket looks identical to open floor** through a closest-
+point query. Check reachability, not just walkability.
+
+**Navigation map readiness must be established before interpreting results.** An
+empty or unready map is not a customer AI fault, and returns the origin rather
+than failing.
+
+## Architecture
+
+**Two readings of one quantity is the recurring failure mode.** It has happened
+in the game (storeroom display versus storage) and inside the diagnostic system
+itself (stock report versus chain validator). One owner, everything else
+observes.
+
+**Changing a resource's shape means auditing its UI consumers.** The supplier
+resource tested perfectly while the Order Ledger panel crashed, because the menu
+still read a field that filled-container entries do not have.
+
+**A silent default is worse than a missing value.** The reusable station scene
+shipped a grog refill item, so any station that forgot to override it asked
+staff for a grog barrel — a well-formed task, existing stock, successful
+transfer, and completely wrong. Prefer nothing over a plausible default.
+
+**Verifying a node exists is not verifying it is wired.** A missing reference is
+a silent null.
+
+## Godot file handling
+
+**Godot re-saves `[sub_resource]` blocks without `script_class`.** A regex
+matching on `script_class` silently misses previously written blocks and
+duplicates them.
+
+**Preserve the original `uid` line when rewriting a `.tres`.** Inventing one
+breaks every reference to it.
+
+**Anchoring a scripted edit on a common line hits the wrong node.** A property
+assignment landed on `BarManagementMenu` instead of `StockDevPanel` because both
+contained the same line. Anchor on something unique.
+
+## Git
+
+**Never use `git stash` as the only protection for uncommitted work.** It
+silently shelved a full session's changes on this project.
+
+**Diff the developer's commits before delivering.** Ship only what has not
+already landed, rebased onto their HEAD.
