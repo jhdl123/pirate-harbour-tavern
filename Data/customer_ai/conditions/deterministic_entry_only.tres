@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="DeterministicEntryOnlyCondition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/conditions/deterministic_entry_only_condition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")

@@ -3,9 +3,11 @@
 [ext_resource type="Script" uid="uid://cs48yy71d2h1v" path="res://systems/customer_ai/activities/activity_definition.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://gpped54gxq3u" path="res://systems/customer_ai/activities/activity_condition.gd" id="2_condition_type"]
 [ext_resource type="Resource" path="res://Data/customer_ai/behaviours/return_to_seat.tres" id="3_behaviour"]
+[ext_resource type="Resource" path="res://Data/customer_ai/conditions/deterministic_entry_only.tres" id="4_deterministic_only"]
 
 [resource]
 script = ExtResource("1_script")
 activity_id = &"return_to_seat"
 display_name = "Return to Seat"
+conditions = Array[ExtResource("2_condition_type")]([ExtResource("4_deterministic_only")])
 behaviour = ExtResource("3_behaviour")
