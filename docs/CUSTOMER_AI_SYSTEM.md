@@ -954,16 +954,26 @@ find).
 
 ### Known limitations, honestly
 
-- **Capacity is not implemented beyond 1.** `TavernActivityPoint.capacity`
-  exists as a documented field for a future multi-slot point; Darts (and
-  the framework generally) only supports one simultaneous user this
-  phase - see the class's own doc comment.
+- **Capacity beyond 1 is now implemented, for Darts specifically.**
+  `TavernActivityPoint` discovers `TavernActivitySlot` children (each its
+  own `Reservable` + use position) instead of assuming exactly one;
+  `ActivityDefinition.min_participants`/`max_participants` (default 1/1,
+  Darts set to 1/2) tell `VisitTavernActivityBehaviour` whether to attempt
+  co-opting a second participant via `Customer.find_nearby_activity_partner()`.
+  A future multi-slot point (cards, a 4-seat table) reuses the same
+  mechanism; only the framework's own generic min/max-participant support
+  landed this pass, not a matchmaking/waiting system - a customer with no
+  suitable partner nearby at the moment of choosing simply plays alone.
 - **Cooldown is not enforced.** `TavernActivityPoint.cooldown_minutes` is
   recorded but nothing currently checks it after a point is released.
 - **Darts' scene position is a placeholder guess**, not visually verified -
-  see the Darts section above.
-- **"Selected customer" in the F10 tools is "the first active customer"**,
-  not a real picker.
+  see the Darts section above. The new second slot's marker position is
+  the same kind of guess, not confirmed against the sprite in the editor.
+- **"Selected customer" in the F10/F9 tools is now a real picker** (cycle
+  key `I` in the F9 panel, a button in F10) rather than always "the first
+  active customer" - every existing action (print profile, verbose
+  scoring, force-to-socialise, force-to-darts) now targets whichever
+  customer is selected.
 - **No new stuck-detection was built** for the activity-visit states -
   intentionally, reusing the existing navigation framework's own recovery
   instead, per the brief's explicit instruction not to replace it.

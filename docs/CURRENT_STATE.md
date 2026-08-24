@@ -113,6 +113,53 @@ ever assigned). This shipped in commit `4923617` without a commit-message
 disclosure or a doc entry; two bugs were found and fixed against it this
 pass (see Known issues).
 
+### Customer AI — cross-activity affinity and two-participant darts (new)
+`ActivityContext.last_activity_id` (stamped by `CustomerBrain._exit_current()`)
+plus `PreviousActivityAffinityCondition` let an activity's own `.tres` data
+declare a soft bonus off whatever the customer just finished, without any
+new branching in `CustomerBrain`. Wired for drink→socialise, darts→drink,
+and darts↔socialise. `ActivityDefinition` gained `min_participants`/
+`max_participants` (default 1/1); Darts is 1/2. `TavernActivityPoint` now
+discovers `TavernActivitySlot` children instead of assuming exactly one
+`Reservable`, so `darts_point.tscn` offers two independently-reservable
+slots. `VisitTavernActivityBehaviour` makes one synchronous attempt (no
+waiting/timeout) to co-opt a nearby available customer as a second
+participant via the new `Customer.find_nearby_activity_partner()`; each
+participant reserves, plays, and returns to its own decision point
+independently, so e.g. one choosing to order a drink afterward while the
+other socialises is the ordinary result of two separate `Customer` nodes,
+not new coordination code. Group members reach this the same way solo
+customers do (`GroupManager._ask_member_brain()` already calls the same
+`think()`) with no `GroupManager`/`CustomerGroup` changes needed.
+
+Found and fixed along the way: `return_to_seat.tres` had zero conditions
+despite its own doc comment saying it should only ever be entered directly,
+so a customer with no other viable option could have normal `think()`
+scoring pick it while already at its own chair - an instant "return" that
+re-triggers `think()` immediately, printing as a burst of repeated
+`Chosen: return_to_seat` rather than a hang. Now gated by
+`DeterministicEntryOnlyCondition`, which is always false and safe because
+`enter_activity()`/`force_activity()` never check availability.
+
+`CustomerBehaviourPanel` (F9) and `StockDevPanel` (F10) gained a real
+customer picker (previously always "customer index 0", by their own
+explicit comments) - every existing action (print profile, verbose
+scoring, force-to-socialise, force-to-darts) now targets whichever customer
+is selected. `DecisionRecord` gained `activity_partner_customer_id`,
+mirroring the existing `social_partner_customer_id` field.
+
+Not covered by an automated test this pass - several attempts at a
+dedicated solo/two-player darts test were made and found three of the real
+bugs above, but the test itself remained too environmentally fragile
+(customer-type visit-duration variance, `--fixed-fps` timing races on
+transient states) to land reliably in the time available; the mechanism is
+exercised by `tests/group_parity_test.gd`'s existing (unchanged, still
+passing) `_test_leisure_darts_and_return()` via the legacy stub path, and
+by the full regression suite (`customer_identity_test`,
+`group_and_recovery_probe`, `report_fields_test`, `diagnostic_export_probe`,
+`behaviour_mix_probe` all pass unchanged), but solo/two-player darts and
+post-match divergence have not been proven end-to-end by an automated test.
+
 ### Beverage, stock and delivery — Verified
 `BeverageRegistry`, `ContainerDefinition`, `ServingFormatDefinition`,
 `StorageProfileDefinition`, `FilledContainer`, `BeverageStorage`,

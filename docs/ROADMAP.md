@@ -64,7 +64,16 @@ purchasing, warnings, restocking and physical display already exist.
 ## Priority 5 — Activities and tavern life
 
 Gambling; entertainment; environmental interaction; special customer
-opportunities. The activity framework exists and is data-driven.
+opportunities. The activity framework exists and is data-driven, and now
+supports an activity needing 1-2 (or more) participants at once
+(`ActivityDefinition.min_participants`/`max_participants`, proven on Darts) -
+a future cards/dice/gambling table is the same pattern with a different
+participant count and its own `TavernActivityPoint` slots, not a new
+mechanism. Still needed: a dedicated automated test for solo/two-player
+darts and post-match divergence (attempted, not landed - see
+`CURRENT_STATE.md`'s Customer AI section); a waiting/matchmaking mechanism
+if a future activity genuinely needs one (darts deliberately does not -
+no partner nearby means playing solo, no wait).
 
 ## Priority 6 — Reputation depth and customer identity
 
