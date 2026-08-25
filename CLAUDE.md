@@ -183,6 +183,12 @@ A startup navigation scan runs in debug builds and prints either
 `NAVIGATION SCAN: all seats, slots and props are approachable` or a FAIL line
 per misplaced marker.
 
+A startup tavern-activity-point scan runs alongside it and prints either
+`TAVERN ACTIVITY POINT SCAN: every slot resolves to its point` or a FAIL line
+per slot that cannot resolve back to its `TavernActivityPoint` - added after
+darts silently failed every selection from `a6e8993` to 2026-08-25 with no
+surfaced signal. See `LEARNING_LOG.md`'s Architecture section.
+
 ## Git discipline
 
 - Start from a clean, committed state.

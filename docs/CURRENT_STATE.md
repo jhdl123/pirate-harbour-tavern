@@ -285,6 +285,30 @@ factions · weather · save/load.
    unreconciled duplication.
 8. Pre-existing GDScript warnings (shadowed names, integer division, unused
    `order_placed` signal). See the editor log.
+9. **Darts was unplayable on `main` from `a6e8993` (2026-08-24) until fixed
+   in this Phase B pass, independent of Phase B itself and independent of
+   the flat-pool problem Phase B was built to address.** `a6e8993` came
+   *after* `235b7ac` (confirmed by ancestry, not assumed) - the 37.2%
+   eligible → 1.2% occupancy figures measured at `235b7ac` predate this bug
+   entirely and reflect only the flat-pool scoring loss (darts losing to
+   `relax_at_seat`), not this. `a6e8993` moved darts' `Reservable` one
+   nesting level deeper (child of a new `TavernActivitySlot` rather than
+   direct child of `TavernActivityPoint`, for the two-slot model), so
+   `VisitTavernActivityBehaviour.on_enter()`'s `reservable.get_parent() as
+   TavernActivityPoint` cast always returned null from that commit forward.
+   Every darts selection was silently abandoned in the same instant it was
+   entered (`abandon_activity_visit(
+   "reserved_destination_not_a_activity_point")`). By the time Phase B
+   started, darts was doubly broken: losing the scoring contest *and*
+   unable to execute even on the rare win. Two-stage decisions (this pass)
+   fixed the first; fixing the second was necessary to observe the first
+   fix actually working. Nothing surfaced the execution failure because
+   nothing reads `report_issue()` calls at startup or in normal play - the
+   fourth time on this project a computed failure signal was discarded
+   before reaching a surface, see `LEARNING_LOG.md`'s Architecture section.
+   Fixed via an explicit `TavernActivitySlot.point` back-reference rather
+   than a parent-walk; `darts_point.tscn` is the only scene using
+   `TavernActivityPoint`, so nothing else carried the same defect.
 
 `docs/history/KNOWN_ISSUES.md` holds a longer, older static-audit list from
 an early cleanup pass; parts of it are now stale.

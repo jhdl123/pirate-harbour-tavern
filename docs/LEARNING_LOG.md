@@ -286,6 +286,24 @@ transfer, and completely wrong. Prefer nothing over a plausible default.
 **Verifying a node exists is not verifying it is wired.** A missing reference is
 a silent null.
 
+**A parent-walk assumption breaks the moment a nesting level is inserted, and
+nothing announces it.** `a6e8993` ("Add cross-activity affinity and a two-slot
+darts model") moved darts' `Reservable` one level deeper - direct child of
+`TavernActivityPoint` to child of a new `TavernActivitySlot` - so the
+existing `reservable.get_parent() as TavernActivityPoint` cast in
+`VisitTavernActivityBehaviour.on_enter()` always returned null afterward.
+Every darts selection was abandoned in the same instant it was entered,
+silently, from that commit forward on `main` - independent of Phase B, which
+only exposed it by finally making darts win selection often enough to hit
+the path. The fourth time on this project a computed failure signal
+(`abandon_activity_visit("reserved_destination_not_a_activity_point")`) was
+discarded before reaching any surface - see `CURRENT_STATE.md`'s Known
+issues and DECISIONS.md §17's "diagnostics observe, never re-implement" for
+the pattern this keeps producing. Fix: an explicit back-reference
+(`TavernActivitySlot.point`, set by the owner) instead of a parent-walk that
+assumes a fixed nesting depth. Where a node relationship matters, prefer a
+reference set by the one class that knows it over a lookup that infers it.
+
 ## Godot file handling
 
 **Godot re-saves `[sub_resource]` blocks without `script_class`.** A regex

@@ -133,6 +133,12 @@ var use_position: Marker2D:
 
 
 func _ready() -> void:
+	# Lets TavernActivityPointValidator's startup scan find every point by
+	# group membership rather than a recursive tree walk, the same
+	# convention Reservable's tag groups already use - see
+	# NavigationValidator's doc comment on why.
+	add_to_group(&"tavern_activity_points")
+
 	for child: Node in get_children():
 		var slot: TavernActivitySlot = child as TavernActivitySlot
 

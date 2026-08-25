@@ -135,6 +135,7 @@ func _report(main: Node) -> void:
 	var group_ids: Dictionary = {}
 	var group_with_activity: int = 0
 	var no_activity: int = 0
+	var total_activity_starts: int = 0
 	var order_drink_time_samples: int = 0
 
 	for record: Object in completed:
@@ -175,6 +176,8 @@ func _report(main: Node) -> void:
 
 		if relax_n == 0 and social_n == 0 and tavern_n == 0:
 			no_activity += 1
+
+		total_activity_starts += relax_n + social_n + tavern_n
 
 	print(
 		"  departure - chose to leave: ", chose_to_leave,
@@ -231,6 +234,17 @@ func _report(main: Node) -> void:
 				100.0 * float(no_activity) / float(maxi(completed.size(), 1))
 			)
 		), ")"
+	)
+
+	print("")
+	print("ACTIVITY STARTS PER CUSTOMER (relax + socialise + tavern, mean)")
+	print(
+		"  ", total_activity_starts, " starts / ", completed.size(),
+		" completed visits  =  ",
+		"%.2f" % (
+			float(total_activity_starts) / float(maxi(completed.size(), 1))
+		),
+		" per customer"
 	)
 
 	print("=== END PHASE B MEASUREMENT PROBE ===")

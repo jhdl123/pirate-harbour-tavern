@@ -95,6 +95,7 @@ func _mark_navigation_ready() -> void:
 		# every query returns the origin.
 		await get_tree().physics_frame
 		_run_navigation_scan()
+		_run_tavern_activity_point_scan()
 
 
 func _run_navigation_scan() -> void:
@@ -114,4 +115,29 @@ func _run_navigation_scan() -> void:
 			problem["node_path"].get_file(),
 			problem["off_mesh_distance"],
 			str(problem["position"]),
+		])
+
+
+## The equivalent scan for TavernActivityPoint slot resolution - see
+## TavernActivityPointValidator's class doc comment for why. A computed
+## failure signal (abandon_activity_visit()) went unnoticed for days because
+## nothing ever surfaced it; this makes the same class of bug loud at
+## startup instead, the same way the navigation scan above already does for
+## off-mesh markers.
+func _run_tavern_activity_point_scan() -> void:
+	var problems: Array[Dictionary] = (
+		TavernActivityPointValidator.find_unresolvable_slots(get_tree())
+	)
+
+	if problems.is_empty():
+		print("TAVERN ACTIVITY POINT SCAN: every slot resolves to its point.")
+		return
+
+	print("TAVERN ACTIVITY POINT SCAN: %d problem(s) --" % problems.size())
+
+	for problem: Dictionary in problems:
+		print("  FAIL %-40s %-20s %s" % [
+			problem["point_path"],
+			problem["slot_name"],
+			problem["reason"],
 		])
