@@ -125,8 +125,24 @@ sampling was 0, consistent with the "occupancy counts in the tens are noise"
 warning rather than a contradiction of the scoring-contest result. The
 chose-to-leave/visit-time-ended balance improving and group participation
 dropping are both worth a longer confirming run before either is treated as
-settled; "no activity at all" staying substantial (not collapsing toward
-zero) is the intended non-theme-park result, not a shortfall.
+settled.
+
+**"No activity at all staying substantial is the intended non-theme-park
+result, not a shortfall"** (previous wording of this line) turned out to be
+only half right. The slot-parent-resolution bug fixed later this pass meant
+darts occupancy above was a false zero, not a measured one — see Known
+issue 9. `docs/history/2026-08-25_PHASE_B_VERIFICATION_PASS.md` re-ran this
+measurement after that fix plus the needs/awareness/leave-stage-1 work
+landed: "no activity at all" is still 78.6% (33/42), essentially unchanged.
+Reading five complete individual customer histories (not sampled — the full
+decision sequence) shows the architecture genuinely works: 2 of 5 show
+believable, non-monotonous relax/socialise/darts variety across a full
+visit, and leave now wins on merit. What is suppressing the tavern-wide
+*rate* is identified and traced: `order_drink` (outside Phase B's scope)
+scores from raw `wealth`/`remaining_visit_minutes`, uncapped, alongside a
+capped thirst term — the same raw-value defect class as the
+`relax_visit_time_scoring` fix below, not yet applied to `order_drink`. Not
+fixed this pass; see the verification pass doc for the full trace and why.
 
 Extension test re-measured: a hypothetical new point-based leisure activity
 needs one `ActivityDefinition.tres` and one `TavernActivityPoint` scene, zero

@@ -192,10 +192,15 @@ reconciling this file against the code:
   commitment.
 - `CustomerNeeds.engagement` is retired. It is split into `social`/
   `entertainment`/`relaxation` (§20's remaining three named needs), each
-  fed by the activity that already raised the old shared pool. Two-stage
-  motivation selection reads `1.0 - value` for these three (satisfaction-
-  shaped, same as engagement always was) against `thirst` read directly
-  (already demand-shaped).
+  fed by the activity that already raised the old shared pool.
+  **Corrected in the 2026-08-25 verification pass:** these three are now
+  genuinely demand-shaped like `thirst` - motivation selection reads the
+  need value directly, not `1.0 - value`. They rise on an asymptotic time
+  curve (`CustomerNeeds.update_motivational_needs(current_world_minutes)`)
+  and fall when the activity that serves them (via `satisfies`) completes.
+  The rise is now driven by elapsed world time, not by how often
+  `CustomerBrain.think()` happens to be called - see
+  `2026-08-25_PHASE_B_VERIFICATION_PASS.md` item 2.
 - Raw values (`wealth`, `remaining_visit_minutes`, `visit_duration_minutes`,
   the repeat counters) are no longer reachable through
   `CustomerNeeds.get_need()`/`set_need()` at all - a separate
@@ -221,3 +226,22 @@ reconciling this file against the code:
   unconditionally on `CustomerBrain` (`get_last_decision()`) rather than
   only existing when `report_manager.is_export_enabled()` - the aggregate
   export path is unchanged and still gated the same way.
+
+**2026-08-25 verification pass** (`2026-08-25_PHASE_B_VERIFICATION_PASS.md`)
+re-checked all ten `CUSTOMER_MODEL.md` requirements against the code
+directly rather than trusting the numbers above, which predate the slot-
+bug fix. `ActivityDefinition.satisfies` is now the *only* place a need/
+activity relationship is declared - `SocialiseAtSeatBehaviour.social_gain`
+and `TavernActivityPoint.entertainment_effect`/`.social_effect` (described
+above) are removed; both paths read `satisfies` directly, same as relax
+already did. `DestinationBroker.get_occupied()` extracts the awareness
+layer's occupancy query so it is a reusable foundation method, not logic
+embedded in one condition. The inspector gained a small always-on visit
+history (`Customer._visit_history`), deliberately not reusing
+`VisitRecord.recent_activity_history`, which only exists during an active
+diagnostic export. One open finding, not yet fixed: `order_drink` (a
+mandatory, motivation-filter-exempt activity predating Phase B) scores
+using raw `wealth` and raw `remaining_visit_minutes` rather than
+normalised values - the same bug class this section's `wealth`/
+`remaining_visit_minutes` fixes already addressed elsewhere, found now in
+a third place. See the verification pass doc for the full trace.

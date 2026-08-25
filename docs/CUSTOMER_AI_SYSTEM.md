@@ -1097,19 +1097,20 @@ change only): darts' "would be top scorer when eligible" went from 54/504
 
 ### Activities declare what they satisfy
 
-`ActivityDefinition.satisfies` is also the single source of truth for the
-two activities that already had ad hoc need-effect fields:
-`SocialiseAtSeatBehaviour.engagement_gain` → `social_gain`, read from
-`context.activity.satisfies.get("social")`, no longer a separate exported
-number; `RelaxAtSeatBehaviour` reads `context.activity.satisfies.get(
-"relaxation")` the same way - previously relax wrote back nothing at all on
-completion. `TavernActivityPoint` keeps its own `entertainment_effect`/
-`social_effect` fields (renamed from `engagement_effect`, plus one new
-field) rather than being folded into `satisfies`, since a
-`TavernActivityPoint` is explicitly meant to be reused per-instance for
-future point-based activities (cards, a musician) independent of any one
-`ActivityDefinition` - the two are authored to match, same separation
-`repeat_count_need_id` already used.
+`ActivityDefinition.satisfies` is the single source of truth for every
+leisure activity's need-effect, both for stage-3 filtering and for the
+completion-time write-back - `RelaxAtSeatBehaviour` always read it this
+way; `SocialiseAtSeatBehaviour` and the darts completion path in
+`Customer._on_activity_use_finished()` were converted to it in the
+2026-08-25 verification pass (`docs/history/
+2026-08-25_PHASE_B_VERIFICATION_PASS.md`). `TavernActivityPoint`'s
+`entertainment_effect`/`social_effect` fields (mentioned in earlier drafts
+of this section) were removed in that pass, not kept - they duplicated
+numbers `satisfies` already declared, which is exactly the two-readings-
+of-one-fact problem §17 warns about.
+`Customer._on_activity_use_finished()` now iterates `definition.satisfies`
+generically for any need id, so a future point-based activity needs no
+change here.
 
 `relax_at_seat.tres` lost `relax_visit_time_scoring` (above) and
 `relax_engagement_scoring` (its own condition rewarding relax when

@@ -304,6 +304,35 @@ the pattern this keeps producing. Fix: an explicit back-reference
 assumes a fixed nesting depth. Where a node relationship matters, prefer a
 reference set by the one class that knows it over a lookup that infers it.
 
+**A recurring bug class survives a fix that only touches the instance found,
+not the pattern.** Raw, unbounded values used directly as scoring inputs
+have now broken customer decisions three separate times on this project:
+`wealth` (raw coin count) broke the leave decision; `remaining_visit_minutes`
+(raw minutes) distorted relax against darts and was fixed by deleting the
+condition outright; `order_drink`'s money/visit-time scoring
+(`2026-08-25_PHASE_B_VERIFICATION_PASS.md`) does the same thing a third
+time, undiscovered until a full individual-customer-history read (not an
+aggregate) made the pattern visible - a customer at `thirst=0.02` still
+winning the reorder contest at score 18.4. Each fix so far treated the
+symptom (this one condition, this one activity) rather than searching for
+the same shape elsewhere. When a raw-context-value defect is found and
+fixed, the right next step is grepping every `NeedThresholdCondition` with
+`value_is_context = true` for the same missing normalisation, not just
+closing the one instance found.
+
+**An aggregate metric can stay flat while the mechanism underneath it is
+completely different.** "No activity at all: 78.6%" measured after this
+pass's real fixes (slot-bug, leave-stage-1, needs inversion, time-
+decoupling) landed is numerically almost identical to the pre-fix 78.5%
+figure - which could easily read as "nothing changed, the fixes didn't
+work." Reading five complete individual decision histories instead of the
+aggregate showed the opposite: the fixes worked exactly as designed
+(genuine non-monotonous relax/socialise/darts sequences, leave winning on
+merit), and a *different*, previously-invisible cause (`order_drink`'s own
+scoring) is independently holding the aggregate flat. An unchanged
+aggregate is not evidence a fix did nothing; it can also mean two effects
+of similar size are now cancelling where only one existed before.
+
 ## Godot file handling
 
 **Godot re-saves `[sub_resource]` blocks without `script_class`.** A regex
