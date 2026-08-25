@@ -324,18 +324,19 @@ factions · weather · save/load.
    Fixed via an explicit `TavernActivitySlot.point` back-reference rather
    than a parent-walk; `darts_point.tscn` is the only scene using
    `TavernActivityPoint`, so nothing else carried the same defect.
-10. **`CustomerBrain._select_weighted()` can resample a candidate the
-    stage-3 motivation filter already excluded.** Found 2026-08-25 by
-    reading full individual customer histories rather than aggregates -
+10. **`CustomerBrain._select_weighted()` could resample a candidate the
+    stage-3 motivation filter already excluded - fixed 2026-08-25.** Found
+    by reading full individual customer histories rather than aggregates -
     3 confirmed instances in one 20-history sample
-    (`2026-08-25_SCORING_AUDIT.md` §7). `think()` computes `best`/
-    `best_score` only from motivation-filtered candidates, but passes the
+    (`2026-08-25_SCORING_AUDIT.md` §7). `think()` computed `best`/
+    `best_score` only from motivation-filtered candidates, but passed the
     *unfiltered* `eligible_for_report` list to `_select_weighted()`, which
-    samples anything within `selection_band` of `best_score` with no
-    re-check against the motivation that produced it - a candidate that
-    does not serve the chosen motivation can win anyway if its raw score
-    happens to sit close enough. Not fixed - see the audit doc for the
-    exact code location and a proposed fix.
+    sampled anything within `selection_band` of `best_score` with no
+    re-check against the motivation that produced it. Fixed by adding
+    `stage3_survivors`, populated only for candidates that pass the
+    filter, and passing that to the selector instead -
+    `2026-08-25_WEIGHTED_SELECTION_FIX.md`. Isolated regression: 74/150
+    violations before, 0/150 after; full post-fix transcript sweep: 0/29.
 
 `docs/history/KNOWN_ISSUES.md` holds a longer, older static-audit list from
 an early cleanup pass; parts of it are now stale.

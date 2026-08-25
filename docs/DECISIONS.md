@@ -277,6 +277,14 @@ if its raw score is close to the filtered winner's. Found by reading full
 individual customer histories rather than aggregates (`_select_weighted()`
 was sampling from `eligible_for_report`, populated before the motivation
 filter runs) - see `2026-08-25_SCORING_AUDIT.md` §7's headline finding.
-**Not yet fixed** - flagged for a decision on next steps, since correcting
-it changes decision outcomes tavern-wide and needs its own isolated
-before/after measurement, not a fix folded into an audit pass.
+**Fixed** (`2026-08-25_WEIGHTED_SELECTION_FIX.md`): a second list,
+`stage3_survivors`, is populated at the exact point a candidate passes both
+the `is_terminal` skip and the stage-3 filter - the same population `best`/
+`best_score` are drawn from - and `_select_weighted()` now reads that
+instead of `eligible_for_report`. `_select_weighted()` itself is
+unchanged - it was already a correctly generic selector; the defect was
+entirely in what the call site handed it. Isolated regression: 74/150
+violations before, 0/150 after
+(`tests/weighted_selection_regression_test.gd`); a full post-fix
+transcript sweep found 0/29 real selections violating the filter, down
+from 3 confirmed instances before.

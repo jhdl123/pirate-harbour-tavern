@@ -273,8 +273,21 @@ func think() -> void:
 	var unfiltered_best: ActivityDefinition = null
 	var unfiltered_best_score: float = -INF
 
+	# Every scored candidate, for the inspector/diagnostics - includes ones
+	# stage 3 goes on to exclude, since CUSTOMER_INSPECTOR.md wants a
+	# rejected candidate's score visible, not just its winner. NEVER pass
+	# this to _select_weighted() - see stage3_survivors below.
 	var eligible_for_report: Array[Dictionary] = []
 	var rejected_for_report: Array[Dictionary] = []
+
+	# Only the candidates stage 3 actually let compete - the same
+	# population best/best_score are computed from. This is what
+	# _select_weighted() must sample from: a candidate the motivation
+	# filter already excluded must never be resurrected just because its
+	# raw score sits close to the filtered winner's. Bug found by reading
+	# individual customer histories rather than aggregates - see
+	# docs/history/2026-08-25_SCORING_AUDIT.md §7.
+	var stage3_survivors: Array[Dictionary] = []
 	var record_rejections: bool = (
 		report_manager != null
 		and report_manager.is_export_enabled()
@@ -384,6 +397,14 @@ func think() -> void:
 
 			continue
 
+		# Reached only by a candidate that survived both the is_terminal
+		# skip and the stage-3 motivation filter above - the exact
+		# population best/best_score are drawn from.
+		stage3_survivors.append({
+			"activity_id": String(definition.activity_id),
+			"score": score,
+		})
+
 		if score > best_score:
 			best_score = score
 			best = definition
@@ -408,7 +429,7 @@ func think() -> void:
 	# score, it is taken, not sampled. Service must not be left to chance.
 	if best != null and not best.is_mandatory:
 		var sampled: ActivityDefinition = _select_weighted(
-			eligible_for_report, best_score
+			stage3_survivors, best_score
 		)
 
 		if sampled != null:
