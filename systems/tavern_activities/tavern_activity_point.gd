@@ -58,24 +58,6 @@ var satisfaction_effect: float = 0.15
 @export_range(0.0, 1.0, 0.01)
 var intoxication_effect: float = 0.0
 
-## Added to [member CustomerNeeds.entertainment] on completion - see
-## docs/CUSTOMER_AI_SYSTEM.md's Phase 2C "reasons to stay" section.
-## Renamed from `engagement_effect` when CustomerNeeds.engagement was
-## split into social/entertainment/relaxation - see
-## docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
-@export_range(0.0, 1.0, 0.01)
-var entertainment_effect: float = 0.3
-
-## Added to [member CustomerNeeds.social] on completion. Defaults to a
-## small nonzero value because the only point type today (Darts) is often
-## played with a partner - see [member ActivityDefinition.satisfies] on
-## the matching [code]visit_tavern_activity[/code] definition for the
-## declared equivalent (kept in sync by whoever tunes either). A future
-## solitary point (a notice board) should override this to 0.0 in its own
-## scene.
-@export_range(0.0, 1.0, 0.01)
-var social_effect: float = 0.15
-
 ## Deducted from [member CustomerNeeds.wealth] on completion, if any -
 ## e.g. a future gambling table. 0 for darts.
 @export_range(0, 100, 1)

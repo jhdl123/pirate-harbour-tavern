@@ -149,14 +149,15 @@ var travel_willingness: float = 1.0
 ## post-`87aa238` correction.
 ##
 ## Seeded from personality at spawn (see [method seed_from]) so customers
-## start differently, then rises a little every time a decision is made
-## (see [method update_motivational_needs]) - the same per-decision cadence
-## [member remaining_visit_minutes] and the original engagement pool both
-## already used, standing in for "time/circumstance" without needing a new
-## clock or, for now, real crowding/noise detection (left as a documented
+## start differently, then rises with real elapsed world time (see [method
+## update_motivational_needs] - genuinely time-based, not "one decision =
+## one bump", corrected 2026-08-25), standing in for "time/circumstance"
+## without needing environmental sensing yet (left as a documented
 ## simplification, not built - CUSTOMER_MODEL.md §3 scopes Awareness
-## separately and asks to keep it cheap). Motivation selection reads each
-## directly, the same way it already reads thirst.
+## separately and asks to keep it cheap; the rise rate itself is where a
+## future circumstance modifier - isolation, crowding, noise - would plug
+## in, without CustomerBrain changing at all). Motivation selection reads
+## each directly, the same way it already reads thirst.
 
 ## Rises with time apart from company; falls when Socialise at Seat, group
 ## leisure socialising or a [code]SocialPresenceService[/code] conversation
@@ -179,13 +180,22 @@ var entertainment: float = 0.0
 ## [member Personality.privacy_preference].
 var relaxation: float = 0.0
 
-## Seeded from CustomerAIBalanceConfig.needs_rise_per_decision in
-## seed_from() - stored here rather than read by CustomerBrain each time so
+## Seeded from CustomerAIBalanceConfig.needs_rise_per_minute in seed_from()
+## - stored here rather than read by CustomerBrain each time so
 ## CustomerBrain never needs its own reference to CustomerAIBalanceConfig,
 ## consistent with it already only holding needs/registry/report_manager.
 ## Shared by all three of the above; nothing currently needs a different
-## rate per need.
-var _need_rise_per_decision: float = 0.05
+## rate per need. Per world-minute, not per call - see
+## [method update_motivational_needs].
+var _need_rise_per_minute: float = 0.05
+
+## World-clock minutes at the last [method update_motivational_needs] call,
+## the same pattern [member _visit_started_at_minutes] already uses for
+## [method update_remaining_visit_time] - negative means "never updated",
+## since world minutes 0.0 is a legitimate real timestamp and cannot be the
+## sentinel the way it is for the visit clock (which has its own explicit
+## [method has_visit_clock_started] check instead).
+var _needs_last_updated_at_minutes: float = -1.0
 
 
 ## Seeds every starting value at spawn. [param balance] and [param personality]
@@ -221,7 +231,7 @@ func seed_from(
 		relaxation = clampf(personality.privacy_preference * 0.4, 0.0, 1.0)
 
 	if balance != null:
-		_need_rise_per_decision = balance.needs_rise_per_decision
+		_need_rise_per_minute = balance.needs_rise_per_minute
 
 		wealth = roundi(
 			randf_range(
@@ -477,17 +487,45 @@ func get_context_value(context_id: StringName) -> float:
 			return 0.0
 
 
-## Called once per decision (CustomerBrain._build_context()) rather than on
-## its own timer - see [member social]'s doc comment for why. Standing in
-## for "time/circumstance" (isolation, idleness, time on your feet) without
-## a dedicated clock or environmental sensing. Asymptotic toward 1.0 - each
-## rise shrinks as the need gets closer to fully wanted, the same curve
-## shape [method CustomerNeeds]' decay used to have toward 0, just aimed the
-## other way - so nothing overshoots or needs a separate clamp.
-func update_motivational_needs() -> void:
-	if _need_rise_per_decision <= 0.0:
+## Genuinely time-based, the same pattern [method update_remaining_visit_time]
+## already uses via [member _visit_started_at_minutes]: this stores when it
+## last ran ([member _needs_last_updated_at_minutes]) and scales the rise by
+## real elapsed world minutes, not by how many times it happened to be
+## called. Called from [code]CustomerBrain._build_context()[/code] because
+## that is the cheap, already-existing per-decision hook - not because the
+## rise is conceptually "one decision = one bump". If a future pass adds a
+## genuine timer or ties the rate to circumstance (isolation, crowding,
+## noise - see [member social]'s doc comment), this method's signature and
+## every caller stay exactly as they are; only what happens inside changes.
+## Corrected 2026-08-25 after a review flagged the earlier per-call version
+## as coupling [CustomerNeeds] conceptually to [CustomerBrain]'s decision
+## cadence - two customers reconsidering at different rates would previously
+## have drifted apart in wall-clock terms for reasons that had nothing to do
+## with their needs.
+##
+## Asymptotic toward 1.0 regardless of the elapsed span: [code]pow(1.0 -
+## rate, elapsed)[/code] is the continuous-time generalisation of repeatedly
+## applying the old per-call multiplier, so a customer who reconsiders every
+## 2 minutes and one who goes 20 minutes between decisions end up on the
+## same curve rather than the second falling behind.
+func update_motivational_needs(current_world_minutes: float) -> void:
+	if _needs_last_updated_at_minutes < 0.0:
+		_needs_last_updated_at_minutes = current_world_minutes
 		return
 
-	social += (1.0 - social) * _need_rise_per_decision
-	entertainment += (1.0 - entertainment) * _need_rise_per_decision
-	relaxation += (1.0 - relaxation) * _need_rise_per_decision
+	var elapsed_minutes: float = (
+		current_world_minutes - _needs_last_updated_at_minutes
+	)
+
+	_needs_last_updated_at_minutes = current_world_minutes
+
+	if elapsed_minutes <= 0.0 or _need_rise_per_minute <= 0.0:
+		return
+
+	var retained_fraction: float = pow(
+		1.0 - _need_rise_per_minute, elapsed_minutes
+	)
+
+	social = 1.0 - (1.0 - social) * retained_fraction
+	entertainment = 1.0 - (1.0 - entertainment) * retained_fraction
+	relaxation = 1.0 - (1.0 - relaxation) * retained_fraction

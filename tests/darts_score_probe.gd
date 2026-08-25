@@ -175,23 +175,25 @@ func _sample() -> void:
 				best_score = score
 				best_id = aid
 
-			# Stage 1 (CUSTOMER_MODEL.md §4): leave competes against every
-			# candidate, unfiltered - same fix as CustomerBrain.think(),
-			# see the correction after 87aa238 (leave was winning the
-			# motivation-gated pool by default, not on merit, once its
-			# rivals were filtered out from under it).
+			# Stage 1 (CUSTOMER_MODEL.md §4): the terminal (departure)
+			# activity competes against every candidate, unfiltered - same
+			# fix as CustomerBrain.think(), see the correction after
+			# 87aa238 (leave was winning the motivation-gated pool by
+			# default, not on merit, once its rivals were filtered out
+			# from under it). Checked via is_terminal, mirroring
+			# CustomerBrain, not a hard-coded activity_id.
 			if score > unfiltered_best_score:
 				unfiltered_best_score = score
 				unfiltered_best_id = aid
 
-			if aid == &"leave":
+			if bool(definition.get("is_terminal")):
 				continue
 
 			# MOTIVATION GATE: the same exclusion CustomerBrain.think()
 			# applies at stage 3 - a non-mandatory candidate whose
 			# ActivityDefinition.satisfies does not serve the chosen
-			# motivation never enters the contest at all. `leave` is
-			# excluded above, already decided at stage 1.
+			# motivation never enters the contest at all. The terminal
+			# activity is excluded above, already decided at stage 1.
 			var is_mandatory: bool = bool(definition.get("is_mandatory"))
 			var serves: bool = bool(
 				definition.call("serves_motivation", motivation)

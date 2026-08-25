@@ -54,6 +54,25 @@ static func has_available(
 	return false
 
 
+## Every [Reservable] carrying [param tag] that is currently claimed - the
+## mirror image of [method has_available]. The awareness layer's one query
+## (CUSTOMER_MODEL.md §3: "is this activity already in use nearby") - kept
+## here, not inside [NearbyActivityInUseCondition], so any future consumer
+## (another condition, a group-bias rule, the inspector showing "2 others
+## playing darts") gets the same answer without re-deriving it.
+static func get_occupied(
+	tag: StringName,
+	tree: SceneTree
+) -> Array[Reservable]:
+	var typed: Array[Reservable] = []
+
+	for reservable: Reservable in get_candidates(tag, tree):
+		if not reservable.is_free():
+			typed.append(reservable)
+
+	return typed
+
+
 ## Claims the nearest free [Reservable] carrying [param tag] for
 ## [param actor], or null if none is free. The only method here that
 ## actually reserves anything.

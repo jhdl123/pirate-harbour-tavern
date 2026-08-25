@@ -1857,12 +1857,24 @@ func _on_activity_use_finished() -> void:
 
 	if needs != null:
 		needs.adjust(&"mood", point.satisfaction_effect)
-		# Demand-shaped: completing the activity that serves a need lowers
-		# it, not raises it - see CustomerNeeds.social's doc comment.
-		needs.adjust(&"entertainment", -point.entertainment_effect)
 
-		if point.social_effect > 0.0:
-			needs.adjust(&"social", -point.social_effect)
+		# Sourced from the activity's own declared ActivityDefinition.
+		# satisfies rather than a field on TavernActivityPoint, so there is
+		# exactly one place that says what this activity gives back - see
+		# DECISIONS.md §21. Demand-shaped: completing the activity that
+		# serves a need lowers it, not raises it - see CustomerNeeds.social's
+		# doc comment. Falls back to nothing (0.0) if the brain has already
+		# moved on, which should not happen at this call site but must not
+		# crash if it ever does.
+		var definition: ActivityDefinition = (
+			_brain.get_current_activity() if _brain != null else null
+		)
+
+		if definition != null:
+			for need_id: String in definition.satisfies:
+				needs.adjust(
+					StringName(need_id), -float(definition.satisfies[need_id])
+				)
 
 		if point.intoxication_effect > 0.0:
 			needs.adjust(&"intoxication", point.intoxication_effect)

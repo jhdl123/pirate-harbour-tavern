@@ -354,12 +354,15 @@ func think() -> void:
 			unfiltered_best_score = score
 			unfiltered_best = definition
 
-		# `leave` already had its fair, unfiltered shot just above and must
-		# not compete a second time inside the motivation-thinned stage-3
-		# pool - see the doc comment above. Every other mandatory activity
-		# and Wander (empty ActivityDefinition.satisfies) remain exempt
-		# from the motivation filter itself, unchanged.
-		if definition.activity_id == &"leave":
+		# The terminal (departure) activity already had its fair, unfiltered
+		# shot just above and must not compete a second time inside the
+		# motivation-thinned stage-3 pool - see the doc comment above.
+		# Checked by is_terminal, not a hard-coded activity_id, so a future
+		# activity never needs a brain change here - see the extension test
+		# in CUSTOMER_MODEL.md §5. Every other mandatory activity and
+		# Wander (empty ActivityDefinition.satisfies) remain exempt from
+		# the motivation filter itself, unchanged.
+		if definition.is_terminal:
 			continue
 
 		# Stage 3 filter (CUSTOMER_MODEL.md §4): an optional activity only
@@ -385,10 +388,11 @@ func think() -> void:
 			best_score = score
 			best = definition
 
-	# Stage 1 decision: leave wins outright - taken, not sampled, same as
-	# any mandatory activity - only when it beat the true best alternative
-	# above, not merely whatever survived stage 3's motivation filter.
-	if unfiltered_best != null and unfiltered_best.activity_id == &"leave":
+	# Stage 1 decision: the terminal (departure) activity wins outright -
+	# taken, not sampled, same as any mandatory activity - only when it
+	# beat the true best alternative above, not merely whatever survived
+	# stage 3's motivation filter.
+	if unfiltered_best != null and unfiltered_best.is_terminal:
 		best = unfiltered_best
 		best_score = unfiltered_best_score
 
@@ -845,8 +849,10 @@ func _build_context() -> ActivityContext:
 		position = actor_2d.global_position
 
 	if needs != null:
-		needs.update_remaining_visit_time(WorldTime.get_total_minutes())
-		needs.update_motivational_needs()
+		var world_minutes_now: float = WorldTime.get_total_minutes()
+
+		needs.update_remaining_visit_time(world_minutes_now)
+		needs.update_motivational_needs(world_minutes_now)
 
 	var context: ActivityContext = ActivityContext.create(
 		actor,

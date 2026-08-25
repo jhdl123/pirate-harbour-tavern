@@ -48,15 +48,6 @@ var satisfaction_gain: float = 0.1
 @export_range(0.0, 1.0, 0.01)
 var partner_satisfaction_gain: float = 0.05
 
-## Added to CustomerNeeds.social on completion - see that need's doc
-## comment on why this decays per-decision rather than on its own timer.
-## Renamed from `engagement_gain` when CustomerNeeds.engagement was split
-## into social/entertainment/relaxation - see
-## docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
-@export_range(0.0, 1.0, 0.01)
-var social_gain: float = 0.25
-
-
 func on_enter(context: ActivityContext) -> void:
 	var customer: Customer = context.actor as Customer
 
@@ -66,6 +57,17 @@ func on_enter(context: ActivityContext) -> void:
 	var partner: Customer = customer.find_nearby_social_partner(
 		social_range_pixels
 	)
+
+	# Sourced from the activity's own declared ActivityDefinition.satisfies
+	# rather than a field on this behaviour, so there is exactly one place
+	# that says what Socialise at Seat gives back - see DECISIONS.md §21.
+	# The group-leisure path (CustomerGroup.leisure_socialise_social_gain)
+	# is deliberately separate - it does not go through this behaviour at
+	# all, see GroupManager._start_leisure_socialise()'s own doc comment.
+	var social_gain: float = 0.0
+
+	if context.activity != null:
+		social_gain = float(context.activity.satisfies.get("social", 0.0))
 
 	customer.begin_socialising(
 		partner,

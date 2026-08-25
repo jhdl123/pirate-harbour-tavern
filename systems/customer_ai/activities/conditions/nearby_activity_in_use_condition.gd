@@ -6,7 +6,7 @@ extends ActivityCondition
 ## CUSTOMER_MODEL.md §3's Awareness layer, scoped exactly as
 ## `docs/PHASE_B_BRIEF.md` asks for it - "proximity plus 'is this activity
 ## already in use' is enough to start". Reuses
-## [DestinationBroker.get_candidates] and the same falloff-by-
+## [DestinationBroker.get_occupied] and the same falloff-by-
 ## [member CustomerNeeds.travel_willingness] formula
 ## [NearestPointDistanceCondition] already uses for the mirror-image
 ## question (how close is the nearest *free* point) - this asks how close
@@ -45,15 +45,9 @@ func score(context: ActivityContext) -> float:
 	var nearest_distance: float = INF
 
 	for tag: StringName in tags:
-		for reservable: Reservable in DestinationBroker.get_candidates(
+		for reservable: Reservable in DestinationBroker.get_occupied(
 			tag, tree
 		):
-			# The mirror image of NearestPointDistanceCondition, which
-			# skips occupied points to find the nearest free one - here we
-			# want the nearest one already claimed, free or not.
-			if reservable.is_free():
-				continue
-
 			var owner_node: Node2D = reservable.get_parent() as Node2D
 
 			if owner_node == null:

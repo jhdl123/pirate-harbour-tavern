@@ -98,14 +98,16 @@ var absolute_maximum_drinks_per_visit: int = 5
 
 @export_category("Phase 2C - Motivational Needs")
 ## How much each of CustomerNeeds' social/entertainment/relaxation needs
-## rises toward 1.0 each time a decision is made - see
-## CustomerNeeds.update_motivational_needs()'s doc comment for why this
-## happens per-decision rather than on a timer, and for the 2026-08-25
-## correction from a satisfaction-shaped ("decays") pool to this
-## demand-shaped ("rises") one -
-## docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
+## rises toward 1.0 per world minute - see
+## CustomerNeeds.update_motivational_needs()'s doc comment. Per-minute, not
+## per-decision: a customer who reconsiders often and one who goes a long
+## activity without reconsidering both land on the same curve. Same numeric
+## default carried over from the original per-decision rate (itself carried
+## from the pre-split "engagement" pool) rather than freshly tuned - a
+## placeholder worth revisiting with real measurement, not a validated
+## per-minute figure. See docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
 @export_range(0.0, 0.5, 0.01)
-var needs_rise_per_decision: float = 0.08
+var needs_rise_per_minute: float = 0.08
 
 
 @export_category("Phase 2C - Social Discovery")
