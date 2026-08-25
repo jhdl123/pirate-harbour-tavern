@@ -64,8 +64,32 @@ enum Comparison {
 ## Added to the activity's utility when satisfied, scaled by how far past
 ## [member threshold] the need is - the further past, the stronger the pull.
 ## Negative values make an activity less attractive as the need rises rather
-## than more, for e.g. "prefer Leave as patience falls".
+## than more, for e.g. "prefer Leave as patience falls". For a genuine
+## [CustomerNeeds] need this is inherently bounded, since the need itself is
+## 0.0-1.0 - see [member context_scale] for the [member value_is_context]
+## case, where it is not.
 @export var score_weight: float = 0.0
+
+## Only read when [member value_is_context] is true. The raw
+## distance-from-[member threshold] that maps to a full 1.0 fraction before
+## [member score_weight] is applied - e.g. 45.0 for `wealth` (this project's
+## `maximum_starting_money`), 90.0 for `remaining_visit_minutes` (this
+## project's `maximum_visit_duration_minutes`). [member score_weight] then
+## means the same thing it already means for a genuine 0.0-1.0 need: the
+## contribution at full distance, not an unbounded per-unit multiplier.
+##
+## Zero (default) means "not yet given a scale" - the raw distance is used
+## unclamped, preserving every existing resource's behaviour exactly until
+## it deliberately opts in. This is the gap the 2026-08-25 scoring audit
+## found: [member value_is_context] made reading a raw value an explicit,
+## visible choice, but nothing stopped [member score_weight] from being
+## multiplied against an unbounded raw quantity the way it safely can be
+## against a 0.0-1.0 need - `order_drink`'s money/visit-time scoring and
+## three other resources did exactly that, each independently, none of them
+## capped the way [NearestPointDistanceCondition]/
+## [EndOfVisitPressureCondition] already cap their own raw-value inputs. See
+## `docs/history/2026-08-25_SCORING_AUDIT.md`.
+@export var context_scale: float = 0.0
 
 
 func _read_value(context: ActivityContext) -> float:
@@ -113,5 +137,8 @@ func score(context: ActivityContext) -> float:
 
 	var value: float = _read_value(context)
 	var distance: float = absf(value - threshold)
+
+	if value_is_context and context_scale > 0.0:
+		distance = clampf(distance / context_scale, 0.0, 1.0)
 
 	return score_weight * distance

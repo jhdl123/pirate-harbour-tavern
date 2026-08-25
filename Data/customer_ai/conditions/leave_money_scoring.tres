@@ -11,3 +11,4 @@ threshold = 0.0
 gates = false
 value_is_context = true
 score_weight = -0.3
+context_scale = 45.0
