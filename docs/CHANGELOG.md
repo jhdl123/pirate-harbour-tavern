@@ -9,7 +9,7 @@ shipped, and where to read more if it matters.
 When a phase in `TASKS.md` completes, fold its summary in here and clear it
 from `TASKS.md`.
 
-## On `feature/darts-multiplayer-and-activity-affinity`, not yet merged to `main`
+## Merged from `feature/darts-multiplayer-and-activity-affinity`
 
 ### Cross-activity affinity and two-participant darts — 2026-08-24/25
 Commits `a6e8993`..`526e2fa`. Customers now get a soft scoring bonus toward

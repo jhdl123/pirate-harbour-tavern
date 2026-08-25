@@ -4,26 +4,38 @@ The currently active phase only. When a phase completes, fold its summary
 into `CHANGELOG.md` and clear it from here — do not let this file accumulate
 history.
 
-## Active phase: none started — awaiting a decision
+## Active phase: Priority 0.5 — Phase B, the customer model (briefed, not yet implemented)
 
-As of this documentation pass
-(`feature/darts-multiplayer-and-activity-affinity` @ `526e2fa`), the previous
-phase (cross-activity affinity + two-participant darts) is
-implementation-complete to the limits described below. No new development
-phase has been started since. Choosing the next one is a decision for the
-next planning conversation, not something this pass decides — see
-`ROADMAP.md`'s Priority 0 for the standing recommendation.
+The customer decision architecture is being restructured from a flat
+utility contest to a two-stage decision (motivation, then activity within
+it) — see `PHASE_B_BRIEF.md` for the work order and `CUSTOMER_MODEL.md` for
+the target architecture. `DECISIONS.md` #19–25 record the design calls
+behind it.
 
-## Pending decisions before new work starts
+**What exists so far:** the brief, the target-architecture doc, the
+inspector spec, `docs/DECISIONS.md` #19–25, and one diagnostic probe
+(`tests/darts_score_probe.gd`, no assertions) that measured *why* darts
+currently loses the scoring contest at `235b7ac` — see `CURRENT_STATE.md`'s
+"Customer AI — activity selection, measured 2026-08-25" section. **No
+implementation has landed yet** — this is design and measurement only.
 
-- **Merge or continue on the branch?**
-  `feature/darts-multiplayer-and-activity-affinity` is 5 commits ahead of
-  `main` (`main` is at `235b7ac`) and pushed to `origin`, with no PR opened
-  yet. `main` does not currently reflect the darts/activity-affinity work
-  this documentation pass describes.
-- **Priority 0 (reputation → demand → end-of-day spend)** is the standing
-  recommendation in `ROADMAP.md` and remains unscoped — no design brief and
-  no architecture review has been done for it yet.
+**Next step:** implement against `PHASE_B_BRIEF.md`'s work order
+(audit → implement → measure), starting from its own stated scope.
+
+## Pending decisions
+
+- **Priority 0 (reputation → demand → end-of-day spend)** is still the
+  standing roadmap recommendation ahead of Phase B in `ROADMAP.md`'s own
+  ordering, but Phase B was started first and is now the active phase. Not
+  contradictory by accident: `ROADMAP.md` places Phase B at Priority 0.5
+  specifically because it blocks Priority 2 and the future information
+  layer — see its own reasoning there.
+- **Process note:** the Phase B brief was delivered as a zip extracted
+  directly over the project root rather than as a patch, which silently
+  overwrote whole files (`CLAUDE.md`, `DECISIONS.md`, `ROADMAP.md`,
+  `CURRENT_STATE.md`) and destroyed unrelated concurrent edits to them
+  before this pass reconciled the two. See `CLAUDE.md`'s Documentation
+  discipline section for the rule this added.
 
 ## Carried-over backlog from the last completed phase
 

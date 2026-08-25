@@ -117,12 +117,6 @@ that can only ever report PASS is indistinguishable from one that cannot fail �
 `diagnostic_export_probe` therefore injects real faults and asserts they are
 caught.
 
-## 18. Changing decisions
-
-When a decision changes: update this file, update the affected system docs,
-explain why it changed, implement, and commit documentation with implementation
-where practical.
-
 ## 19. Customer decisions are two-stage
 
 A customer decides **what it currently wants**, then **which available thing
@@ -176,3 +170,29 @@ theme-park result is a worse outcome than the current one, not a better one.
 customer internals, needs, the brain or the registry directly. Same rule and
 same failure mode as §3's `StockedDisplay`. This exists so the decision
 architecture can change again without touching UI.
+
+## 26. Cross-activity influence is soft-scored data, not a state machine
+
+A customer's next choice can be nudged by what they just finished (e.g.
+drink → socialise) through a scoring condition reading
+`ActivityContext.last_activity_id`, not a hard sequence or a ban. This keeps
+the competitive-scoring decision model as the one mechanism customers ever
+use — adding influence never means adding a special case to it. Written
+against the pre-Phase-B scoring model; #19's two-stage restructuring changes
+*how* activities compete, not this rule about *how influence is expressed*.
+
+## 27. Multi-participant activities reuse the reservation framework
+
+An activity needing more than one participant (Darts: 1–2) gets a second
+`TavernActivitySlot` on its `TavernActivityPoint` and an
+`ActivityDefinition.max_participants` value, not a new coordination
+mechanism. A future card table or gambling activity is the same pattern with
+a different participant count and its own slots. Deliberately excluded: a
+waiting/matchmaking system — no partner nearby at decision time means
+playing solo, not waiting.
+
+## 28. Changing decisions
+
+When a decision changes: update this file, update the affected system docs,
+explain why it changed, implement, and commit documentation with implementation
+where practical.
