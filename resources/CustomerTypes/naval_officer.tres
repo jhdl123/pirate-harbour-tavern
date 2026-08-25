@@ -34,8 +34,6 @@ metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
 [resource]
 script = ExtResource("1_script")
-visit_duration_minimum_minutes = 25
-visit_duration_maximum_minutes = 55
 display_name = "Naval Officer"
 customer_texture = ExtResource("4_tex")
 spawn_weight = 2.0
@@ -64,5 +62,7 @@ solo_arrival_chance = 0.4
 waiting_tolerance_multiplier = 1.2
 compatible_tags = Array[StringName]([&"official", &"merchant", &"captain"])
 disliked_tags = Array[StringName]([&"pirate", &"criminal"])
+visit_duration_minimum_minutes = 25
+visit_duration_maximum_minutes = 55
 knowledge_tags = Array[StringName]([&"navy_orders", &"routes"])
 metadata/_custom_type_script = "res://scripts/data/customer_type.gd"

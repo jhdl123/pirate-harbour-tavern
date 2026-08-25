@@ -28,8 +28,6 @@ metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
 [resource]
 script = ExtResource("1_script")
-visit_duration_minimum_minutes = 45
-visit_duration_maximum_minutes = 95
 display_name = "Merchant"
 customer_texture = ExtResource("5_tex")
 spawn_weight = 4.0
@@ -68,6 +66,8 @@ disliked_tags = Array[StringName]([&"pirate", &"criminal"])
 stranger_approach_willingness = 0.3
 conversation_join_willingness = 0.35
 conversation_duration_multiplier = 1.2
+visit_duration_minimum_minutes = 45
+visit_duration_maximum_minutes = 95
 group_social_preference = 0.5
 information_domains = Array[StringName]([&"shipping", &"trade", &"prices"])
 knowledge_tags = Array[StringName]([&"cargo", &"contracts"])

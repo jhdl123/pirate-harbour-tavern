@@ -36,8 +36,6 @@ metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
 [resource]
 script = ExtResource("1_script")
-visit_duration_minimum_minutes = 50
-visit_duration_maximum_minutes = 120
 display_name = "Plantation Owner"
 customer_texture = ExtResource("4_tex")
 spawn_weight = 1.5
@@ -68,5 +66,7 @@ crowding_tolerance = 0.45
 waiting_tolerance_multiplier = 0.9
 compatible_tags = Array[StringName]([&"merchant", &"official", &"wealthy"])
 disliked_tags = Array[StringName]([&"criminal"])
+visit_duration_minimum_minutes = 50
+visit_duration_maximum_minutes = 120
 knowledge_tags = Array[StringName]([&"cargo", &"harvests"])
 metadata/_custom_type_script = "res://scripts/data/customer_type.gd"

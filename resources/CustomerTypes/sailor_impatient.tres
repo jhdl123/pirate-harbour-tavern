@@ -25,8 +25,6 @@ metadata/_custom_type_script = "res://systems/customer_ai/drink_preference.gd"
 
 [resource]
 script = ExtResource("2_nggds")
-visit_duration_minimum_minutes = 15
-visit_duration_maximum_minutes = 40
 display_name = "Impatient Sailor"
 customer_texture = ExtResource("3_wd86o")
 spawn_weight = 2.0
@@ -60,6 +58,8 @@ group_drink_affinity = 1.2
 compatible_tags = Array[StringName]([&"sailor", &"seafarer"])
 conversation_join_willingness = 0.4
 conversation_duration_multiplier = 0.7
+visit_duration_minimum_minutes = 15
+visit_duration_maximum_minutes = 40
 information_domains = Array[StringName]([&"voyages"])
 knowledge_tags = Array[StringName]([&"crews"])
 conversation_topics = Array[StringName]([&"complaints"])
