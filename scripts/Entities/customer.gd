@@ -1503,7 +1503,9 @@ func _on_relax_finished() -> void:
 
 	if needs != null:
 		needs.adjust_context_value(&"relax_count", 1.0)
-		needs.adjust(&"relaxation", _relaxation_gain)
+		# Demand-shaped: completing the activity that serves a need lowers
+		# it, not raises it - see CustomerNeeds.social's doc comment.
+		needs.adjust(&"relaxation", -_relaxation_gain)
 
 	if _is_ai_debug_enabled():
 		print(
@@ -1733,7 +1735,9 @@ func _on_socialise_finished() -> void:
 
 	if needs != null:
 		needs.adjust(&"mood", _social_satisfaction_gain)
-		needs.adjust(&"social", _social_gain)
+		# Demand-shaped: completing the activity that serves a need lowers
+		# it, not raises it - see CustomerNeeds.social's doc comment.
+		needs.adjust(&"social", -_social_gain)
 		needs.adjust_context_value(&"socialise_count", 1.0)
 
 	if (
@@ -1853,10 +1857,12 @@ func _on_activity_use_finished() -> void:
 
 	if needs != null:
 		needs.adjust(&"mood", point.satisfaction_effect)
-		needs.adjust(&"entertainment", point.entertainment_effect)
+		# Demand-shaped: completing the activity that serves a need lowers
+		# it, not raises it - see CustomerNeeds.social's doc comment.
+		needs.adjust(&"entertainment", -point.entertainment_effect)
 
 		if point.social_effect > 0.0:
-			needs.adjust(&"social", point.social_effect)
+			needs.adjust(&"social", -point.social_effect)
 
 		if point.intoxication_effect > 0.0:
 			needs.adjust(&"intoxication", point.intoxication_effect)
@@ -3820,13 +3826,15 @@ func on_conversation_ended(_partner: Customer, mood_gain: float) -> void:
 	if needs != null:
 		needs.adjust(&"mood", mood_gain)
 
-		# Counts toward the existing socialise tally and social need, so a
-		# customer who spent the evening talking reads as fulfilled rather
-		# than as someone who did nothing. Uses the ids CustomerNeeds
-		# already knows - inventing a new one would silently clamp to 0-1
-		# and never surface anywhere.
+		# Counts toward the existing socialise tally and lowers the social
+		# need, so a customer who spent the evening talking reads as
+		# fulfilled rather than as someone who did nothing. Uses the ids
+		# CustomerNeeds already knows - inventing a new one would silently
+		# clamp to 0-1 and never surface anywhere. Demand-shaped: completing
+		# the activity that serves a need lowers it, not raises it - see
+		# CustomerNeeds.social's doc comment.
 		needs.adjust_context_value(&"socialise_count", 1.0)
-		needs.adjust(&"social", mood_gain)
+		needs.adjust(&"social", -mood_gain)
 
 
 func is_in_conversation() -> bool:

@@ -250,14 +250,28 @@ func think() -> void:
 
 	# Stage 2 (CUSTOMER_MODEL.md §4): what do I currently want, chosen once
 	# per think() call before any activity is scored. Mandatory pipeline
-	# steps (order_drink, drink, leave) and Wander's always-available
-	# fallback are exempt from the filter this feeds below - see the
+	# steps (order_drink, drink) and Wander's always-available fallback are
+	# exempt from the filter this feeds below - see the
 	# `not definition.is_mandatory` check in the loop - so this only
-	# decides which *optional* activities even compete this pass.
+	# decides which *optional* activities even compete this pass. `leave`
+	# is also exempt from the filter, but for a different reason - see the
+	# stage-1 handling below.
 	var motivation: StringName = _select_motivation(context)
 
 	var best: ActivityDefinition = null
 	var best_score: float = -INF
+
+	# Stage 1 (CUSTOMER_MODEL.md §4): "should this visit continue" needs
+	# leave compared against the true best alternative, not the motivation-
+	# thinned field stage 3 uses - otherwise leave wins purely because its
+	# rivals were filtered out from under it, not because leaving actually
+	# scored better than everything. Tracked across every candidate,
+	# unfiltered, in the same pass. Correction from live measurement after
+	# `87aa238`: leave was top scorer 433/994 times in the motivation-gated
+	# pool at a mean score of -8.30 - it was winning by default, not on
+	# merit. See docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
+	var unfiltered_best: ActivityDefinition = null
+	var unfiltered_best_score: float = -INF
 
 	var eligible_for_report: Array[Dictionary] = []
 	var rejected_for_report: Array[Dictionary] = []
@@ -307,25 +321,6 @@ func think() -> void:
 
 			continue
 
-		# Stage 3 filter (CUSTOMER_MODEL.md §4): an optional activity only
-		# competes when it serves the motivation stage 2 chose. Mandatory
-		# activities and Wander (empty ActivityDefinition.satisfies) are
-		# exempt - see ActivityDefinition.serves_motivation().
-		if (
-			not definition.is_mandatory
-			and not definition.serves_motivation(motivation)
-		):
-			if record_rejections:
-				rejected_for_report.append({
-					"activity_id": String(definition.activity_id),
-					"reason": (
-						"does not serve current motivation (%s)"
-						% motivation
-					),
-				})
-
-			continue
-
 		var score: float = definition.get_utility(context)
 
 		# Visit intention bias. Applied here rather than as another
@@ -353,9 +348,49 @@ func think() -> void:
 				breakdown
 			)
 
+		# Stage 1 tracking - every scored candidate, leave included,
+		# motivation-unfiltered. See the doc comment above.
+		if score > unfiltered_best_score:
+			unfiltered_best_score = score
+			unfiltered_best = definition
+
+		# `leave` already had its fair, unfiltered shot just above and must
+		# not compete a second time inside the motivation-thinned stage-3
+		# pool - see the doc comment above. Every other mandatory activity
+		# and Wander (empty ActivityDefinition.satisfies) remain exempt
+		# from the motivation filter itself, unchanged.
+		if definition.activity_id == &"leave":
+			continue
+
+		# Stage 3 filter (CUSTOMER_MODEL.md §4): an optional activity only
+		# competes when it serves the motivation stage 2 chose. Mandatory
+		# activities and Wander (empty ActivityDefinition.satisfies) are
+		# exempt - see ActivityDefinition.serves_motivation().
+		if (
+			not definition.is_mandatory
+			and not definition.serves_motivation(motivation)
+		):
+			if record_rejections:
+				rejected_for_report.append({
+					"activity_id": String(definition.activity_id),
+					"reason": (
+						"does not serve current motivation (%s)"
+						% motivation
+					),
+				})
+
+			continue
+
 		if score > best_score:
 			best_score = score
 			best = definition
+
+	# Stage 1 decision: leave wins outright - taken, not sampled, same as
+	# any mandatory activity - only when it beat the true best alternative
+	# above, not merely whatever survived stage 3's motivation filter.
+	if unfiltered_best != null and unfiltered_best.activity_id == &"leave":
+		best = unfiltered_best
+		best_score = unfiltered_best_score
 
 	# Weighted selection among the strongest candidates.
 	#
@@ -722,13 +757,11 @@ func _exit_current(completed: bool) -> void:
 
 
 ## Stage 2 of CUSTOMER_MODEL.md §4: which named motivation is currently
-## most worth pursuing. [member CustomerNeeds.thirst] is already
-## demand-shaped (high means wanted) so it is read directly;
-## [member CustomerNeeds.social]/[member CustomerNeeds.entertainment]/
-## [member CustomerNeeds.relaxation] are satisfaction-shaped (they rise
-## when satisfied - see their doc comment), so [code]1.0 - value[/code]
-## gives the same "how much is this currently wanted" reading thirst gets
-## for free.
+## most worth pursuing. All four needs are demand-shaped (high means
+## wanted) since the 2026-08-25 correction - see
+## [member CustomerNeeds.social]'s doc comment for why the original
+## satisfaction-shaped/[code]1.0 - value[/code] version was wrong - so all
+## four are read directly and identically here.
 ## Personality/visit-intent bias nudges the weights the same way
 ## [method CustomerIdentity.get_activity_bias] nudges stage 3, one stage
 ## earlier. Group context already reaches darts specifically through the
@@ -738,11 +771,9 @@ func _exit_current(completed: bool) -> void:
 func _select_motivation(context: ActivityContext) -> StringName:
 	var weights: Dictionary = {
 		&"thirst": (needs.thirst if needs != null else 0.0),
-		&"social": (1.0 - needs.social) if needs != null else 0.0,
-		&"entertainment": (
-			(1.0 - needs.entertainment) if needs != null else 0.0
-		),
-		&"relaxation": (1.0 - needs.relaxation) if needs != null else 0.0,
+		&"social": (needs.social if needs != null else 0.0),
+		&"entertainment": (needs.entertainment if needs != null else 0.0),
+		&"relaxation": (needs.relaxation if needs != null else 0.0),
 	}
 
 	if identity != null:
@@ -815,7 +846,7 @@ func _build_context() -> ActivityContext:
 
 	if needs != null:
 		needs.update_remaining_visit_time(WorldTime.get_total_minutes())
-		needs.decay_motivational_needs()
+		needs.update_motivational_needs()
 
 	var context: ActivityContext = ActivityContext.create(
 		actor,

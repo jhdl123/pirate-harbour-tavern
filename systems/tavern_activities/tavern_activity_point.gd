@@ -137,6 +137,7 @@ func _ready() -> void:
 		var slot: TavernActivitySlot = child as TavernActivitySlot
 
 		if slot != null:
+			slot.point = self
 			slots.append(slot)
 
 	if slots.is_empty():
@@ -170,6 +171,7 @@ func _synthesize_legacy_slot() -> void:
 
 	slot.reservable = bare_reservable
 	slot.use_position = get_node_or_null("UsePosition")
+	slot.point = self
 
 	slots.append(slot)
 

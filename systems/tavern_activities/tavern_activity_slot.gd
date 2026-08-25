@@ -22,6 +22,20 @@ extends Node2D
 var reservable: Reservable = null
 var use_position: Marker2D = null
 
+## The [TavernActivityPoint] this slot belongs to, set by
+## [method TavernActivityPoint._ready]/[method
+## TavernActivityPoint._synthesize_legacy_slot] for both slot shapes this
+## class supports. An explicit reference rather than
+## [code]reservable.get_parent()[/code] parent-walking, which silently
+## returned the wrong node (this slot itself, not the point) once an
+## authored scene nested the [Reservable] under a real [TavernActivitySlot]
+## - see `docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md`'s
+## darts-occupancy trace for how long that went unnoticed: darts rarely won
+## selection before Phase B's two-stage decision, so
+## [VisitTavernActivityBehaviour.on_enter]'s null-point abandon path was
+## almost never exercised.
+var point: TavernActivityPoint = null
+
 
 func _ready() -> void:
 	if reservable == null:

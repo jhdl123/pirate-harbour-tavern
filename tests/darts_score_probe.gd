@@ -47,6 +47,7 @@ var darts_would_win_gated: int = 0
 var beaten_by_gated: Dictionary = {}
 var winner_tally_gated: Dictionary = {}
 var motivation_tally: Dictionary = {}
+var stage1_leave_wins: int = 0
 
 
 func _ready() -> void:
@@ -123,6 +124,8 @@ func _sample() -> void:
 		var best_id_gated: StringName = &""
 		var best_score_gated: float = -INF
 		var darts_matches_motivation: bool = false
+		var unfiltered_best_id: StringName = &""
+		var unfiltered_best_score: float = -INF
 
 		for definition: Object in registry.get("definitions"):
 			if definition == null:
@@ -172,10 +175,23 @@ func _sample() -> void:
 				best_score = score
 				best_id = aid
 
+			# Stage 1 (CUSTOMER_MODEL.md §4): leave competes against every
+			# candidate, unfiltered - same fix as CustomerBrain.think(),
+			# see the correction after 87aa238 (leave was winning the
+			# motivation-gated pool by default, not on merit, once its
+			# rivals were filtered out from under it).
+			if score > unfiltered_best_score:
+				unfiltered_best_score = score
+				unfiltered_best_id = aid
+
+			if aid == &"leave":
+				continue
+
 			# MOTIVATION GATE: the same exclusion CustomerBrain.think()
 			# applies at stage 3 - a non-mandatory candidate whose
 			# ActivityDefinition.satisfies does not serve the chosen
-			# motivation never enters the contest at all.
+			# motivation never enters the contest at all. `leave` is
+			# excluded above, already decided at stage 1.
 			var is_mandatory: bool = bool(definition.get("is_mandatory"))
 			var serves: bool = bool(
 				definition.call("serves_motivation", motivation)
@@ -190,6 +206,10 @@ func _sample() -> void:
 			if score > best_score_gated:
 				best_score_gated = score
 				best_id_gated = aid
+
+		if unfiltered_best_id == &"leave":
+			stage1_leave_wins += 1
+			best_id_gated = &"leave"
 
 		if best_id != &"":
 			winner_tally[best_id] = int(winner_tally.get(best_id, 0)) + 1
@@ -287,6 +307,14 @@ func _report() -> void:
 		for s: float in gap_samples:
 			g += s
 		print("  mean gap to winner ", "%.2f" % (g / float(gap_samples.size())))
+
+	print("")
+	print("STAGE 1 (leave vs the true unfiltered best alternative)")
+	var total_customer_samples: int = darts_eligible + darts_cooling + darts_blocked
+	print(
+		"  leave won stage 1: ", stage1_leave_wins, " / ",
+		total_customer_samples, " customer-samples (", samples, " ticks)"
+	)
 
 	print("")
 	print("MOTIVATION GATE (stage 2/3, think()-equivalent - see class doc)")

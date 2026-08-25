@@ -134,54 +134,58 @@ var drinks_consumed: float = 0.0
 var travel_willingness: float = 1.0
 
 ## CUSTOMER_MODEL.md §2's remaining three named needs (thirst is above).
-## Phase 2C originally introduced these as one "engagement" pool -
-## "reasons to stay" from something the customer was currently enjoying
-## (a completed Socialise or Darts visit, raised by
-## TavernActivityPoint.entertainment_effect/SocialiseAtSeatBehaviour on
-## completion). `docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md`
-## found the rise/decay mechanism was already exactly what this needs
-## model wanted; it just was not split by what it was a reason to stay
-## *for*. Split here rather than kept alongside a surviving `engagement` -
-## DECISIONS.md §3/§17: one stored fact per real quantity, never two
-## readings of the same one.
+## Demand-shaped, the same as [member thirst]: 0 (not currently wanted) - 1
+## (strongly wanted), rising with time/circumstance and falling when the
+## activity that serves it completes. Corrected 2026-08-25 after live
+## measurement on `87aa238` showed the first version of this split
+## (satisfaction-shaped: started at 0, only rose when satisfied, read as
+## [code]1.0 - value[/code] for motivation weight) was engagement rebuilt
+## three times under new names, not a real need - it could never express
+## "wants to play darts" before darts had already happened once, and with
+## all three staying near 0 for most of a visit, motivation weight sat near
+## a uniform die roll (measured: entertainment 424, social 438, relaxation
+## 422, thirst 216 across one run - no personality/situational signal came
+## through). See docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md's
+## post-`87aa238` correction.
 ##
-## Each is 0 (not currently satisfied) - 1 (recently and fully satisfied),
-## raised on completing the activity that serves it and decayed a little
-## every time a decision is made (see [method decay_motivational_needs])
-## rather than on its own timer, so two customers who both got satisfied
-## never drift out of sync with an independent clock each. None of the
-## three gates Leave and none grows without bound - see
-## leave_social_scoring.tres/leave_entertainment_scoring.tres/
-## leave_relaxation_scoring.tres for how they pull Leave down. Two-stage
-## motivation selection reads [code](1.0 - value)[/code] as "how much is
-## this currently wanted" - the same demand-shaped reading [member thirst]
-## already gets, just derived rather than stored raw, since these three are
-## naturally satisfaction-shaped (rise when satisfied) rather than thirst's
-## deficit-shaped rise-over-time.
+## Seeded from personality at spawn (see [method seed_from]) so customers
+## start differently, then rises a little every time a decision is made
+## (see [method update_motivational_needs]) - the same per-decision cadence
+## [member remaining_visit_minutes] and the original engagement pool both
+## already used, standing in for "time/circumstance" without needing a new
+## clock or, for now, real crowding/noise detection (left as a documented
+## simplification, not built - CUSTOMER_MODEL.md §3 scopes Awareness
+## separately and asks to keep it cheap). Motivation selection reads each
+## directly, the same way it already reads thirst.
 
-## Raised by Socialise at Seat, group leisure socialising and
-## [code]SocialPresenceService[/code]'s spontaneous conversations ending -
-## see [code]Customer._on_socialise_finished()[/code] and
-## [code]Customer.on_conversation_ended()[/code].
+## Rises with time apart from company; falls when Socialise at Seat, group
+## leisure socialising or a [code]SocialPresenceService[/code] conversation
+## completes - see [code]Customer._on_socialise_finished()[/code] and
+## [code]Customer.on_conversation_ended()[/code]. Seeded from
+## [member Personality.social_tendency] - a more sociable customer starts
+## already wanting company sooner.
 var social: float = 0.0
 
-## Raised by completing a [code]TavernActivityPoint[/code]-based activity
-## (Darts) - see [code]Customer._on_activity_use_finished()[/code].
+## Rises with idle time; falls when a [code]TavernActivityPoint[/code]-based
+## activity (Darts) completes - see
+## [code]Customer._on_activity_use_finished()[/code]. Seeded from
+## [member Personality.entertainment_interest].
 var entertainment: float = 0.0
 
-## Raised by Relax at Seat completing - see
+## Rises with time on your feet; falls when Relax at Seat completes - see
 ## [code]Customer._on_relax_finished()[/code]. Previously nothing wrote
 ## this at all (the audit's "absent, not weak" finding); wired up as part
-## of item 3 (activities declare what they satisfy).
+## of item 3 (activities declare what they satisfy). Seeded from
+## [member Personality.privacy_preference].
 var relaxation: float = 0.0
 
-## Seeded from CustomerAIBalanceConfig.needs_decay_per_decision in
+## Seeded from CustomerAIBalanceConfig.needs_rise_per_decision in
 ## seed_from() - stored here rather than read by CustomerBrain each time so
 ## CustomerBrain never needs its own reference to CustomerAIBalanceConfig,
 ## consistent with it already only holding needs/registry/report_manager.
 ## Shared by all three of the above; nothing currently needs a different
-## decay rate per need.
-var _need_decay_per_decision: float = 0.05
+## rate per need.
+var _need_rise_per_decision: float = 0.05
 
 
 ## Seeds every starting value at spawn. [param balance] and [param personality]
@@ -206,8 +210,18 @@ func seed_from(
 		duration_multiplier = personality.visit_duration_multiplier
 		travel_willingness = personality.travel_willingness
 
+		# Demand-shaped seeding - see these three fields' doc comment above.
+		# Scaled to 0.4 max so a customer never arrives already maxed out on
+		# a need before anything has happened to them; the per-decision rise
+		# and activity completion still do most of the work over a visit.
+		social = clampf(personality.social_tendency * 0.4, 0.0, 1.0)
+		entertainment = clampf(
+			personality.entertainment_interest * 0.4, 0.0, 1.0
+		)
+		relaxation = clampf(personality.privacy_preference * 0.4, 0.0, 1.0)
+
 	if balance != null:
-		_need_decay_per_decision = balance.needs_decay_per_decision
+		_need_rise_per_decision = balance.needs_rise_per_decision
 
 		wealth = roundi(
 			randf_range(
@@ -464,17 +478,16 @@ func get_context_value(context_id: StringName) -> float:
 
 
 ## Called once per decision (CustomerBrain._build_context()) rather than on
-## its own timer - see [member social]'s doc comment for why. A small,
-## configurable multiplicative decay applied to all three motivational
-## needs: each halves roughly every
-## [code]log(0.5)/log(1-decay_rate)[/code] decisions, never reaches exactly
-## zero, and never goes negative.
-func decay_motivational_needs() -> void:
-	if _need_decay_per_decision <= 0.0:
+## its own timer - see [member social]'s doc comment for why. Standing in
+## for "time/circumstance" (isolation, idleness, time on your feet) without
+## a dedicated clock or environmental sensing. Asymptotic toward 1.0 - each
+## rise shrinks as the need gets closer to fully wanted, the same curve
+## shape [method CustomerNeeds]' decay used to have toward 0, just aimed the
+## other way - so nothing overshoots or needs a separate clamp.
+func update_motivational_needs() -> void:
+	if _need_rise_per_decision <= 0.0:
 		return
 
-	social = maxf(0.0, social * (1.0 - _need_decay_per_decision))
-	entertainment = maxf(
-		0.0, entertainment * (1.0 - _need_decay_per_decision)
-	)
-	relaxation = maxf(0.0, relaxation * (1.0 - _need_decay_per_decision))
+	social += (1.0 - social) * _need_rise_per_decision
+	entertainment += (1.0 - entertainment) * _need_rise_per_decision
+	relaxation += (1.0 - relaxation) * _need_rise_per_decision

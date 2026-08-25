@@ -10,9 +10,6 @@
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/leave_intoxication_scoring.tres" id="8_intoxication"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/leave_thirst_scoring.tres" id="9_thirst"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/leave_drinks_scoring.tres" id="10_drinks"]
-[ext_resource type="Resource" path="res://Data/customer_ai/conditions/leave_social_scoring.tres" id="11_social"]
-[ext_resource type="Resource" path="res://Data/customer_ai/conditions/leave_entertainment_scoring.tres" id="15_entertainment"]
-[ext_resource type="Resource" path="res://Data/customer_ai/conditions/leave_relaxation_scoring.tres" id="16_relaxation"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/leave_end_of_visit_pressure.tres" id="12_end_of_visit"]
 [ext_resource type="Resource" path="res://Data/customer_ai/conditions/decision_variance.tres" id="13_variance"]
 [ext_resource type="Resource" path="res://Data/customer_ai/behaviours/leave.tres" id="14_behaviour"]
@@ -22,7 +19,7 @@ script = ExtResource("1_script")
 activity_id = &"leave"
 display_name = "Leave"
 base_utility = 7.0
-conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_not_ordering"), ExtResource("4_mood_scoring"), ExtResource("5_at_limit"), ExtResource("6_visit_time"), ExtResource("7_money"), ExtResource("8_intoxication"), ExtResource("9_thirst"), ExtResource("10_drinks"), ExtResource("11_social"), ExtResource("15_entertainment"), ExtResource("16_relaxation"), ExtResource("12_end_of_visit"), ExtResource("13_variance")])
+conditions = Array[ExtResource("2_condition_type")]([ExtResource("3_not_ordering"), ExtResource("4_mood_scoring"), ExtResource("5_at_limit"), ExtResource("6_visit_time"), ExtResource("7_money"), ExtResource("8_intoxication"), ExtResource("9_thirst"), ExtResource("10_drinks"), ExtResource("12_end_of_visit"), ExtResource("13_variance")])
 is_terminal = true
 behaviour = ExtResource("14_behaviour")
 is_mandatory = true

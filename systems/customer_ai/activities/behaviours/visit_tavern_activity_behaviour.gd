@@ -42,7 +42,21 @@ func on_enter(context: ActivityContext) -> void:
 		customer.abandon_activity_visit(&"no_reserved_destination")
 		return
 
+	# reservable.get_parent() is the point directly only for the legacy bare-
+	# Reservable-under-point scene shape; a real TavernActivitySlot (every
+	# authored point, including darts_point.tscn) puts the Reservable one
+	# level deeper, so that cast always returned null there and this
+	# activity was abandoned on every single selection - see
+	# docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md's darts-
+	# occupancy trace. TavernActivitySlot.point is the explicit back-
+	# reference that fixes this without assuming a fixed nesting depth.
 	var point: TavernActivityPoint = reservable.get_parent() as TavernActivityPoint
+
+	if point == null:
+		var owning_slot: TavernActivitySlot = reservable.get_parent() as TavernActivitySlot
+
+		if owning_slot != null:
+			point = owning_slot.point
 
 	if point == null:
 		customer.abandon_activity_visit(&"reserved_destination_not_a_activity_point")
