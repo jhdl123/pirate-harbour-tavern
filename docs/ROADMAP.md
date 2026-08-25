@@ -1,11 +1,8 @@
 # Roadmap
 
 Working roadmap. Nothing is complete until implemented **and** verified.
-Reconciled against `feature/darts-multiplayer-and-activity-affinity`
-(through the Phase B brief, `cdcae60`); items already built have been
-removed rather than carried forward as aspiration. See `PLAN.md` for the
-long-term direction this prioritises from, and `TASKS.md` for the one
-currently active slice of it.
+Reconciled against `825add8`; items already built have been removed rather than
+carried forward as aspiration.
 
 ## The strategic gap
 
