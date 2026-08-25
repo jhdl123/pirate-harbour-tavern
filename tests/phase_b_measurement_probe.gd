@@ -247,4 +247,103 @@ func _report(main: Node) -> void:
 		" per customer"
 	)
 
+	_report_individual_histories(report_manager, completed)
+
 	print("=== END PHASE B MEASUREMENT PROBE ===")
+
+
+## Several COMPLETE customer histories, not just aggregates - the item-10
+## ask ("customers look like people spending time there... rather than
+## agents completing enter -> drink -> leave") cannot be judged from a
+## table. Reuses CustomerAIReportManager's existing per-decision records
+## (_decisions_by_customer, already populated every run - see
+## record_decision()'s doc comment) rather than adding a second tracking
+## mechanism; this is exactly the needs -> motivation -> candidates ->
+## selected -> execution -> resulting need change -> next decision trace
+## CUSTOMER_INSPECTOR.md's diagnostics requirement asks for, read from
+## history instead of live.
+func _report_individual_histories(
+	report_manager: Object, completed: Array
+) -> void:
+	var decisions_by_customer: Dictionary = report_manager.get(
+		"_decisions_by_customer"
+	)
+
+	if decisions_by_customer == null or decisions_by_customer.is_empty():
+		return
+
+	# Longest decision sequences first - a customer who left after one
+	# decision has no story to read; the point is to inspect a full visit.
+	var customer_ids: Array = decisions_by_customer.keys()
+	customer_ids.sort_custom(
+		func(a, b) -> bool:
+			return (
+				decisions_by_customer[a].size()
+				> decisions_by_customer[b].size()
+			)
+	)
+
+	var visit_by_customer: Dictionary = {}
+	for record: Object in completed:
+		visit_by_customer[int(record.get("customer_id"))] = record
+
+	print("")
+	print("=== INDIVIDUAL CUSTOMER HISTORIES (top 5 by decision count) ===")
+
+	for i: int in range(mini(5, customer_ids.size())):
+		var customer_id: int = int(customer_ids[i])
+		var decisions: Array = decisions_by_customer[customer_id]
+		var visit: Object = visit_by_customer.get(customer_id)
+
+		print("")
+		print(
+			"--- customer ", customer_id, " (", decisions.size(),
+			" decisions)",
+			(
+				"  departed: %s after %.1f min" % [
+					String(visit.get("departure_reason")),
+					visit.call("get_visit_duration_minutes"),
+				]
+			) if visit != null else "  (visit still active at report time)"
+		)
+
+		for decision: DecisionRecord in decisions:
+			var candidate_summary: String = ""
+
+			for entry: Dictionary in decision.eligible_activities:
+				var mark: String = (
+					"*" if String(entry.get("activity_id", ""))
+						== decision.selected_activity_id
+					else ""
+				)
+				candidate_summary += "%s%s=%.1f " % [
+					mark, entry.get("activity_id", ""), entry.get("score", 0.0)
+				]
+
+			print(
+				"  t=%6.1f  motivation=%-13s selected=%-20s%s"
+				% [
+					decision.game_time_minutes,
+					decision.motivation if not decision.motivation.is_empty()
+						else ("forced:" + decision.forced_reason),
+					decision.selected_activity_id,
+					("  [" + decision.execution_outcome + "]")
+						if not decision.execution_outcome.is_empty() else "",
+				]
+			)
+			print(
+				(
+					"          needs: thirst=%.2f social=%.2f"
+					+ " entertainment=%.2f relaxation=%.2f mood=%.2f"
+					+ " intox=%.2f money=£%d"
+				) % [
+					decision.thirst, decision.social, decision.entertainment,
+					decision.relaxation, decision.satisfaction,
+					decision.intoxication, decision.money,
+				]
+			)
+
+			if not candidate_summary.is_empty():
+				print("          candidates: ", candidate_summary)
+
+	print("=== END INDIVIDUAL CUSTOMER HISTORIES ===")
