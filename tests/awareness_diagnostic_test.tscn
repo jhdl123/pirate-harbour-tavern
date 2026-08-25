@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tests/awareness_diagnostic_test.gd" id="1_awareness"]
+
+[node name="AwarenessDiagnosticTest" type="Node"]
+script = ExtResource("1_awareness")
