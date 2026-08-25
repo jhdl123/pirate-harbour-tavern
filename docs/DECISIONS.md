@@ -117,27 +117,62 @@ that can only ever report PASS is indistinguishable from one that cannot fail �
 `diagnostic_export_probe` therefore injects real faults and asserts they are
 caught.
 
-## 19. Cross-activity influence is soft-scored data, not a state machine
-
-A customer's next choice can be nudged by what they just finished (e.g.
-drink → socialise) through a scoring condition reading
-`ActivityContext.last_activity_id`, not a hard sequence or a ban. This keeps
-`CustomerBrain.think()`'s competitive-scoring model as the one decision
-mechanism customers ever use — adding influence never means adding a special
-case to it.
-
-## 20. Multi-participant activities reuse the reservation framework
-
-An activity needing more than one participant (Darts: 1–2) gets a second
-`TavernActivitySlot` on its `TavernActivityPoint` and an
-`ActivityDefinition.max_participants` value, not a new coordination
-mechanism. A future card table or gambling activity is the same pattern with
-a different participant count and its own slots. Deliberately excluded: a
-waiting/matchmaking system — no partner nearby at decision time means
-playing solo, not waiting.
-
-## 21. Changing decisions
+## 18. Changing decisions
 
 When a decision changes: update this file, update the affected system docs,
 explain why it changed, implement, and commit documentation with implementation
 where practical.
+
+## 19. Customer decisions are two-stage
+
+A customer decides **what it currently wants**, then **which available thing
+serves that want**. Activities do not all compete in one flat utility pool.
+
+Why: measured at `235b7ac`, `relax_at_seat` beat darts in 321 of 528 samples
+where darts was eligible. In a flat contest sitting still is a legitimate
+winner over doing something, and no weight fixes that — it only changes which
+activity wins the same contest. See `CUSTOMER_MODEL.md`.
+
+## 20. Needs are demands, not happiness
+
+A need expresses what would currently be valuable to a customer. Low `social`
+does not mean unhappy; it means company is not worth much right now. Mood and
+satisfaction are separate and already exist — do not merge them.
+
+**All needs are normalised 0.0–1.0.** Raw-valued needs have caused two
+multi-session bugs: `wealth` as a raw coin count made leaving impossible, and
+`remaining_visit_minutes` as raw minutes gives a customer +2.75 for sitting
+down. Raw quantities are exposed as context values, never as needs.
+
+## 21. Activities declare what they satisfy
+
+Conditions read needs; activities advertise what they give back. Adding an
+activity — cards, gambling, food, a musician — should be one activity resource,
+one behaviour and a destination. No new condition resources, no re-balancing of
+existing activities, no brain changes. This is the acceptance test for the
+customer model, not an aspiration.
+
+## 22. Groups bias members, they do not dictate
+
+A crew is more likely to socialise or play together, and any member can still
+peel off for their own reasons. Group context is a scoring input, never a
+separate code path.
+
+## 23. Lingering is the default
+
+Staying is normal; a customer does not justify not leaving. Departure is a
+decision that becomes gradually more likely under time, money, satisfaction,
+group departure and closing. The visit timer is a backstop, not the mechanism.
+
+## 24. Most customers do ordinary things
+
+Explicitly rejected: a tavern where everyone is always doing an activity. In a
+real tavern most time is drinking and talking and darts is occasional. A
+theme-park result is a worse outcome than the current one, not a better one.
+
+## 25. Inspection UI reads a snapshot
+
+`Customer → CustomerInspectionData → CustomerInspectorUI`. The UI never reads
+customer internals, needs, the brain or the registry directly. Same rule and
+same failure mode as §3's `StockedDisplay`. This exists so the decision
+architecture can change again without touching UI.

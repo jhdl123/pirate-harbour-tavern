@@ -66,6 +66,7 @@ if it reports more than a couple of `TIMEOUT`s.
 | `group_stress_test` | Groups (load/stress) | Inferred | none recorded |
 | `item_system_tests` | Items and inventory | **Verified** | covers item/slot/container/transfer (no numeric baseline recorded); see runner caveat above |
 | `leave_decision_probe` | Customer AI (leave-decision utility) | Inferred | none recorded |
+| `darts_score_probe` | Customer AI (activity scoring contest) | Verified | diagnostic probe, no assertions — prints eligibility, cooldown, winner tally and mean contribution breakdown |
 | `management_menu_test` | UI (bar management menu) | Inferred | none recorded |
 | `nav_and_backpressure_probe` | Navigation, staff (stuck recoveries) | Inferred | none recorded |
 | `nav_probe` | Navigation | **Verified** | no numeric baseline recorded |

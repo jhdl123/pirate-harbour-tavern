@@ -1,10 +1,8 @@
 # Roadmap
 
 Working roadmap. Nothing is complete until implemented **and** verified.
-Reconciled against `feature/darts-multiplayer-and-activity-affinity` at
-`526e2fa`; items already built have been removed rather than carried forward
-as aspiration. See `PLAN.md` for the long-term direction this prioritises
-from, and `TASKS.md` for the one currently active slice of it.
+Reconciled against `825add8`; items already built have been removed rather than
+carried forward as aspiration.
 
 ## The strategic gap
 
@@ -30,6 +28,24 @@ The progression spine. Largely unbuilt, but most of the plumbing exists.
 Target: day 5 should feel different from day 1 — busier, richer, one upgrade
 bought. That is the point at which this becomes a game worth showing someone.
 
+## Priority 0.5 — Phase B: the customer model (in progress)
+
+The customer decision architecture is being restructured. See
+`CUSTOMER_MODEL.md` for the target, `PHASE_B_BRIEF.md` for the work order.
+
+It sits here rather than lower because it blocks two things above it: the
+information layer needs customers who stay and interact, and customer feel is
+the foundation those systems plug into. It is also a foundation intended to be
+built once — adding activities or interaction types afterwards should not
+require redesigning customers.
+
+- **Two-stage decision** — motivation, then activity within that motivation.
+- **Needs normalised and audited** — no raw-valued needs.
+- **Activities declare what they satisfy** — new activities become resources.
+- **Lingering default, departure by decision.**
+- **Awareness of the room** — the one genuinely new layer.
+- **Customer inspector** — developer tier now, information UI foundation later.
+
 ## Priority 1 — Stabilise what exists
 
 Before more features:
@@ -52,6 +68,8 @@ Before more features:
 
 Multiple drinks per visit; clearer departure logic; more varied visit lengths;
 making existing customer identity and social depth **visible** to the player.
+Largely absorbed into Priority 0.5 — what remains here is whatever Phase B does
+not reach.
 
 ## Priority 3 — Staff
 
@@ -66,16 +84,7 @@ purchasing, warnings, restocking and physical display already exist.
 ## Priority 5 — Activities and tavern life
 
 Gambling; entertainment; environmental interaction; special customer
-opportunities. The activity framework exists and is data-driven, and now
-supports an activity needing 1-2 (or more) participants at once
-(`ActivityDefinition.min_participants`/`max_participants`, proven on Darts) -
-a future cards/dice/gambling table is the same pattern with a different
-participant count and its own `TavernActivityPoint` slots, not a new
-mechanism. Still needed: a dedicated automated test for solo/two-player
-darts and post-match divergence (attempted, not landed - see
-`CURRENT_STATE.md`'s Customer AI section); a waiting/matchmaking mechanism
-if a future activity genuinely needs one (darts deliberately does not -
-no partner nearby means playing solo, no wait).
+opportunities. The activity framework exists and is data-driven.
 
 ## Priority 6 — Reputation depth and customer identity
 

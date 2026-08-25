@@ -19,13 +19,13 @@ Project-memory layer, in the order to consult it:
 | File | Holds |
 |---|---|
 | `CLAUDE.md` | this operating manual |
-| `docs/PLAN.md` | long-term vision and direction — context, not a spec |
-| `docs/GAME_DESIGN.md` | intended experience and design principles |
-| `docs/ROADMAP.md` | agreed, prioritised future work |
-| `docs/TASKS.md` | the current active phase only |
 | `docs/CURRENT_STATE.md` | verified implementation status per system |
 | `docs/DECISIONS.md` | durable decisions not to re-litigate |
-| `docs/CHANGELOG.md` | living record of completed milestones |
+| `docs/GAME_DESIGN.md` | intended experience and design principles |
+| `docs/CUSTOMER_MODEL.md` | intended customer architecture (the Phase B target) |
+| `docs/CUSTOMER_INSPECTOR.md` | inspection panel spec — debug now, information UI later |
+| `docs/PHASE_B_BRIEF.md` | the current work order |
+| `docs/ROADMAP.md` | agreed future work |
 | `docs/AI_WORKFLOW.md` | how ChatGPT / Claude Code / Git / Godot fit together |
 | `docs/LEARNING_LOG.md` | Godot concepts learned + durable development lessons |
 | `docs/ARCHITECTURE.md` | system ownership and data flow |
@@ -198,8 +198,3 @@ per misplaced marker.
 
 Document durable facts, design intent, decisions, verified state and lessons.
 Do not duplicate the code. Do not record speculation as implemented behaviour.
-`TASKS.md` holds only the current phase; fold a completed phase into
-`CHANGELOG.md` rather than letting `TASKS.md` accumulate history. Treat
-`PLAN.md`'s long-term vision as context for architecture, never as a queue of
-features to start implementing — a vision item becomes real work only once
-it is explicitly promoted into `ROADMAP.md`.

@@ -1,0 +1,17 @@
+NEW
+  docs/CUSTOMER_MODEL.md
+  docs/CUSTOMER_INSPECTOR.md
+  docs/PHASE_B_BRIEF.md
+  tests/darts_score_probe.gd
+  tests/darts_score_probe.gd.uid
+  tests/darts_score_probe.tscn
+
+MODIFIED
+  CLAUDE.md
+  docs/DECISIONS.md
+  docs/ROADMAP.md
+  docs/CURRENT_STATE.md
+  docs/TEST_MAP.md
+
+UNCHANGED
+  All gameplay code, all resources, all scenes, all other tests.

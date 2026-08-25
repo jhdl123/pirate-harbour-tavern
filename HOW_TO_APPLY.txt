@@ -1,0 +1,50 @@
+PHASE B — CUSTOMER MODEL DOCS
+Base commit: 235b7ac
+
+HOW TO APPLY
+1. Make sure your working tree is clean and committed.
+2. Extract this zip over the PROJECT ROOT (the folder containing project.godot).
+   Do not extract into docs/ — the paths inside the zip are already relative to
+   the project root.
+3. Open the project once in the Godot editor, or run:
+       godot --headless --editor --quit
+   so tests/darts_score_probe.gd resolves. A .uid file is included, so this is
+   belt-and-braces rather than required.
+4. Commit.
+
+WHAT THIS IS
+Documentation and one diagnostic probe. NO gameplay code changes. Nothing in
+this package alters customer behaviour — it is the design and work order that
+Claude Code will implement against.
+
+NEW FILES
+  docs/CUSTOMER_MODEL.md        the intended customer architecture
+  docs/CUSTOMER_INSPECTOR.md    inspection panel spec
+  docs/PHASE_B_BRIEF.md         the work order (audit -> implement -> measure)
+  tests/darts_score_probe.gd    diagnostic probe, no assertions
+  tests/darts_score_probe.gd.uid
+  tests/darts_score_probe.tscn
+
+MODIFIED FILES
+  CLAUDE.md              three new docs added to the project-memory table
+  docs/DECISIONS.md      new decisions 19-25 (two-stage decision, needs are not
+                         happiness, activities declare what they satisfy, groups
+                         bias not dictate, lingering default, no theme park,
+                         inspector reads a snapshot)
+  docs/ROADMAP.md        new Priority 0.5 (Phase B); Priority 2 marked absorbed
+  docs/CURRENT_STATE.md  new measured section under Customer AI recording the
+                         darts scoring findings at 235b7ac
+  docs/TEST_MAP.md       one row for darts_score_probe
+
+RUNNING THE PROBE
+    godot --headless res://tests/darts_score_probe.tscn
+Takes about 4 minutes. Prints eligibility / cooldown / condition-blocked counts
+for darts, the winner tally, and the mean contribution breakdown for relax vs
+darts. It does NOT touch debug/latest/, so it will not overwrite your committed
+diagnostic runs.
+
+NOTE ON RUN VARIANCE
+Two runs of this probe at 235b7ac gave darts "would win" 52/528 and 93/419.
+The direction is stable and the mean scores barely move (10.20 vs 10.28); the
+absolute counts vary with spawn timing. Compare the mean contribution
+breakdown and the eligible-vs-occupancy gap, not the raw win counts.

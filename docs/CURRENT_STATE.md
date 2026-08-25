@@ -4,9 +4,7 @@ Verified implementation status. **This is a summary, not a substitute for the
 code.** When it disagrees with the repository, the repository is right — fix
 this file.
 
-Reconciled against `feature/darts-multiplayer-and-activity-affinity` at
-`526e2fa` (2026-08-25). `main` is currently at `235b7ac` — 5 commits behind
-this branch; see `CHANGELOG.md` for what has not merged yet.
+Reconciled against `main` at `825add8` (phase-a-part4-corrected).
 
 Repository: `jhdl123/pirate-harbour-tavern` · Godot **4.7.1**
 
@@ -68,6 +66,38 @@ scheduling. `Tavern` owns the day lifecycle; `TavernSchedule` and
 `SocialCompatibility`. Covered by `customer_identity_test` (92 assertions).
 **Gap:** much of this depth is not visible to the player.
 
+### Customer AI — activity selection, measured 2026-08-25 at `235b7ac`
+The activity framework functions; the behaviour it produces does not read as a
+tavern, and the cause is measured rather than suspected.
+
+`visit_tavern_activity` (darts) is **eligible in 37.2% of customer-samples and
+occupies 1.2% of customer time**. It is not gated out — it loses the scoring
+contest. Of 528 samples where it was eligible it would have won 52; it was
+beaten by `relax_at_seat` 321 times, `order_drink` 117 and `socialise_at_seat`
+38, and was on cooldown only 20. Mean score when eligible: `order_drink` 20.76,
+`socialise_at_seat` 12.51, `relax_at_seat` 12.43, darts 10.20, `drink` 8.00,
+`leave` −9.62.
+
+Mean contribution breakdown, relax 12.25 vs darts 9.99: darts starts a point
+ahead on base utility (8.50 vs 7.50) and still loses. The dominant term is
+`relax_visit_time_scoring`, `score_weight = 0.05` against
+`remaining_visit_minutes` — a **raw minute count, not a 0–1 need** — worth
++2.72 mean, against darts' visit-time condition which gates only and scores
+0.00. Having plenty of visit time left therefore makes sitting still more
+attractive and does nothing for darts. This is the same raw-vs-normalised
+defect that broke the leave decision with `wealth` in Phase A part 5.
+
+Secondary: darts' distance bonus averages +0.39 of a possible 4.0 — both
+`DartsPoint` nodes are at (82,452)/(156,452) against tables at (448,319) and
+(696,317), so the 600px falloff barely reaches table 2. Relax also has a
+3-minute commitment floor and 6-minute cooldown against darts' 5 and 12.
+
+Also confirmed: `is_committed()` in `customer_brain.gd` is never called, so
+commitment does not gate `think()`.
+
+Reproduce with `tests/darts_score_probe.tscn`. Phase B (`PHASE_B_BRIEF.md`)
+addresses the structural cause; see `CUSTOMER_MODEL.md`.
+
 ### Groups — Verified
 `CustomerGroup`, `GroupManager`, `GroupOrderService`, `GroupKegStockService`,
 `DeliverGroupKegExecutor`, shared table cask ordering, leader-pays payment.
@@ -114,53 +144,6 @@ reason becomes `&"repeated_neglect"` (`&"patience_expired"` is no longer
 ever assigned). This shipped in commit `4923617` without a commit-message
 disclosure or a doc entry; two bugs were found and fixed against it this
 pass (see Known issues).
-
-### Customer AI — cross-activity affinity and two-participant darts (new)
-`ActivityContext.last_activity_id` (stamped by `CustomerBrain._exit_current()`)
-plus `PreviousActivityAffinityCondition` let an activity's own `.tres` data
-declare a soft bonus off whatever the customer just finished, without any
-new branching in `CustomerBrain`. Wired for drink→socialise, darts→drink,
-and darts↔socialise. `ActivityDefinition` gained `min_participants`/
-`max_participants` (default 1/1); Darts is 1/2. `TavernActivityPoint` now
-discovers `TavernActivitySlot` children instead of assuming exactly one
-`Reservable`, so `darts_point.tscn` offers two independently-reservable
-slots. `VisitTavernActivityBehaviour` makes one synchronous attempt (no
-waiting/timeout) to co-opt a nearby available customer as a second
-participant via the new `Customer.find_nearby_activity_partner()`; each
-participant reserves, plays, and returns to its own decision point
-independently, so e.g. one choosing to order a drink afterward while the
-other socialises is the ordinary result of two separate `Customer` nodes,
-not new coordination code. Group members reach this the same way solo
-customers do (`GroupManager._ask_member_brain()` already calls the same
-`think()`) with no `GroupManager`/`CustomerGroup` changes needed.
-
-Found and fixed along the way: `return_to_seat.tres` had zero conditions
-despite its own doc comment saying it should only ever be entered directly,
-so a customer with no other viable option could have normal `think()`
-scoring pick it while already at its own chair - an instant "return" that
-re-triggers `think()` immediately, printing as a burst of repeated
-`Chosen: return_to_seat` rather than a hang. Now gated by
-`DeterministicEntryOnlyCondition`, which is always false and safe because
-`enter_activity()`/`force_activity()` never check availability.
-
-`CustomerBehaviourPanel` (F9) and `StockDevPanel` (F10) gained a real
-customer picker (previously always "customer index 0", by their own
-explicit comments) - every existing action (print profile, verbose
-scoring, force-to-socialise, force-to-darts) now targets whichever customer
-is selected. `DecisionRecord` gained `activity_partner_customer_id`,
-mirroring the existing `social_partner_customer_id` field.
-
-Not covered by an automated test this pass - several attempts at a
-dedicated solo/two-player darts test were made and found three of the real
-bugs above, but the test itself remained too environmentally fragile
-(customer-type visit-duration variance, `--fixed-fps` timing races on
-transient states) to land reliably in the time available; the mechanism is
-exercised by `tests/group_parity_test.gd`'s existing (unchanged, still
-passing) `_test_leisure_darts_and_return()` via the legacy stub path, and
-by the full regression suite (`customer_identity_test`,
-`group_and_recovery_probe`, `report_fields_test`, `diagnostic_export_probe`,
-`behaviour_mix_probe` all pass unchanged), but solo/two-player darts and
-post-match divergence have not been proven end-to-end by an automated test.
 
 ### Beverage, stock and delivery — Verified
 `BeverageRegistry`, `ContainerDefinition`, `ServingFormatDefinition`,
