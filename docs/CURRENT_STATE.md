@@ -287,16 +287,15 @@ factions · weather · save/load.
 5. Sprite gaps: bottled drinks use an 8×16 bottle when full but a 16×16 wine mug
    when empty or broken; Cider, Small Beer and Ale share one mug sprite. Both
    need art, not code.
-6. Group activity participation reading 0.0% is likely already stale: commit
-   `a6b6b38` (2026-08-19, before the commit this file was last reconciled
-   against) fixed both causes its own comments describe
-   (`allow_activities_while_drinking` now defaults `true`;
-   `is_settled` now includes `IN_GROUP`). Never re-measured -
-   `activity_participation_rate_percent` isn't printed in any exported
-   report file (checked `drinks_report.txt`, `customer_report.txt`,
-   `system_diagnostics.txt`, `staff_report.txt` on a fresh run), so
-   confirming this needs either reading the exporter's in-memory dictionary
-   directly or adding it to a report.
+6. **Re-measured 2026-08-25, still 0.0%, not stale.** This entry previously
+   speculated commit `a6b6b38`'s two fixes (`allow_activities_while_drinking`
+   defaulting `true`; `is_settled` including `IN_GROUP`) had likely already
+   corrected this, unconfirmed because no report line printed the number.
+   `2026-08-25_SCORING_AUDIT.md` §7's controlled run read
+   `CustomerAIReportManager`'s in-memory group-visit records directly:
+   0.0% (0/45 member-visits) in a 420-second run, 17 distinct groups. Group
+   members are reaching leisure activities in essentially none of their
+   time - genuinely unresolved, not a stale reading.
 7. `grog` and `kill_devil` are two `DrinkDefinition`s sharing one content id —
    unreconciled duplication.
 8. Pre-existing GDScript warnings (shadowed names, integer division, unused
@@ -325,6 +324,18 @@ factions · weather · save/load.
    Fixed via an explicit `TavernActivitySlot.point` back-reference rather
    than a parent-walk; `darts_point.tscn` is the only scene using
    `TavernActivityPoint`, so nothing else carried the same defect.
+10. **`CustomerBrain._select_weighted()` can resample a candidate the
+    stage-3 motivation filter already excluded.** Found 2026-08-25 by
+    reading full individual customer histories rather than aggregates -
+    3 confirmed instances in one 20-history sample
+    (`2026-08-25_SCORING_AUDIT.md` §7). `think()` computes `best`/
+    `best_score` only from motivation-filtered candidates, but passes the
+    *unfiltered* `eligible_for_report` list to `_select_weighted()`, which
+    samples anything within `selection_band` of `best_score` with no
+    re-check against the motivation that produced it - a candidate that
+    does not serve the chosen motivation can win anyway if its raw score
+    happens to sit close enough. Not fixed - see the audit doc for the
+    exact code location and a proposed fix.
 
 `docs/history/KNOWN_ISSUES.md` holds a longer, older static-audit list from
 an early cleanup pass; parts of it are now stale.

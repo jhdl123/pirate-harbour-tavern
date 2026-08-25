@@ -1,14 +1,13 @@
-[gd_resource type="Resource" script_class="NeedThresholdCondition" format=3]
+[gd_resource type="Resource" script_class="NeedThresholdCondition" format=3 uid="uid://dkh1nbdmngnt4"]
 
-[ext_resource type="Script" path="res://systems/customer_ai/activities/conditions/need_threshold_condition.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://pdgi8t5cnrrl" path="res://systems/customer_ai/activities/conditions/need_threshold_condition.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")
-contribution_label = &"money_contribution"
 need_id = &"wealth"
-comparison = 0
 threshold = 0.0
-gates = false
 value_is_context = true
+gates = false
 score_weight = 0.25
 context_scale = 45.0
+contribution_label = &"money_contribution"

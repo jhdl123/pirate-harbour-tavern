@@ -239,9 +239,44 @@ layer's occupancy query so it is a reusable foundation method, not logic
 embedded in one condition. The inspector gained a small always-on visit
 history (`Customer._visit_history`), deliberately not reusing
 `VisitRecord.recent_activity_history`, which only exists during an active
-diagnostic export. One open finding, not yet fixed: `order_drink` (a
-mandatory, motivation-filter-exempt activity predating Phase B) scores
-using raw `wealth` and raw `remaining_visit_minutes` rather than
-normalised values - the same bug class this section's `wealth`/
-`remaining_visit_minutes` fixes already addressed elsewhere, found now in
-a third place. See the verification pass doc for the full trace.
+diagnostic export. One finding from this pass - `order_drink` scoring from
+raw `wealth`/`remaining_visit_minutes` - was not fixed here; it was the
+trigger for the systematic audit in §27, which fixed it along with every
+other instance of the same defect rather than just this one.
+
+## 27. Scoring inputs need an explicit, bounded scale, not just a raw/need label
+
+`2026-08-25_SCORING_AUDIT.md`. §20 already established that a need must be
+0.0-1.0 and a raw quantity must go through `get_context_value()` instead of
+`get_need()`. That type-level split turned out not to be sufficient on its
+own: `NeedThresholdCondition.score()` still multiplied `score_weight`
+directly against whatever `get_context_value()` returned, with no cap -
+correct for a genuine 0.0-1.0 need (where the formula is safe by
+construction) but not for a raw context value, which can be arbitrarily
+large. Found independently in six resources (`order_money_scoring`,
+`order_visit_time_scoring`, `leave_money_scoring`,
+`leave_visit_time_scoring`, `socialise_visit_time_scoring`,
+`leave_drinks_scoring`), each authored separately, none of them checked
+against the others.
+
+**Decision:** a condition that scores a raw context value must declare an
+explicit, bounded scale for it - `NeedThresholdCondition.context_scale`,
+the raw distance that maps to a full 1.0 fraction before `score_weight` is
+applied, mirroring the clamp-then-scale pattern `NearestPointDistance
+Condition`/`EndOfVisitPressureCondition` already used by hand. Not a
+blanket "normalise every raw value to 0-1 everywhere" rule - `wealth` and
+`remaining_visit_minutes` stay raw everywhere else in the codebase (gates,
+display, `RepeatDecayCondition`'s exponential, distance falloffs); only the
+one place that turns a raw value into a *score contribution* needs the
+scale to be explicit and authored, not implicit in whatever `score_weight`
+a resource happened to pick.
+
+Also decided: a candidate that fails `CustomerBrain`'s stage-3 motivation
+filter must never re-enter the pool weighted selection samples from, even
+if its raw score is close to the filtered winner's. Found by reading full
+individual customer histories rather than aggregates (`_select_weighted()`
+was sampling from `eligible_for_report`, populated before the motivation
+filter runs) - see `2026-08-25_SCORING_AUDIT.md` §7's headline finding.
+**Not yet fixed** - flagged for a decision on next steps, since correcting
+it changes decision outcomes tavern-wide and needs its own isolated
+before/after measurement, not a fix folded into an audit pass.

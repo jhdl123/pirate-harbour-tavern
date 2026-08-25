@@ -12,9 +12,9 @@ extends Node
 ## and the "did no activity at all" count, which no existing report line
 ## already answers.
 
-const RUN_SECONDS: float = 240.0
+const RUN_SECONDS: float = 420.0
 const SAMPLE_SECONDS: float = 2.0
-const SPAWN_UNTIL: float = 200.0
+const SPAWN_UNTIL: float = 360.0
 
 var samples: int = 0
 var occupancy_tally: Dictionary = {}
@@ -288,9 +288,9 @@ func _report_individual_histories(
 		visit_by_customer[int(record.get("customer_id"))] = record
 
 	print("")
-	print("=== INDIVIDUAL CUSTOMER HISTORIES (top 5 by decision count) ===")
+	print("=== INDIVIDUAL CUSTOMER HISTORIES (top 20 by decision count) ===")
 
-	for i: int in range(mini(5, customer_ids.size())):
+	for i: int in range(mini(20, customer_ids.size())):
 		var customer_id: int = int(customer_ids[i])
 		var decisions: Array = decisions_by_customer[customer_id]
 		var visit: Object = visit_by_customer.get(customer_id)

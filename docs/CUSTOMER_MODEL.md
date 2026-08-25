@@ -163,6 +163,21 @@ second drink; someone leaves; a new group arrives.
 
 And crucially — **you should not be able to predict what happens next.**
 
+**Verification status** (updated 2026-08-25, see `docs/history/
+2026-08-25_SCORING_AUDIT.md` §7 for the full evidence): read in full, not
+sampled, 20 complete customer histories from a controlled run. 9 of 20 are
+genuine multi-activity visits matching this scene - relax then socialise
+then darts, or darts twice with a return to seat between, at lengths from
+55 to 219 minutes, with `leave` winning on merit against real alternatives
+rather than by default. 3 more have exactly one optional activity in an
+otherwise ordinary drink-led visit. This is **proven for the customers who
+reach it**, not yet the tavern-wide norm - a genuine, unfixed decision-
+selection bug (weighted selection can resample a candidate the motivation
+filter had already excluded) is confirmed contributing to some of the
+gap, found in 3 of the 20 sampled histories; see the audit doc before
+attempting any further tuning that assumes the decision pipeline is
+already clean.
+
 ## Non-goals
 
 Stated explicitly because each has been proposed and rejected:

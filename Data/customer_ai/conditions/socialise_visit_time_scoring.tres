@@ -1,14 +1,13 @@
-[gd_resource type="Resource" script_class="NeedThresholdCondition" format=3]
+[gd_resource type="Resource" script_class="NeedThresholdCondition" format=3 uid="uid://odk0io2rw1ri"]
 
-[ext_resource type="Script" path="res://systems/customer_ai/activities/conditions/need_threshold_condition.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://pdgi8t5cnrrl" path="res://systems/customer_ai/activities/conditions/need_threshold_condition.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")
-contribution_label = &"visit_time_contribution"
 need_id = &"remaining_visit_minutes"
-comparison = 0
 threshold = 0.0
-gates = false
 value_is_context = true
+gates = false
 score_weight = 0.03
 context_scale = 90.0
+contribution_label = &"visit_time_contribution"

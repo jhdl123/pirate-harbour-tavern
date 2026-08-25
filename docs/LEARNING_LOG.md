@@ -320,6 +320,23 @@ fixed, the right next step is grepping every `NeedThresholdCondition` with
 `value_is_context = true` for the same missing normalisation, not just
 closing the one instance found.
 
+**A filter enforced when computing the winner is not automatically enforced
+on the pool a later step samples from.** `CustomerBrain.think()`'s stage-3
+motivation filter correctly excludes a non-serving candidate from ever
+becoming `best`/`best_score` - but the weighted-selection call right after
+it (`_select_weighted(eligible_for_report, best_score)`) was handed the
+*unfiltered* `eligible_for_report` list, not the filtered set `best` came
+from. A candidate the filter had already correctly rejected could still be
+resampled back in, purely because its raw score happened to sit within
+`selection_band` of whatever the filtered competition produced - three
+confirmed cases in one 20-history read
+(`2026-08-25_SCORING_AUDIT.md` §7). Two lists that are *supposed* to be the
+same population but are built at different points in a function, one
+before a filter and one after, will silently diverge the moment a third
+step (weighted selection, added later than the filter) reads the wrong
+one - the same shape as the two-readings-of-one-quantity lesson above, just
+with a filtered/unfiltered list instead of two separate value sources.
+
 **An aggregate metric can stay flat while the mechanism underneath it is
 completely different.** "No activity at all: 78.6%" measured after this
 pass's real fixes (slot-bug, leave-stage-1, needs inversion, time-
