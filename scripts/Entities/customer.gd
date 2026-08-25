@@ -259,6 +259,19 @@ var _social_satisfaction_gain: float = 0.0
 var _social_partner_satisfaction_gain: float = 0.0
 var _social_gain: float = 0.0
 
+## Small developer-only log of activities completed this visit, in order -
+## CustomerInspectionData.visit_history's source, see
+## _record_visit_history(). One Customer node is one visit (a fresh
+## instance is spawned per arrival), so this never needs resetting.
+##
+## Not VisitRecord.recent_activity_history - that one only exists while
+## CustomerAIReportManager.is_export_enabled() is true (a diagnostic
+## export run), so it is empty for ordinary debug-build play. The
+## inspector must work any time in a debug build (CUSTOMER_INSPECTOR.md's
+## "hover/select to inspect", gated only by OS.is_debug_build()), so it
+## needs its own always-on record rather than reading the export-only one.
+var _visit_history: Array[Dictionary] = []
+
 ## Phase 2C: which TavernActivityPoint this customer is currently visiting
 ## or travelling to/from - null the rest of the time.
 var _current_activity_point: TavernActivityPoint = null
@@ -1507,6 +1520,8 @@ func _on_relax_finished() -> void:
 		# it, not raises it - see CustomerNeeds.social's doc comment.
 		needs.adjust(&"relaxation", -_relaxation_gain)
 
+	_record_visit_history(_brain.get_current_activity() if _brain != null else null)
+
 	if _is_ai_debug_enabled():
 		print(
 			"[CustomerAI] ", name,
@@ -1751,6 +1766,8 @@ func _on_socialise_finished() -> void:
 
 	social_partner = null
 
+	_record_visit_history(_brain.get_current_activity() if _brain != null else null)
+
 	if _return_group_member_after_activity(&"socialise"):
 		return
 
@@ -1855,22 +1872,22 @@ func _on_activity_use_finished() -> void:
 
 	var point: TavernActivityPoint = _current_activity_point
 
+	# Sourced from the activity's own declared ActivityDefinition.satisfies
+	# rather than a field on TavernActivityPoint, so there is exactly one
+	# place that says what this activity gives back - see DECISIONS.md §21.
+	# Falls back to nothing (0.0) if the brain has already moved on, which
+	# should not happen at this call site but must not crash if it ever does.
+	var definition: ActivityDefinition = (
+		_brain.get_current_activity() if _brain != null else null
+	)
+
 	if needs != null:
 		needs.adjust(&"mood", point.satisfaction_effect)
 
-		# Sourced from the activity's own declared ActivityDefinition.
-		# satisfies rather than a field on TavernActivityPoint, so there is
-		# exactly one place that says what this activity gives back - see
-		# DECISIONS.md §21. Demand-shaped: completing the activity that
-		# serves a need lowers it, not raises it - see CustomerNeeds.social's
-		# doc comment. Falls back to nothing (0.0) if the brain has already
-		# moved on, which should not happen at this call site but must not
-		# crash if it ever does.
-		var definition: ActivityDefinition = (
-			_brain.get_current_activity() if _brain != null else null
-		)
-
 		if definition != null:
+			# Demand-shaped: completing the activity that serves a need
+			# lowers it, not raises it - see CustomerNeeds.social's doc
+			# comment.
 			for need_id: String in definition.satisfies:
 				needs.adjust(
 					StringName(need_id), -float(definition.satisfies[need_id])
@@ -1884,6 +1901,8 @@ func _on_activity_use_finished() -> void:
 
 		if not point.repeat_count_need_id.is_empty():
 			needs.adjust_context_value(point.repeat_count_need_id, 1.0)
+
+	_record_visit_history(definition)
 
 	if _report_manager != null:
 		_report_manager.record_tavern_activity(
@@ -2859,6 +2878,21 @@ func get_diagnostics_snapshot() -> Dictionary:
 	}
 
 
+## Appends one completed activity to _visit_history - called from every
+## activity-completion handler (_on_relax_finished, _on_socialise_finished,
+## _on_activity_use_finished) with whatever CustomerBrain still reports as
+## the current activity at that point, before think() reassigns it.
+func _record_visit_history(definition: ActivityDefinition) -> void:
+	if definition == null:
+		return
+
+	_visit_history.append({
+		"activity_id": String(definition.activity_id),
+		"display_name": definition.display_name,
+		"at_minutes": WorldTime.get_total_minutes(),
+	})
+
+
 ## Builds this customer's developer-tier inspection snapshot -
 ## DECISIONS.md §25's `Customer -> CustomerInspectionData ->
 ## CustomerInspectorUI`. This is the one place allowed to read `_brain`,
@@ -2934,6 +2968,8 @@ func get_inspection_data() -> CustomerInspectionData:
 
 	if not group_id.is_empty():
 		data.group_role = "member"
+
+	data.visit_history = _visit_history.duplicate(true)
 
 	return data
 

@@ -70,6 +70,15 @@ var money: int = 0
 var drinks_consumed: int = 0
 
 
+@export_category("Visit History")
+## Activities completed so far this visit, oldest first - developer-only,
+## CUSTOMER_INSPECTOR.md's later ask ("a small developer-only visit history
+## showing the sequence of activities completed during the current visit").
+## Array[Dictionary]: {"activity_id": String, "display_name": String,
+## "at_minutes": float}.
+var visit_history: Array[Dictionary] = []
+
+
 ## The brief's console format (CUSTOMER_INSPECTOR.md), as plain text -
 ## rendering only, no logic that reads anything beyond this snapshot's own
 ## fields.
@@ -137,6 +146,23 @@ func to_display_text() -> String:
 	if not group_id.is_empty():
 		lines.append("")
 		lines.append("group: %s (%s)" % [group_id, group_role])
+
+	if not visit_history.is_empty():
+		lines.append("")
+		lines.append("visit history:")
+
+		for entry: Dictionary in visit_history:
+			lines.append(
+				"  %6.0f  %s"
+				% [
+					float(entry.get("at_minutes", 0.0)),
+					String(
+						entry.get(
+							"display_name", entry.get("activity_id", "")
+						)
+					),
+				]
+			)
 
 	lines.append("")
 	lines.append(
