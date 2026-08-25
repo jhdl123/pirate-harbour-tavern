@@ -1,7 +1,8 @@
 # Game Design — Pirate Harbour Tavern
 
 Intended experience and design principles. For what is actually built, see
-`CURRENT_STATE.md`.
+`CURRENT_STATE.md`. For the long-term vision behind these principles, see
+`PLAN.md`.
 
 ## Vision
 

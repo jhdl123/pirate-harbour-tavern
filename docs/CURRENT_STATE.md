@@ -4,7 +4,9 @@ Verified implementation status. **This is a summary, not a substitute for the
 code.** When it disagrees with the repository, the repository is right — fix
 this file.
 
-Reconciled against `main` at `825add8` (phase-a-part4-corrected).
+Reconciled against `feature/darts-multiplayer-and-activity-affinity` at
+`526e2fa` (2026-08-25). `main` is currently at `235b7ac` — 5 commits behind
+this branch; see `CHANGELOG.md` for what has not merged yet.
 
 Repository: `jhdl123/pirate-harbour-tavern` · Godot **4.7.1**
 

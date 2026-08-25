@@ -1,8 +1,32 @@
 # Current Architecture
 
-## Design goal
+## Architectural principles
 
-Gameplay systems should depend on reusable definitions and managers rather than embedding balance values in individual scripts.
+- **Data-driven, configurable systems.** Gameplay systems depend on reusable
+  definitions and managers rather than embedding balance values in
+  individual scripts. Adding content should mean adding a Resource, not a
+  branch. See `DECISIONS.md` #2.
+- **Modular, reusable behaviour over special cases.** New mechanics compose
+  existing systems (reservation, navigation, tasks, items, activities)
+  rather than duplicating them for one object type. See `DECISIONS.md` #4,
+  #7, #11.
+- **Avoid unnecessary hard-coding.** A hard-coded `if activity_id == ...`
+  branch is a signal something should have been a small piece of exported
+  data instead — see "Customer AI and activities" below for a concrete
+  recent example.
+- **Extensibility without over-engineering.** Build what the current phase
+  needs; do not add configurability, participant counts or abstraction for a
+  case that does not exist yet. See `DECISIONS.md` #13.
+- **Separation of simulation and presentation.** UI observes gameplay state
+  through signals; it never owns it. See the dependency rules below.
+- **Testable systems.** Behaviour with a numeric claim needs a test or
+  diagnostic behind it. See `CLAUDE.md`'s verification levels.
+- **Incremental development.** Systems are built in the order the playable
+  game currently needs them, not the order the long-term vision lists them
+  in. See `docs/PLAN.md`.
+
+These are why the sections below look the way they do; `PLAN.md` explains
+what they are protecting room for.
 
 ## Items and drink flow
 
@@ -154,6 +178,56 @@ API, so `Table`, `GameManager` and `Customer` are untouched.
 
 Full detail, including why each old behaviour was wrong and how future staff
 reuse the system unchanged, is in [Navigation System](NAVIGATION_SYSTEM.md).
+
+## Customer AI and activities
+
+```text
+CustomerNeeds          drives, decaying/rising over time
+CustomerBrain          one per customer: think() scores every ActivityDefinition
+    ├── ActivityRegistry        all registered activities
+    ├── ActivityDefinition      Resource: conditions + behaviour + duration
+    │       └── ActivityCondition   Resource: one scoring/gating rule
+    ├── ActivityContext         Resource: current needs/state/last activity,
+    │                           rebuilt fresh for every think()
+    └── DecisionRecord          diagnostics: what was eligible, what won, why
+
+CustomerIdentity / Personality     who this customer is, read by conditions
+                                    and behaviours, never branched on by name
+```
+
+`CustomerBrain.think()` is a single competitive scoring loop over every
+registered `ActivityDefinition`, called from every "an activity just
+finished" point in `Customer` — there is no fixed drink→leave sequence.
+Weighted-random tie-breaking among near-equal scores keeps customers from
+choosing identically. Adding a new activity (a card table, eventually food)
+means adding a new `ActivityDefinition` pointed at an existing or new
+`behaviour` Resource; it does not mean touching `CustomerBrain`.
+
+Activities that happen at a place (Darts, and the framework it proved out)
+reuse the same reservation primitive a `Chair` uses:
+
+```text
+TavernActivityPoint (Node2D)
+    └── TavernActivitySlot (one or more)
+            ├── Reservable        FREE -> RESERVED -> OCCUPIED
+            └── UsePosition       Marker2D
+```
+
+An activity with `max_participants > 1` (Darts is 1–2) can co-opt a second,
+independently scanned customer via `Customer.find_nearby_activity_partner()`
+and reserve a second slot for them directly; each participant then runs its
+own unmodified travel → use → decide-next-activity pipeline, so two people
+finishing the same game of darts and choosing different next activities is
+the ordinary result of two separate `CustomerBrain` instances, not
+coordination code. `GroupManager` reaches this same `think()` for group
+members, so group and solo customers share one activity-decision system,
+not two.
+
+Full detail — including cross-activity affinity (why a customer who just
+finished a drink is more likely to socialise next), the known gap in
+automated multiplayer-darts test coverage, and every activity currently
+registered — is in [Customer AI System](CUSTOMER_AI_SYSTEM.md) and
+[Group Framework](GROUP_FRAMEWORK.md).
 
 ## Cleaning and actions
 
@@ -353,3 +427,8 @@ This supports future save/load sessions and makes dependencies visible in the sc
 - Items move only through `ItemTransferService`, never by editing a slot directly.
 - Item behaviour is driven by tags on resources, not by hard-coded item checks.
 - A slot or container never contains UI code; UI observes their change signals.
+- Activities extend by adding data (a new `ActivityDefinition`/`.tres` and
+  conditions), never by branching `CustomerBrain` on an activity id.
+- An activity needing more than one participant reuses
+  `Reservable`/`TavernActivitySlot`; it does not get its own coordination
+  mechanism.

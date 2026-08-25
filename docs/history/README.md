@@ -12,3 +12,7 @@ not this folder.
 Kept rather than deleted for the reasoning trails some of them contain (bug
 traces, tuning history, decisions made and reverted) that the compact current
 docs deliberately do not restate.
+
+Note: `CHANGELOG.md` in this folder is itself one such frozen, one-off
+report (a single cleanup pass), not a living log. The current, living
+changelog is `docs/CHANGELOG.md`, one level up.

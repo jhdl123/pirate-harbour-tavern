@@ -952,6 +952,29 @@ directly from the live `Reservable` state (not a separate tracking
 system, so it can never drift from what `DestinationBroker` itself would
 find).
 
+### Cross-activity affinity
+
+`ActivityContext` gained `last_activity_id`, stamped by
+`CustomerBrain._exit_current()` — the one choke point every exit path
+(`think()`, `enter_activity()`, `force_activity()`,
+`abandon_current_activity()`) already funnels through, so there is exactly
+one place "what did this customer just finish" is tracked. A new condition
+class, `PreviousActivityAffinityCondition`, scores a flat bonus when
+`last_activity_id` matches one of its configured trigger ids and zero
+otherwise - no decay curve needed, because the field only ever holds the
+immediately-preceding activity, so the bonus stops applying the moment the
+customer does anything else. Wired via ordinary `.tres` data onto existing
+activities: drink → socialise, darts → drink, darts ↔ socialise. Adding
+another pairing (e.g. socialise → a future card table) is another `.tres`
+file, not a code change.
+
+The one previously hard-coded per-activity branch this pass found -
+`Customer._on_activity_use_finished()`'s
+`if point.activity_id == &"darts": needs.adjust(&"darts_count", ...)` - was
+generalised to `TavernActivityPoint.repeat_count_need_id`, so a future
+activity's own repeat-decay need no longer requires its own `if` branch
+here either.
+
 ### Known limitations, honestly
 
 - **Capacity beyond 1 is now implemented, for Darts specifically.**
@@ -984,5 +1007,14 @@ find).
   `Personality` (`future_trait_tags`) but not read by anything yet, per
   the brief's "do not implement new customer archetypes unless needed for
   testing".
-
+- **No dedicated automated test for solo/two-player darts and post-match
+  divergence.** Three attempts were made this pass; each found and fixed a
+  real bug (off-navmesh teleport coordinates, eager GDScript argument
+  evaluation, a scheduled-event race between forcing an activity and a
+  customer's own pending completion timer), but the test itself stayed too
+  environmentally fragile - customer-type visit-duration variance and
+  `--fixed-fps` timing races on transient states - to land reliably in the
+  time available, and was deleted rather than shipped unreliable. Coverage
+  today is indirect: `group_parity_test.gd`'s existing legacy-stub darts
+  case, plus the unchanged full regression suite. See `TASKS.md`.
 

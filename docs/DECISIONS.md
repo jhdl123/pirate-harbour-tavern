@@ -117,7 +117,26 @@ that can only ever report PASS is indistinguishable from one that cannot fail �
 `diagnostic_export_probe` therefore injects real faults and asserts they are
 caught.
 
-## 18. Changing decisions
+## 19. Cross-activity influence is soft-scored data, not a state machine
+
+A customer's next choice can be nudged by what they just finished (e.g.
+drink → socialise) through a scoring condition reading
+`ActivityContext.last_activity_id`, not a hard sequence or a ban. This keeps
+`CustomerBrain.think()`'s competitive-scoring model as the one decision
+mechanism customers ever use — adding influence never means adding a special
+case to it.
+
+## 20. Multi-participant activities reuse the reservation framework
+
+An activity needing more than one participant (Darts: 1–2) gets a second
+`TavernActivitySlot` on its `TavernActivityPoint` and an
+`ActivityDefinition.max_participants` value, not a new coordination
+mechanism. A future card table or gambling activity is the same pattern with
+a different participant count and its own slots. Deliberately excluded: a
+waiting/matchmaking system — no partner nearby at decision time means
+playing solo, not waiting.
+
+## 21. Changing decisions
 
 When a decision changes: update this file, update the affected system docs,
 explain why it changed, implement, and commit documentation with implementation
