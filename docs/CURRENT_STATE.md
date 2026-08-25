@@ -64,39 +64,109 @@ scheduling. `Tavern` owns the day lifecycle; `TavernSchedule` and
 `CustomerNeeds`, `CustomerBrain`, `ActivityDefinition`/`ActivityCondition`,
 `ActivityRegistry`, `CustomerIdentity`, `Personality`, `VisitIntentConfig`,
 `SocialCompatibility`. Covered by `customer_identity_test` (92 assertions).
-**Gap:** much of this depth is not visible to the player.
+**Gap:** much of this depth is not visible to the player — narrowed by
+Phase B's developer-tier inspector (below), still not player-facing.
 
-### Customer AI — activity selection, measured 2026-08-25 at `235b7ac`
-The activity framework functions; the behaviour it produces does not read as a
-tavern, and the cause is measured rather than suspected.
+### Customer AI — inspector (Phase B, developer tier)
+`Customer.get_inspection_data() -> CustomerInspectionData`, rendered by
+`CustomerInspectorUI` (`systems/customer_ai/inspection/`) — needs, current
+motivation, candidate scores, rejection reasons, execution outcome, group
+membership. `CustomerBrain.get_last_decision()`/`get_last_execution_outcome()`
+are new, un-gated per-customer caches (populated regardless of
+`report_manager`/export state). Reached via select (not hover — documented
+deviation, `DECISIONS.md` §10/§26) through the existing `Interactable`
+framework, one `&"inspect"` action, gated behind `OS.is_debug_build()`.
+Group role is simplified to "member" (no leader/non-leader distinction yet —
+`Customer` has no back-reference to its `CustomerGroup`).
 
-`visit_tavern_activity` (darts) is **eligible in 37.2% of customer-samples and
-occupies 1.2% of customer time**. It is not gated out — it loses the scoring
-contest. Of 528 samples where it was eligible it would have won 52; it was
-beaten by `relax_at_seat` 321 times, `order_drink` 117 and `socialise_at_seat`
-38, and was on cooldown only 20. Mean score when eligible: `order_drink` 20.76,
-`socialise_at_seat` 12.51, `relax_at_seat` 12.43, darts 10.20, `drink` 8.00,
-`leave` −9.62.
+### Customer AI — activity selection, Phase B two-stage decisions (2026-08-25)
+The flat-pool problem measured at `235b7ac` (below, kept as history) is
+addressed: `CustomerBrain.think()` now picks a motivation
+(`thirst`/`social`/`entertainment`/`relaxation`) before scoring, and a
+non-mandatory activity only competes when its `ActivityDefinition.satisfies`
+serves that motivation. Full design in `CUSTOMER_MODEL.md`, implementation
+detail in `docs/CUSTOMER_AI_SYSTEM.md`'s "Phase B" section, verdicts and plan
+in `docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md`.
 
-Mean contribution breakdown, relax 12.25 vs darts 9.99: darts starts a point
-ahead on base utility (8.50 vs 7.50) and still loses. The dominant term is
-`relax_visit_time_scoring`, `score_weight = 0.05` against
+**Isolated before/after for the single most distorting fix** (deleting
+`relax_visit_time_scoring.tres`, which scored a raw minute count directly -
+`tests/darts_score_probe.tscn`, same commit, this one change only): darts'
+"would be top scorer when eligible" went from 54/504 (10.7%) to 229/469
+(48.8%).
+
+**Full Stage 2 state** (`tests/darts_score_probe.tscn`, motivation-gated
+pool): darts eligible-and-motivation-matched 257 samples, would be top
+scorer in 184 of them (**71.6%**), beaten by `order_drink` 58,
+`socialise_at_seat` 13, `leave` 2. `CustomerNeeds.engagement` is retired,
+split into `social`/`entertainment`/`relaxation` fed by the activity that
+used to raise the shared pool; raw values (`wealth`,
+`remaining_visit_minutes`, repeat counters) are no longer reachable through
+`get_need()`/`set_need()` at all, only through a separate
+`get_context_value()` pair.
+
+**Stage 4 table** (`tests/phase_b_measurement_probe.tscn`, 240s run, 65
+completed visits, 10 distinct groups):
+
+| Metric | At `235b7ac` | After (this run) |
+|---|---|---|
+| chose-to-leave vs visit-time-ended | 13 vs 30 | **16 vs 18** |
+| realised visit length (median / max) | 65.0 / 218.0 | 52.0 / 99.0 |
+| solo service rate | 53.3% | 71.7% |
+| group activity participation | 33.3% (6 groups) | 8.6% (10 groups) |
+| order_drink share of customer time | ~28–35% | 24.3% |
+| did no activity at all (relax+socialise+darts) | not previously tracked | 51/65 (78.5%) |
+
+Read with the brief's own measurement traps in mind: this run has 10 groups,
+still under the ~14 needed for group-level numbers to stop being noisy, and
+a 240s/65-visit sample is short enough that occupancy (as opposed to the
+scoring-contest numbers above, which have much larger sample sizes) is not
+reliable — darts' actual occupancy in this run's 2-second activity-time-share
+sampling was 0, consistent with the "occupancy counts in the tens are noise"
+warning rather than a contradiction of the scoring-contest result. The
+chose-to-leave/visit-time-ended balance improving and group participation
+dropping are both worth a longer confirming run before either is treated as
+settled; "no activity at all" staying substantial (not collapsing toward
+zero) is the intended non-theme-park result, not a shortfall.
+
+Extension test re-measured: a hypothetical new point-based leisure activity
+needs one `ActivityDefinition.tres` and one `TavernActivityPoint` scene, zero
+new condition resources - the four conditions every existing leisure
+activity's baseline needs (`is_settled`, `not_transacting_at_bar`,
+`visit_activity_availability`, `decision_variance`) are already shared,
+reusable instances, and `VisitTavernActivityBehaviour.gd` already runs any
+point-based activity generically. Darts needed 12 condition resources at
+`235b7ac`; `relax_at_seat.tres` is down to 6 from 9 (two conditions -
+the raw-minute one above, and one rewarding relax for already being
+relaxed, backwards once `relaxation` became a demand-shaped motivation
+input - were deleted, not reweighted).
+
+#### History: the problem as measured at `235b7ac`, before Phase B
+
+`visit_tavern_activity` (darts) was **eligible in 37.2% of customer-samples
+and occupied 1.2% of customer time**. It was not gated out — it lost the
+scoring contest. Of 528 samples where it was eligible it would have won 52;
+it was beaten by `relax_at_seat` 321 times, `order_drink` 117 and
+`socialise_at_seat` 38, and was on cooldown only 20. Mean score when
+eligible: `order_drink` 20.76, `socialise_at_seat` 12.51, `relax_at_seat`
+12.43, darts 10.20, `drink` 8.00, `leave` −9.62.
+
+Mean contribution breakdown, relax 12.25 vs darts 9.99: darts started a
+point ahead on base utility (8.50 vs 7.50) and still lost. The dominant term
+was `relax_visit_time_scoring`, `score_weight = 0.05` against
 `remaining_visit_minutes` — a **raw minute count, not a 0–1 need** — worth
-+2.72 mean, against darts' visit-time condition which gates only and scores
-0.00. Having plenty of visit time left therefore makes sitting still more
-attractive and does nothing for darts. This is the same raw-vs-normalised
-defect that broke the leave decision with `wealth` in Phase A part 5.
++2.72 mean, against darts' visit-time condition which gated only and scored
+0.00. This was the same raw-vs-normalised defect that broke the leave
+decision with `wealth` in Phase A part 5; both are now fixed the same way
+(see Phase B above).
 
-Secondary: darts' distance bonus averages +0.39 of a possible 4.0 — both
+Secondary: darts' distance bonus averaged +0.39 of a possible 4.0 — both
 `DartsPoint` nodes are at (82,452)/(156,452) against tables at (448,319) and
-(696,317), so the 600px falloff barely reaches table 2. Relax also has a
+(696,317), so the 600px falloff barely reaches table 2 (still true, not
+addressed this pass — a level fix, not a code fix). Relax also had a
 3-minute commitment floor and 6-minute cooldown against darts' 5 and 12.
 
-Also confirmed: `is_committed()` in `customer_brain.gd` is never called, so
-commitment does not gate `think()`.
-
-Reproduce with `tests/darts_score_probe.tscn`. Phase B (`PHASE_B_BRIEF.md`)
-addresses the structural cause; see `CUSTOMER_MODEL.md`.
+Also confirmed: `is_committed()` in `customer_brain.gd` was never called, so
+commitment did not gate `think()` — wired in as part of Phase B (see above).
 
 ### Groups — Verified
 `CustomerGroup`, `GroupManager`, `GroupOrderService`, `GroupKegStockService`,

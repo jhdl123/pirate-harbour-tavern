@@ -96,12 +96,14 @@ var maximum_drinks_per_visit: int = 2
 var absolute_maximum_drinks_per_visit: int = 5
 
 
-@export_category("Phase 2C - Engagement")
-## How much CustomerNeeds.engagement decays each time a decision is made -
-## see CustomerNeeds.decay_engagement()'s doc comment for why this happens
-## per-decision rather than on a timer.
+@export_category("Phase 2C - Motivational Needs")
+## How much each of CustomerNeeds' social/entertainment/relaxation needs
+## decays each time a decision is made - see
+## CustomerNeeds.decay_motivational_needs()'s doc comment for why this
+## happens per-decision rather than on a timer. Split from a single
+## "engagement" pool per docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
 @export_range(0.0, 0.5, 0.01)
-var engagement_decay_per_decision: float = 0.08
+var needs_decay_per_decision: float = 0.08
 
 
 @export_category("Phase 2C - Social Discovery")

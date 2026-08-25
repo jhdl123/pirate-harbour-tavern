@@ -855,16 +855,21 @@ existing `ActorNavigation` stuck-recovery already surfaces every failure
 through this same callback, which is what "use the existing navigation
 framework" asks for.
 
-### Reasons to stay (engagement)
+### Reasons to stay (engagement) — superseded, see Phase B
 
-`CustomerNeeds.engagement`, raised by `TavernActivityPoint.engagement_effect`
-and `SocialiseAtSeatBehaviour`'s configured gain, decayed a small
-configurable fraction every time a decision is made
-(`CustomerNeeds.decay_engagement()`, called from
-`CustomerBrain._build_context()` - the same per-decision cadence
+`CustomerNeeds.engagement` as described below was retired in Phase B and
+split into `social`/`entertainment`/`relaxation` - see the "Phase B" section
+near the end of this file for the current shape. Kept here as history: it
+was raised by `TavernActivityPoint.engagement_effect` and
+`SocialiseAtSeatBehaviour`'s configured gain, decayed a small configurable
+fraction every time a decision is made (`CustomerNeeds.decay_engagement()`,
+called from `CustomerBrain._build_context()` - the same per-decision cadence
 `remaining_visit_minutes` already refreshes on, not a new timer). Never
-gates Leave - `leave_engagement_scoring.tres` only scores, and decays back
-toward zero on its own, so it cannot indefinitely block a departure.
+gated Leave - `leave_engagement_scoring.tres` only scored, and decayed back
+toward zero on its own, so it could not indefinitely block a departure. The
+split kept this same rise/decay mechanism and non-gating contract; it just
+gives each source (darts, socialising, relaxing) its own named field instead
+of one shared pool.
 
 ### Repetition and variety
 
@@ -1017,4 +1022,153 @@ here either.
   time available, and was deleted rather than shipped unreliable. Coverage
   today is indirect: `group_parity_test.gd`'s existing legacy-stub darts
   case, plus the unchanged full regression suite. See `TASKS.md`.
+
+## Phase B — two-stage decisions and the customer model
+
+Full design in `CUSTOMER_MODEL.md`; audit and plan in
+`docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md`. This section is
+the "how it actually works now" reference.
+
+### The flat pool is gone from the optional-activity contest
+
+`CustomerBrain.think()` now runs a stage-2 motivation pick
+(`_select_motivation()`) before scoring: a weighted draw over
+`{thirst, social, entertainment, relaxation}`, where `thirst` is read
+directly (already demand-shaped - high means wanted) and the other three
+are read as `1.0 - value` (they are satisfaction-shaped - they rise when
+satisfied, so "low" means "wanted"). `CustomerIdentity.get_motivation_bias()`
+(new, mirrors `get_activity_bias()`) lets a `VisitIntentConfig` nudge this
+via its own new `motivation_weight_offsets` dictionary.
+
+Inside the existing scoring loop, one new clause:
+
+```gdscript
+if not definition.is_mandatory and not definition.serves_motivation(motivation):
+    continue
+```
+
+`ActivityDefinition.satisfies` (`Dictionary`, need id string → amount) is
+the declarative field `serves_motivation()` reads. `order_drink`/`drink`/
+`leave` (`is_mandatory = true`) and `wander` (empty `satisfies`, its
+deliberate always-available fallback) are exempt and still compete in every
+pass, unchanged from before Phase B - only the three leisure activities
+(`relax_at_seat`, `socialise_at_seat`, `visit_tavern_activity`) are now
+motivation-filtered. Everything after the filter clause - gating,
+`get_utility()`, cooldown, commitment, weighted selection among near-equal
+candidates, diagnostics recording - is the exact same code that ran before
+this pass.
+
+`darts_score_probe.gd` reproduces this filter as a second "MOTIVATION GATE"
+report section (it walks `registry.definitions` directly, bypassing
+`think()`, so its plain "eligible" number is condition-eligibility only and
+would silently stop meaning "would actually compete" without this).
+
+### Needs: engagement retired, raw values fenced off
+
+`CustomerNeeds.engagement` is gone. `social`/`entertainment`/`relaxation`
+replace it (CUSTOMER_MODEL.md §2's remaining three named needs), each fed by
+the activity that used to raise the shared pool:
+
+| Need | Raised by |
+|---|---|
+| `social` | Socialise at Seat, group leisure socialising, `SocialPresenceService` conversations ending |
+| `entertainment` | Completing a `TavernActivityPoint` activity (Darts) |
+| `relaxation` | Relax at Seat completing (previously raised nothing at all) |
+
+All three decay per-decision via `CustomerNeeds.decay_motivational_needs()`,
+the same mechanism and cadence `decay_engagement()` always used.
+
+Raw values (`wealth`, `remaining_visit_minutes`, `visit_duration_minutes`,
+the repeat counters) moved off `get_need()`/`set_need()` entirely onto a
+parallel `get_context_value()`/`set_context_value()`/
+`adjust_context_value()` pair. `NeedThresholdCondition` gained
+`value_is_context: bool` to pick which accessor it uses -
+`RepeatDecayCondition` and `EndOfVisitPressureCondition` always use the
+context accessor, since every existing use of both is a raw value. Reading
+`remaining_visit_minutes` via `get_need()` now warns and returns `0.0`
+instead of silently returning the raw minute count.
+
+`relax_visit_time_scoring.tres` - the condition measured as the actual cause
+of relax dominating darts (`score_weight = 0.05` against raw
+`remaining_visit_minutes`, worth +2.72 mean) - is deleted, not reweighted.
+Isolated before/after (`darts_score_probe.tscn`, same commit, this one
+change only): darts' "would be top scorer when eligible" went from 54/504
+(10.7%) to 229/469 (48.8%).
+
+### Activities declare what they satisfy
+
+`ActivityDefinition.satisfies` is also the single source of truth for the
+two activities that already had ad hoc need-effect fields:
+`SocialiseAtSeatBehaviour.engagement_gain` → `social_gain`, read from
+`context.activity.satisfies.get("social")`, no longer a separate exported
+number; `RelaxAtSeatBehaviour` reads `context.activity.satisfies.get(
+"relaxation")` the same way - previously relax wrote back nothing at all on
+completion. `TavernActivityPoint` keeps its own `entertainment_effect`/
+`social_effect` fields (renamed from `engagement_effect`, plus one new
+field) rather than being folded into `satisfies`, since a
+`TavernActivityPoint` is explicitly meant to be reused per-instance for
+future point-based activities (cards, a musician) independent of any one
+`ActivityDefinition` - the two are authored to match, same separation
+`repeat_count_need_id` already used.
+
+`relax_at_seat.tres` lost `relax_visit_time_scoring` (above) and
+`relax_engagement_scoring` (its own condition rewarding relax when
+`relaxation` was already high - backwards once `relaxation` became a
+demand-shaped motivation input, since it rewarded relax least when
+relaxation was most wanted). It now carries 6 conditions, down from 9 at
+`235b7ac`.
+
+### Extension test, re-measured
+
+A hypothetical new point-based leisure activity (cards) needs, under this
+model: one `ActivityDefinition.tres` (with `satisfies` declared) and one
+`TavernActivityPoint` scene - zero new condition resources, since
+`is_settled.tres`, `not_transacting_at_bar.tres`,
+`visit_activity_availability.tres` (its `tag_override` defaults empty,
+already reading `ActivityDefinition.destination_tag` generically) and
+`decision_variance.tres` are already shared, reusable instances, and
+`VisitTavernActivityBehaviour.gd` is already written generically enough to
+run cards unchanged. Darts needed 12 condition resources at `235b7ac`.
+
+### Awareness
+
+One new condition, `NearbyActivityInUseCondition` - score-only, reuses
+`DestinationBroker.get_candidates()` and the same falloff-by-
+`travel_willingness` formula `NearestPointDistanceCondition` already used,
+just scoring the nearest *occupied* point of a tag instead of the nearest
+free one. Attached to darts only (`darts_awareness_scoring.tres`), per the
+brief's "darts is the test case, keep it cheap" - `SocialPresenceService`'s
+own conversation-pairing tick is unchanged and not the source of this
+signal.
+
+### `is_committed()` wired in
+
+Previously computed but never consulted - the commitment floor only worked
+by accident, via `roll_duration_minutes()` keeping an activity's own
+scheduled completion from firing early. `CustomerBrain.think()` now checks
+it explicitly (after the out-of-money override, before scoring): a
+re-decision arriving mid-commitment is a no-op, leaving the current activity
+running. `force_activity()` is unaffected and can still interrupt at any
+time.
+
+### Inspector
+
+`Customer.get_inspection_data() -> CustomerInspectionData` builds the
+developer-tier snapshot DECISIONS.md §25 describes -
+`systems/customer_ai/inspection/`. `CustomerBrain.get_last_decision()` /
+`get_last_execution_outcome()` are new, un-gated caches (populated on every
+decision regardless of `report_manager`/export state) - the export-gated
+aggregate path is unchanged. `CustomerInspectorUI` (`CanvasLayer`, built
+programmatically like `BeverageDiagnosticsPanel`/`StockDevPanel`, no scene
+file) renders only what the snapshot carries.
+
+Reached via select, not hover: `Customer` implements the `Interactable`
+provider methods (`get_interaction_display_name()`/
+`get_interaction_actions()`/`perform_interaction()`), offering one
+`&"inspect"` action only when `OS.is_debug_build()`. Documented deviation
+from CUSTOMER_INSPECTOR.md's stated hover target, per DECISIONS.md §10: the
+existing interaction framework is reach-based (an actor must be in range),
+not screen-space mouse picking, so true hover needs a second detection
+system; select reuses the existing detector/selector/prompt pipeline
+entirely (customers already carry an `InteractionArea`).
 

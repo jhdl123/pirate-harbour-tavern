@@ -1,6 +1,6 @@
 # Test Map
 
-Index of `tests/` (49 scenes) to the system/area each one actually exercises,
+Index of `tests/` (50 scenes) to the system/area each one actually exercises,
 for picking a relevant subset instead of running the whole suite. This is an
 index, not a description of what each test does — read the test's own header
 comment for that.
@@ -8,7 +8,7 @@ comment for that.
 **Basis** column:
 
 - **Verified** — the system/area and (where shown) the baseline is already
-  stated in `CLAUDE.md` or `CURRENT_STATE.md`. 11 tests.
+  stated in `CLAUDE.md` or `CURRENT_STATE.md`. 12 tests.
 - **Inferred** — no existing doc assigns this test to a system. The area
   below comes from this test's own header comment and filename, read for this
   map. Not confirmed against a run. 38 tests.
@@ -66,7 +66,8 @@ if it reports more than a couple of `TIMEOUT`s.
 | `group_stress_test` | Groups (load/stress) | Inferred | none recorded |
 | `item_system_tests` | Items and inventory | **Verified** | covers item/slot/container/transfer (no numeric baseline recorded); see runner caveat above |
 | `leave_decision_probe` | Customer AI (leave-decision utility) | Inferred | none recorded |
-| `darts_score_probe` | Customer AI (activity scoring contest) | Verified | diagnostic probe, no assertions — prints eligibility, cooldown, winner tally and mean contribution breakdown |
+| `darts_score_probe` | Customer AI (activity scoring contest) | Verified | diagnostic probe, no assertions — prints eligibility, cooldown, winner tally and mean contribution breakdown. Since the Phase B two-stage pass, also prints a MOTIVATION GATE section reproducing the real `think()`-equivalent motivation filter as a second column — "eligible" alone is condition-eligibility only and no longer means "would actually compete" |
+| `phase_b_measurement_probe` | Customer AI (Phase B before/after table) | Verified | diagnostic probe, no assertions — runs a 300s session, samples activity time-share every 2s, then exports a real diagnostic run and reads `_completed_visit_records` directly for visit length/departure/service/group-participation/no-activity numbers. See `docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md`'s Stage 4 table |
 | `management_menu_test` | UI (bar management menu) | Inferred | none recorded |
 | `nav_and_backpressure_probe` | Navigation, staff (stuck recoveries) | Inferred | none recorded |
 | `nav_probe` | Navigation | **Verified** | no numeric baseline recorded |

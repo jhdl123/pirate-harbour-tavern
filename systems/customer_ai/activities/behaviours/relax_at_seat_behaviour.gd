@@ -39,7 +39,20 @@ func on_enter(context: ActivityContext) -> void:
 	if customer == null:
 		return
 
+	# Sourced from the activity's own declared ActivityDefinition.satisfies
+	# rather than a field on this behaviour, so there is exactly one place
+	# that says what Relax at Seat gives back - see DECISIONS.md §21 and
+	# item 3 of docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md's
+	# plan.
+	var relaxation_gain: float = 0.0
+
+	if context.activity != null:
+		relaxation_gain = float(
+			context.activity.satisfies.get("relaxation", 0.0)
+		)
+
 	customer.begin_relaxing(
 		minimum_duration_minutes,
-		maximum_duration_minutes
+		maximum_duration_minutes,
+		relaxation_gain
 	)

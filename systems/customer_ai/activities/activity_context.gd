@@ -85,3 +85,12 @@ var world_minutes: float = 0.0
 ## can nudge another drink, and so on, without CustomerBrain itself knowing
 ## anything about specific activities.
 var last_activity_id: StringName = &""
+
+
+## Stage 2's motivation weights (CUSTOMER_MODEL.md §4) for this decision -
+## {&"thirst": float, &"social": float, &"entertainment": float,
+## &"relaxation": float} - set by [method CustomerBrain._select_motivation]
+## purely for diagnostics/inspector visibility. Never read by
+## [ActivityCondition]s; the chosen motivation itself already did its work
+## by the time any condition runs.
+var motivation_weights: Dictionary = {}

@@ -263,6 +263,13 @@ var leisure_relax_minimum_minutes: float = 3.0
 @export_range(1.0, 60.0, 0.5)
 var leisure_relax_maximum_minutes: float = 6.0
 
+## Added to CustomerNeeds.relaxation on completion - matches
+## relax_at_seat.tres's declared [member ActivityDefinition.satisfies]
+## value; see item 3 of
+## docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md's plan.
+@export_range(0.0, 1.0, 0.01)
+var leisure_relax_relaxation_gain: float = 0.3
+
 ## Socialise duration bounds and effects, matching the seated activity.
 @export_range(1.0, 60.0, 0.5)
 var leisure_socialise_minimum_minutes: float = 3.0
@@ -276,8 +283,11 @@ var leisure_socialise_satisfaction_gain: float = 0.12
 @export_range(0.0, 1.0, 0.01)
 var leisure_socialise_partner_gain: float = 0.08
 
+## Renamed from `leisure_socialise_engagement_gain` when
+## CustomerNeeds.engagement was split into social/entertainment/relaxation
+## - see docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
 @export_range(0.0, 1.0, 0.01)
-var leisure_socialise_engagement_gain: float = 0.2
+var leisure_socialise_social_gain: float = 0.2
 
 
 @export_category("References")

@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1_script")
-contribution_label = &"visit_time_contribution"
-need_id = &"remaining_visit_minutes"
+contribution_label = &"relaxation_contribution"
+need_id = &"relaxation"
 comparison = 0
 threshold = 0.0
 gates = false
-score_weight = 0.05
+score_weight = -1.33

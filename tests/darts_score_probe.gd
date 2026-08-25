@@ -6,6 +6,17 @@ extends Node
 ## samples but occupies ~1% of customer time. Eligibility is therefore not the
 ## answer. This prints the actual competitive score next to the winner, and
 ## separately counts cooldown blocks (which the gate audit never evaluated).
+##
+## Phase B added a stage-2 motivation filter inside CustomerBrain.think()
+## (docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md's "ALSO DO") -
+## this probe still walks registry.definitions directly rather than calling
+## think() itself, so "eligible" below is condition-eligibility only, same
+## as before that change, and would silently stop meaning what a reader
+## expects if left alone. The MOTIVATION GATE section reproduces the actual
+## think()-equivalent filter (motivation selected, non-mandatory candidates
+## without a matching ActivityDefinition.satisfies entry excluded) as a
+## second, explicit column - "eligible" alone is the pre-two-stage number,
+## "motivation-gated" is what think() would actually do with it.
 
 const RUN_SECONDS: float = 240.0
 const SAMPLE_SECONDS: float = 2.0
@@ -28,6 +39,14 @@ var entered_tally: Dictionary = {}
 var darts_dumped: int = 0
 var contrib: Dictionary = {}
 var contrib_n: Dictionary = {}
+
+# MOTIVATION GATE (second column) - see the class doc comment above.
+var darts_motivation_matched: int = 0
+var darts_motivation_excluded: int = 0
+var darts_would_win_gated: int = 0
+var beaten_by_gated: Dictionary = {}
+var winner_tally_gated: Dictionary = {}
+var motivation_tally: Dictionary = {}
 
 
 func _ready() -> void:
@@ -90,10 +109,20 @@ func _sample() -> void:
 		var identity: Object = brain.get("identity")
 		var world_minutes: float = float(context.get("world_minutes"))
 
+		# Stage 2 (CUSTOMER_MODEL.md §4) - the real think()-equivalent
+		# motivation this sample would have selected. Computed once per
+		# sample, same as CustomerBrain.think() does.
+		var motivation: StringName = brain.call("_select_motivation", context)
+		motivation_tally[motivation] = int(motivation_tally.get(motivation, 0)) + 1
+
 		var best_id: StringName = &""
 		var best_score: float = -INF
 		var darts_score: float = -INF
 		var darts_state: String = "blocked"
+
+		var best_id_gated: StringName = &""
+		var best_score_gated: float = -INF
+		var darts_matches_motivation: bool = false
 
 		for definition: Object in registry.get("definitions"):
 			if definition == null:
@@ -143,8 +172,32 @@ func _sample() -> void:
 				best_score = score
 				best_id = aid
 
+			# MOTIVATION GATE: the same exclusion CustomerBrain.think()
+			# applies at stage 3 - a non-mandatory candidate whose
+			# ActivityDefinition.satisfies does not serve the chosen
+			# motivation never enters the contest at all.
+			var is_mandatory: bool = bool(definition.get("is_mandatory"))
+			var serves: bool = bool(
+				definition.call("serves_motivation", motivation)
+			)
+
+			if aid == DARTS:
+				darts_matches_motivation = is_mandatory or serves
+
+			if not is_mandatory and not serves:
+				continue
+
+			if score > best_score_gated:
+				best_score_gated = score
+				best_id_gated = aid
+
 		if best_id != &"":
 			winner_tally[best_id] = int(winner_tally.get(best_id, 0)) + 1
+
+		if best_id_gated != &"":
+			winner_tally_gated[best_id_gated] = int(
+				winner_tally_gated.get(best_id_gated, 0)
+			) + 1
 
 		match darts_state:
 			"eligible":
@@ -160,6 +213,18 @@ func _sample() -> void:
 					if darts_dumped < 6:
 						darts_dumped += 1
 						_dump(customer, context, registry, best_id, best_score, darts_score)
+
+				if darts_matches_motivation:
+					darts_motivation_matched += 1
+
+					if best_id_gated == DARTS:
+						darts_would_win_gated += 1
+					else:
+						beaten_by_gated[best_id_gated] = int(
+							beaten_by_gated.get(best_id_gated, 0)
+						) + 1
+				else:
+					darts_motivation_excluded += 1
 			"cooling":
 				darts_cooling += 1
 			_:
@@ -222,6 +287,39 @@ func _report() -> void:
 		for s: float in gap_samples:
 			g += s
 		print("  mean gap to winner ", "%.2f" % (g / float(gap_samples.size())))
+
+	print("")
+	print("MOTIVATION GATE (stage 2/3, think()-equivalent - see class doc)")
+	print("  motivation chosen this run:")
+
+	for k: StringName in motivation_tally:
+		print("      ", k, ": ", motivation_tally[k])
+
+	print(
+		"  darts eligible AND matches chosen motivation: ",
+		darts_motivation_matched
+	)
+	print(
+		"  darts eligible BUT motivation-excluded: ",
+		darts_motivation_excluded
+	)
+
+	if darts_motivation_matched > 0:
+		print(
+			"  would be top scorer (motivation-gated pool): ",
+			darts_would_win_gated,
+			" / ", darts_motivation_matched
+		)
+		print("  beaten by (motivation-gated pool):")
+
+		for k: StringName in beaten_by_gated:
+			print("      ", k, ": ", beaten_by_gated[k])
+
+	print("")
+	print("TOP SCORER TALLY (motivation-gated pool)")
+
+	for k: StringName in winner_tally_gated:
+		print("  ", k, ": ", winner_tally_gated[k])
 
 	print("")
 	print("MEAN SCORE WHEN ELIGIBLE (all activities)")

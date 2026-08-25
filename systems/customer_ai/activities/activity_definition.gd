@@ -37,6 +37,36 @@ extends Resource
 @export var conditions: Array[ActivityCondition] = []
 
 
+@export_category("Satisfies")
+
+## What this activity gives back, as need id (String, matching
+## [method CustomerNeeds.get_need]'s ids) -> amount typically added on
+## completion. Declarative "what does this activity serve" data - read by
+## [CustomerBrain]'s stage-2/3 motivation filter (does this activity serve
+## the motivation stage 2 chose) and by the developer inspector. Empty
+## means this activity serves no particular motivation and is never
+## filtered out regardless of which motivation wins - the mandatory
+## pipeline steps (Order Drink, Drink, Leave, whose real need effects
+## already happen through other established paths - thirst reduction,
+## mood - and are not duplicated here) and Wander's deliberate
+## always-available fallback. See [method serves_motivation] and
+## DECISIONS.md §21.
+@export var satisfies: Dictionary = {}
+
+
+## True if [param motivation_id] is one of the needs this activity
+## declares in [member satisfies] - the stage-3 test [CustomerBrain] runs
+## for every non-mandatory candidate. An activity with an empty
+## [member satisfies] always returns true (Wander's fallback); mandatory
+## activities are never even asked, since [CustomerBrain] exempts them by
+## [member is_mandatory] before this would be called.
+func serves_motivation(motivation_id: StringName) -> bool:
+	if satisfies.is_empty():
+		return true
+
+	return satisfies.has(String(motivation_id))
+
+
 @export_category("Destination")
 
 ## Which [Reservable] tag this activity needs reserved before

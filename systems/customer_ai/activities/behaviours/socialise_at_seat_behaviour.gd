@@ -48,10 +48,13 @@ var satisfaction_gain: float = 0.1
 @export_range(0.0, 1.0, 0.01)
 var partner_satisfaction_gain: float = 0.05
 
-## Added to CustomerNeeds.engagement on completion - see that need's doc
+## Added to CustomerNeeds.social on completion - see that need's doc
 ## comment on why this decays per-decision rather than on its own timer.
+## Renamed from `engagement_gain` when CustomerNeeds.engagement was split
+## into social/entertainment/relaxation - see
+## docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
 @export_range(0.0, 1.0, 0.01)
-var engagement_gain: float = 0.25
+var social_gain: float = 0.25
 
 
 func on_enter(context: ActivityContext) -> void:
@@ -71,5 +74,5 @@ func on_enter(context: ActivityContext) -> void:
 		notify_partner,
 		satisfaction_gain,
 		partner_satisfaction_gain,
-		engagement_gain
+		social_gain
 	)

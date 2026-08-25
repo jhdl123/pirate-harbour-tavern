@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1_script")
-contribution_label = &"engagement_contribution"
-need_id = &"engagement"
+contribution_label = &"social_contribution"
+need_id = &"social"
 comparison = 0
 threshold = 0.0
 gates = false
-score_weight = -4.0
+score_weight = -1.33

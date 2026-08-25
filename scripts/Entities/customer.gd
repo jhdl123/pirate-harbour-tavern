@@ -153,6 +153,14 @@ var _patience_event: ScheduledTimeEvent = null
 ## freed mid-relax - see _cancel_all_scheduled().
 var _relax_event: ScheduledTimeEvent = null
 
+## Added to CustomerNeeds.relaxation on completion - stored per-invocation
+## the same way _social_gain is, since [method begin_relaxing] is called
+## from both RelaxAtSeatBehaviour (the brain-driven path) and
+## [method begin_group_relax] (the group-legacy fallback), each with its
+## own tuned value. See item 3 of
+## docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md's plan.
+var _relaxation_gain: float = 0.0
+
 ## World minute the current patience window ends, for the bar.
 var _patience_end_minutes: float = 0.0
 var _patience_total_minutes: int = 0
@@ -249,7 +257,7 @@ var social_partner: Customer = null
 ## already bridges choose_order() and interact().
 var _social_satisfaction_gain: float = 0.0
 var _social_partner_satisfaction_gain: float = 0.0
-var _social_engagement_gain: float = 0.0
+var _social_gain: float = 0.0
 
 ## Phase 2C: which TavernActivityPoint this customer is currently visiting
 ## or travelling to/from - null the rest of the time.
@@ -1451,9 +1459,12 @@ func begin_waiting_to_order() -> void:
 ## mid-relax, via _cancel_all_scheduled().
 func begin_relaxing(
 	minimum_minutes: float,
-	maximum_minutes: float
+	maximum_minutes: float,
+	relaxation_gain: float = 0.0
 ) -> void:
 	_set_state(State.RELAXING)
+
+	_relaxation_gain = relaxation_gain
 
 	var duration_minutes: int = maxi(
 		1,
@@ -1491,7 +1502,8 @@ func _on_relax_finished() -> void:
 		return
 
 	if needs != null:
-		needs.adjust(&"relax_count", 1.0)
+		needs.adjust_context_value(&"relax_count", 1.0)
+		needs.adjust(&"relaxation", _relaxation_gain)
 
 	if _is_ai_debug_enabled():
 		print(
@@ -1665,14 +1677,14 @@ func begin_socialising(
 	notify_partner: bool,
 	satisfaction_gain: float,
 	partner_satisfaction_gain: float,
-	engagement_gain: float
+	social_gain: float
 ) -> void:
 	_set_state(State.SOCIALISING)
 	social_partner = partner
 
 	_social_satisfaction_gain = satisfaction_gain
 	_social_partner_satisfaction_gain = partner_satisfaction_gain
-	_social_engagement_gain = engagement_gain
+	_social_gain = social_gain
 
 	var duration_minutes: int = maxi(
 		1,
@@ -1721,8 +1733,8 @@ func _on_socialise_finished() -> void:
 
 	if needs != null:
 		needs.adjust(&"mood", _social_satisfaction_gain)
-		needs.adjust(&"engagement", _social_engagement_gain)
-		needs.adjust(&"socialise_count", 1.0)
+		needs.adjust(&"social", _social_gain)
+		needs.adjust_context_value(&"socialise_count", 1.0)
 
 	if (
 		social_partner != null
@@ -1841,16 +1853,19 @@ func _on_activity_use_finished() -> void:
 
 	if needs != null:
 		needs.adjust(&"mood", point.satisfaction_effect)
-		needs.adjust(&"engagement", point.engagement_effect)
+		needs.adjust(&"entertainment", point.entertainment_effect)
+
+		if point.social_effect > 0.0:
+			needs.adjust(&"social", point.social_effect)
 
 		if point.intoxication_effect > 0.0:
 			needs.adjust(&"intoxication", point.intoxication_effect)
 
 		if point.money_cost > 0:
-			needs.adjust(&"wealth", -float(point.money_cost))
+			needs.adjust_context_value(&"wealth", -float(point.money_cost))
 
 		if not point.repeat_count_need_id.is_empty():
-			needs.adjust(point.repeat_count_need_id, 1.0)
+			needs.adjust_context_value(point.repeat_count_need_id, 1.0)
 
 	if _report_manager != null:
 		_report_manager.record_tavern_activity(
@@ -2514,8 +2529,8 @@ func _on_drink_finished() -> void:
 	# payment signal above - money leaves the customer the same instant it
 	# is recorded as tavern income.
 	if needs != null:
-		needs.adjust(&"wealth", -payment_amount)
-		needs.adjust(&"drinks_consumed", 1.0)
+		needs.adjust_context_value(&"wealth", -payment_amount)
+		needs.adjust_context_value(&"drinks_consumed", 1.0)
 
 		if _balance_config != null:
 			needs.adjust(
@@ -2804,7 +2819,11 @@ func get_diagnostics_snapshot() -> Dictionary:
 		),
 		"drinks_consumed": drinks_consumed_this_visit,
 		"has_active_order": ordered_drink != null,
-		"engagement": needs.engagement if needs != null else 0.0,
+		"patience": needs.patience if needs != null else 0.0,
+		"energy": needs.energy if needs != null else 0.0,
+		"social": needs.social if needs != null else 0.0,
+		"entertainment": needs.entertainment if needs != null else 0.0,
+		"relaxation": needs.relaxation if needs != null else 0.0,
 		"current_activity_point": (
 			String(_current_activity_point.activity_id)
 			if _current_activity_point != null else ""
@@ -2820,6 +2839,134 @@ func get_diagnostics_snapshot() -> Dictionary:
 			else -1
 		),
 	}
+
+
+## Builds this customer's developer-tier inspection snapshot -
+## DECISIONS.md §25's `Customer -> CustomerInspectionData ->
+## CustomerInspectorUI`. This is the one place allowed to read `_brain`,
+## `needs` and `identity` directly for this purpose; [CustomerInspectorUI]
+## only ever sees the returned snapshot. See CUSTOMER_INSPECTOR.md.
+func get_inspection_data() -> CustomerInspectionData:
+	var data := CustomerInspectionData.new()
+
+	data.customer_name = String(name)
+
+	if customer_type != null:
+		data.customer_type_name = customer_type.display_name
+
+	data.current_state = (
+		State.keys()[current_state]
+		if current_state >= 0 and current_state < State.size()
+		else "?"
+	)
+
+	var current_activity: ActivityDefinition = (
+		_brain.get_current_activity() if _brain != null else null
+	)
+
+	if current_activity != null:
+		data.current_activity_id = String(current_activity.activity_id)
+		data.current_activity_display_name = current_activity.display_name
+
+	if needs != null:
+		data.visit_purpose = String(needs.visit_purpose)
+		data.visit_expected_minutes = needs.visit_duration_minutes
+		data.visit_elapsed_minutes = maxf(
+			0.0, needs.visit_duration_minutes - needs.remaining_visit_minutes
+		)
+
+		data.thirst = needs.thirst
+		data.mood = needs.mood
+		data.patience = needs.patience
+		data.energy = needs.energy
+		data.intoxication = needs.intoxication
+		data.social = needs.social
+		data.entertainment = needs.entertainment
+		data.relaxation = needs.relaxation
+
+		data.money = needs.wealth
+		data.drinks_consumed = int(needs.drinks_consumed)
+
+	if _brain != null:
+		var decision: DecisionRecord = _brain.get_last_decision()
+
+		if decision != null:
+			data.motivation = decision.motivation
+
+			var scored: Array[Dictionary] = decision.eligible_activities.duplicate(
+				true
+			)
+			scored.sort_custom(
+				func(a: Dictionary, b: Dictionary) -> bool:
+					return float(a.get("score", 0.0)) > float(b.get("score", 0.0))
+			)
+
+			for entry: Dictionary in scored:
+				entry["selected"] = (
+					String(entry.get("activity_id", ""))
+					== decision.selected_activity_id
+				)
+
+			data.candidates = scored
+			data.rejected = decision.rejected_activities
+
+		data.execution_outcome = _brain.get_last_execution_outcome()
+
+	data.group_id = String(group_id)
+
+	if not group_id.is_empty():
+		data.group_role = "member"
+
+	return data
+
+
+## Interactable provider methods (see systems/interaction/interactable.gd's
+## duck-typing contract). Customer already carries an InteractionArea child
+## in customer.tscn - CUSTOMER_INSPECTOR.md asks for hover-to-inspect, but
+## the interaction framework here is proximity-based (arm's-reach
+## detection for gameplay actions), not screen-space mouse picking, so
+## true hover would need a second, separate detection system. Select-to-
+## inspect reuses 100% of the existing detector/selector/prompt pipeline
+## instead - the documented deviation DECISIONS.md §10 allows when it
+## makes the framework "substantially cheaper" to reuse than to bypass.
+## Developer tier only, gated the same way the F10 panel is
+## (OS.is_debug_build()) - see CUSTOMER_INSPECTOR.md's disclosure tiers.
+func get_interaction_display_name() -> String:
+	return String(name)
+
+
+func get_interaction_actions(
+	_request: InteractionRequest
+) -> Array[InteractionAction]:
+	if not OS.is_debug_build():
+		return []
+
+	return [
+		InteractionAction.create(
+			&"inspect", "Inspect", String(name)
+		)
+	]
+
+
+func perform_interaction(request: InteractionRequest) -> bool:
+	if request.action_id != &"inspect":
+		return false
+
+	if not OS.is_debug_build():
+		return false
+
+	var ui: Node = get_tree().root.get_node_or_null(
+		^"/root/CustomerInspectorUILayer"
+	)
+
+	if ui == null:
+		ui = CustomerInspectorUI.new()
+		ui.name = "CustomerInspectorUILayer"
+		get_tree().root.add_child(ui)
+
+	ui.call(&"toggle_inspection", get_inspection_data())
+
+	return true
 
 
 func should_show_debug_messages() -> bool:
@@ -3286,7 +3433,7 @@ func on_group_drink_taken(
 		else:
 			needs.adjust(&"thirst", -0.35)
 
-		needs.adjust(&"drinks_consumed", 1.0)
+		needs.adjust_context_value(&"drinks_consumed", 1.0)
 
 		_apply_group_intoxication(drink)
 
@@ -3370,11 +3517,12 @@ func begin_group_activity(point: TavernActivityPoint) -> bool:
 ## Starts a relax at this member's own group slot. No chair is involved.
 func begin_group_relax(
 	minimum_minutes: float,
-	maximum_minutes: float
+	maximum_minutes: float,
+	relaxation_gain: float = 0.0
 ) -> void:
 	last_group_activity_id = &"relax"
 
-	begin_relaxing(minimum_minutes, maximum_minutes)
+	begin_relaxing(minimum_minutes, maximum_minutes, relaxation_gain)
 
 
 ## Starts a conversation with [param partner], both standing at their slots.
@@ -3384,7 +3532,7 @@ func begin_group_socialise(
 	maximum_minutes: float,
 	satisfaction_gain: float,
 	partner_satisfaction_gain: float,
-	engagement_gain: float
+	social_gain: float
 ) -> void:
 	last_group_activity_id = &"socialise"
 
@@ -3395,7 +3543,7 @@ func begin_group_socialise(
 		true,
 		satisfaction_gain,
 		partner_satisfaction_gain,
-		engagement_gain
+		social_gain
 	)
 
 
@@ -3672,13 +3820,13 @@ func on_conversation_ended(_partner: Customer, mood_gain: float) -> void:
 	if needs != null:
 		needs.adjust(&"mood", mood_gain)
 
-		# Counts toward the existing socialise tally and engagement, so a
+		# Counts toward the existing socialise tally and social need, so a
 		# customer who spent the evening talking reads as fulfilled rather
-		# than as someone who did nothing. Uses the need ids CustomerNeeds
+		# than as someone who did nothing. Uses the ids CustomerNeeds
 		# already knows - inventing a new one would silently clamp to 0-1
 		# and never surface anywhere.
-		needs.adjust(&"socialise_count", 1.0)
-		needs.adjust(&"engagement", mood_gain)
+		needs.adjust_context_value(&"socialise_count", 1.0)
+		needs.adjust(&"social", mood_gain)
 
 
 func is_in_conversation() -> bool:

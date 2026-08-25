@@ -39,7 +39,9 @@ func score(context: ActivityContext) -> float:
 	if context.needs == null or need_id.is_empty():
 		return 0.0
 
-	var repeats: float = context.needs.get_need(need_id)
+	# Repeat counts are always a raw context value, never a 0-1 need - see
+	# CustomerNeeds.get_context_value()'s doc comment.
+	var repeats: float = context.needs.get_context_value(need_id)
 
 	if repeats <= 0.0:
 		return 0.0

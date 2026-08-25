@@ -1094,7 +1094,9 @@ class StubMember extends Node2D:
 	func is_group_member_busy() -> bool:
 		return false
 
-	func begin_group_relax(_minimum: float, _maximum: float) -> void:
+	func begin_group_relax(
+		_minimum: float, _maximum: float, _relaxation_gain: float = 0.0
+	) -> void:
 		pass
 
 	func begin_returning_to_group_slot() -> void:

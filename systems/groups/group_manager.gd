@@ -1574,7 +1574,8 @@ func _start_leisure_activity(
 			member.call(
 				&"begin_group_relax",
 				group.leisure_relax_minimum_minutes,
-				group.leisure_relax_maximum_minutes
+				group.leisure_relax_maximum_minutes,
+				group.leisure_relax_relaxation_gain
 			)
 
 			_log_leisure(group, member, &"relax")
@@ -1672,7 +1673,7 @@ func _start_leisure_socialise(
 		group.leisure_socialise_maximum_minutes,
 		group.leisure_socialise_satisfaction_gain,
 		group.leisure_socialise_partner_gain,
-		group.leisure_socialise_engagement_gain
+		group.leisure_socialise_social_gain
 	)
 
 	_log_leisure(group, member, &"socialise")

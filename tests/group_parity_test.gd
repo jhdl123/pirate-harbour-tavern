@@ -1043,7 +1043,8 @@ class StubMember extends Node2D:
 
 	func begin_group_relax(
 		minimum_minutes: float,
-		_maximum_minutes: float
+		_maximum_minutes: float,
+		_relaxation_gain: float = 0.0
 	) -> void:
 		last_group_activity_id = &"relax"
 		current_state = int(Customer.State.RELAXING)
@@ -1055,7 +1056,7 @@ class StubMember extends Node2D:
 		_maximum_minutes: float,
 		_satisfaction: float,
 		_partner_satisfaction: float,
-		_engagement: float
+		_social: float
 	) -> void:
 		last_group_activity_id = &"socialise"
 		last_social_partner = partner

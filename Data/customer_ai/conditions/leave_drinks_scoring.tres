@@ -9,4 +9,5 @@ need_id = &"drinks_consumed"
 comparison = 0
 threshold = 0.0
 gates = false
+value_is_context = true
 score_weight = 1.2

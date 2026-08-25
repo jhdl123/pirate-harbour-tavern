@@ -176,3 +176,48 @@ theme-park result is a worse outcome than the current one, not a better one.
 customer internals, needs, the brain or the registry directly. Same rule and
 same failure mode as §3's `StockedDisplay`. This exists so the decision
 architecture can change again without touching UI.
+
+## 26. Phase B implementation status (2026-08-25)
+
+§19-25 are implemented, not just decided. Notes on how, for anyone
+reconciling this file against the code:
+
+- Two-stage decision lives inside the existing `CustomerBrain.think()` and
+  `ActivityRegistry` exactly as the audit predicted - no replacement was
+  needed. `ActivityDefinition.satisfies` (need id → amount) is the
+  declarative field; a non-mandatory candidate whose `satisfies` does not
+  serve the motivation `CustomerBrain._select_motivation()` chose is
+  excluded before scoring. Mandatory activities and Wander (empty
+  `satisfies`) are exempt, matching how they already bypassed cooldown/
+  commitment.
+- `CustomerNeeds.engagement` is retired. It is split into `social`/
+  `entertainment`/`relaxation` (§20's remaining three named needs), each
+  fed by the activity that already raised the old shared pool. Two-stage
+  motivation selection reads `1.0 - value` for these three (satisfaction-
+  shaped, same as engagement always was) against `thirst` read directly
+  (already demand-shaped).
+- Raw values (`wealth`, `remaining_visit_minutes`, `visit_duration_minutes`,
+  the repeat counters) are no longer reachable through
+  `CustomerNeeds.get_need()`/`set_need()` at all - a separate
+  `get_context_value()`/`set_context_value()`/`adjust_context_value()` pair
+  exists for them, and `NeedThresholdCondition` needs an explicit
+  `value_is_context = true` to read one. Misconfiguring this now produces a
+  loud warning instead of silently working, which is the type-level
+  distinction this file's raw-value lesson always needed.
+- `relax_visit_time_scoring.tres` is deleted outright, not reweighted - it
+  scored a raw minute count directly and was the measured cause of relax
+  beating darts. Isolated before/after: darts' "would win when eligible"
+  went from 10.7% to 48.8% from this one change alone (`tests/
+  darts_score_probe.tscn`, both runs this session).
+- §10's "the framework should not be bypassed" is honoured with one
+  documented deviation: the customer inspector uses select-to-inspect
+  through the existing `Interactable`/`InteractionSelector` pipeline
+  (customers already carry an `InteractionArea`), not true mouse hover.
+  Hover would need a second, screen-space picking system the existing
+  reach-based framework does not provide; select reuses 100% of it. Gated
+  behind `OS.is_debug_build()`, same as the F10 panel.
+- The `DecisionRecord` a hover/select panel needs (candidate scores,
+  rejection reasons, motivation, execution outcome) is now cached
+  unconditionally on `CustomerBrain` (`get_last_decision()`) rather than
+  only existing when `report_manager.is_export_enabled()` - the aggregate
+  export path is unchanged and still gated the same way.

@@ -35,7 +35,9 @@ func score(context: ActivityContext) -> float:
 	if context.needs == null:
 		return 0.0
 
-	var remaining: float = context.needs.get_need(need_id)
+	# Always a raw minute count, never a 0-1 need - see
+	# CustomerNeeds.get_context_value()'s doc comment.
+	var remaining: float = context.needs.get_context_value(need_id)
 
 	if remaining >= pressure_window_minutes or pressure_window_minutes <= 0.0:
 		return 0.0

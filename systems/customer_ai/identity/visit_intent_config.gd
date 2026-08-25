@@ -82,6 +82,18 @@ var group_cohesion_multiplier: float = 1.0
 @export var activity_score_offsets: Dictionary = {}
 
 
+@export_category("Motivation Bias")
+
+## Per-motivation weight offsets applied inside [CustomerBrain]'s stage-2
+## motivation selection (CUSTOMER_MODEL.md §4) - the same flat-offset shape
+## as [member activity_score_offsets] above, just read one stage earlier
+## and keyed by motivation id (&"thirst"/&"social"/&"entertainment"/
+## &"relaxation") rather than activity id. Optional and additive: empty
+## means this intent has no opinion on which motivation wins and stage 2
+## runs on needs and personality alone. See [method get_motivation_bias].
+@export var motivation_weight_offsets: Dictionary = {}
+
+
 @export_category("Departure")
 
 ## Multiplies how strongly falling satisfaction pushes toward leaving.
@@ -110,6 +122,26 @@ func get_activity_bias(activity_id: StringName) -> float:
 		return 0.0
 
 	var value: Variant = activity_score_offsets[key]
+
+	if value is float or value is int:
+		return float(value)
+
+	return 0.0
+
+
+## Weight offset for one motivation, or 0.0 when this intent has no
+## opinion about it - same tolerance-for-malformed-data contract as
+## [method get_activity_bias].
+func get_motivation_bias(motivation_id: StringName) -> float:
+	if motivation_weight_offsets.is_empty():
+		return 0.0
+
+	var key: String = String(motivation_id)
+
+	if not motivation_weight_offsets.has(key):
+		return 0.0
+
+	var value: Variant = motivation_weight_offsets[key]
 
 	if value is float or value is int:
 		return float(value)

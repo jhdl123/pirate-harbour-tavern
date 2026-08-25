@@ -27,6 +27,18 @@ var selected_activity_id: String = ""
 var was_forced: bool = false
 var forced_reason: String = ""
 
+## Stage 2's winner (CUSTOMER_MODEL.md §4) - "thirst"/"social"/
+## "entertainment"/"relaxation", or "" when this decision bypassed scoring
+## (enter_activity()/force_activity()) and stage 2 never ran.
+var motivation: String = ""
+
+## "" (fine) or a short player-facing description of what went wrong
+## entering [member selected_activity_id] - see
+## CustomerBrain's `_last_execution_outcome` doc comment.
+## CUSTOMER_INSPECTOR.md: "Reservation and execution outcomes must appear
+## here, not only selection."
+var execution_outcome: String = ""
+
 ## Phase 2C: makes close calls visible without opening every eligible
 ## activity's score by hand - see CustomerBrain.think()'s doc comment on
 ## how these three are derived (always from eligible_activities, so they
@@ -64,8 +76,12 @@ var activity_partner_customer_id: int = -1
 ## anything that never left the chair to begin with).
 var return_to_seat_required: bool = false
 
-## Phase 2C: CustomerNeeds.engagement at the moment of this decision.
-var engagement: float = 0.0
+## CustomerNeeds.social/entertainment/relaxation at the moment of this
+## decision - split from a single "engagement" field, see
+## docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
+var social: float = 0.0
+var entertainment: float = 0.0
+var relaxation: float = 0.0
 
 ## Phase 2C: VisitRecord.recent_activity_history at the moment of this
 ## decision - a shallow copy, so later appends to the live list do not
@@ -90,6 +106,8 @@ func to_dictionary() -> Dictionary:
 		"selected_activity": selected_activity_id,
 		"was_forced": was_forced,
 		"forced_reason": forced_reason,
+		"motivation": motivation,
+		"execution_outcome": execution_outcome,
 		"top_score": top_score,
 		"second_score": second_score,
 		"margin": margin,
@@ -98,7 +116,9 @@ func to_dictionary() -> Dictionary:
 		"social_partner_customer_id": social_partner_customer_id,
 		"activity_partner_customer_id": activity_partner_customer_id,
 		"return_to_seat_required": return_to_seat_required,
-		"engagement": engagement,
+		"social": social,
+		"entertainment": entertainment,
+		"relaxation": relaxation,
 		"recent_activity_history": recent_activity_history,
 		"state": {
 			"money": money,

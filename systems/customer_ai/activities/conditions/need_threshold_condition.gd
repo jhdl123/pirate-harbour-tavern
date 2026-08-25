@@ -39,6 +39,15 @@ enum Comparison {
 
 @export var threshold: float = 0.5
 
+## False (default): [member need_id] names a 0.0-1.0 [CustomerNeeds] need,
+## read via [method CustomerNeeds.get_need]. True: it names a raw context
+## value (wealth, remaining_visit_minutes, a repeat count, ...), read via
+## [method CustomerNeeds.get_context_value] instead - an explicit, visible
+## choice rather than one generic accessor silently handling both ranges.
+## See `docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md`'s
+## raw-values correction.
+@export var value_is_context: bool = false
+
 ## When true (default), [member comparison]/[member threshold] must hold for
 ## the activity to be a candidate at all. Set false to use this purely for
 ## [member score_weight] - e.g. money influencing Leave without ever making
@@ -59,6 +68,13 @@ enum Comparison {
 @export var score_weight: float = 0.0
 
 
+func _read_value(context: ActivityContext) -> float:
+	if value_is_context:
+		return context.needs.get_context_value(need_id)
+
+	return context.needs.get_need(need_id)
+
+
 func is_satisfied(context: ActivityContext) -> bool:
 	if not gates:
 		return true
@@ -66,7 +82,7 @@ func is_satisfied(context: ActivityContext) -> bool:
 	if context.needs == null or need_id.is_empty():
 		return true
 
-	var value: float = context.needs.get_need(need_id)
+	var value: float = _read_value(context)
 
 	match comparison:
 		Comparison.AT_LEAST:
@@ -79,7 +95,7 @@ func is_satisfied(context: ActivityContext) -> bool:
 
 func get_rejection_reason(context: ActivityContext) -> String:
 	var value: float = (
-		context.needs.get_need(need_id) if context.needs != null else 0.0
+		_read_value(context) if context.needs != null else 0.0
 	)
 
 	var comparison_text: String = (
@@ -95,7 +111,7 @@ func score(context: ActivityContext) -> float:
 	if context.needs == null or need_id.is_empty() or score_weight == 0.0:
 		return 0.0
 
-	var value: float = context.needs.get_need(need_id)
+	var value: float = _read_value(context)
 	var distance: float = absf(value - threshold)
 
 	return score_weight * distance

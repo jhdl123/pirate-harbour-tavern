@@ -133,23 +133,55 @@ var drinks_consumed: float = 0.0
 ## Read directly by NearestPointDistanceCondition.
 var travel_willingness: float = 1.0
 
-## Phase 2C: "reasons to stay" - temporary positive engagement from
-## something the customer is currently enjoying (a completed Socialise or
-## Darts visit). Raised by TavernActivityPoint.engagement_effect /
-## SocialiseAtSeatBehaviour on completion; decayed a little every time a
-## decision is made (see decay_engagement()) rather than on its own timer,
-## so two customers who both got engaged never drift out of sync with an
-## independent clock each. Never gates Leave and never grows without bound
-## - see leave_engagement_scoring.tres for how it pulls Leave down, and the
-## class doc comment on why this is a need like any other rather than a
-## special case.
-var engagement: float = 0.0
+## CUSTOMER_MODEL.md §2's remaining three named needs (thirst is above).
+## Phase 2C originally introduced these as one "engagement" pool -
+## "reasons to stay" from something the customer was currently enjoying
+## (a completed Socialise or Darts visit, raised by
+## TavernActivityPoint.entertainment_effect/SocialiseAtSeatBehaviour on
+## completion). `docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md`
+## found the rise/decay mechanism was already exactly what this needs
+## model wanted; it just was not split by what it was a reason to stay
+## *for*. Split here rather than kept alongside a surviving `engagement` -
+## DECISIONS.md §3/§17: one stored fact per real quantity, never two
+## readings of the same one.
+##
+## Each is 0 (not currently satisfied) - 1 (recently and fully satisfied),
+## raised on completing the activity that serves it and decayed a little
+## every time a decision is made (see [method decay_motivational_needs])
+## rather than on its own timer, so two customers who both got satisfied
+## never drift out of sync with an independent clock each. None of the
+## three gates Leave and none grows without bound - see
+## leave_social_scoring.tres/leave_entertainment_scoring.tres/
+## leave_relaxation_scoring.tres for how they pull Leave down. Two-stage
+## motivation selection reads [code](1.0 - value)[/code] as "how much is
+## this currently wanted" - the same demand-shaped reading [member thirst]
+## already gets, just derived rather than stored raw, since these three are
+## naturally satisfaction-shaped (rise when satisfied) rather than thirst's
+## deficit-shaped rise-over-time.
 
-## Seeded from CustomerAIBalanceConfig.engagement_decay_per_decision in
+## Raised by Socialise at Seat, group leisure socialising and
+## [code]SocialPresenceService[/code]'s spontaneous conversations ending -
+## see [code]Customer._on_socialise_finished()[/code] and
+## [code]Customer.on_conversation_ended()[/code].
+var social: float = 0.0
+
+## Raised by completing a [code]TavernActivityPoint[/code]-based activity
+## (Darts) - see [code]Customer._on_activity_use_finished()[/code].
+var entertainment: float = 0.0
+
+## Raised by Relax at Seat completing - see
+## [code]Customer._on_relax_finished()[/code]. Previously nothing wrote
+## this at all (the audit's "absent, not weak" finding); wired up as part
+## of item 3 (activities declare what they satisfy).
+var relaxation: float = 0.0
+
+## Seeded from CustomerAIBalanceConfig.needs_decay_per_decision in
 ## seed_from() - stored here rather than read by CustomerBrain each time so
 ## CustomerBrain never needs its own reference to CustomerAIBalanceConfig,
 ## consistent with it already only holding needs/registry/report_manager.
-var _engagement_decay_per_decision: float = 0.05
+## Shared by all three of the above; nothing currently needs a different
+## decay rate per need.
+var _need_decay_per_decision: float = 0.05
 
 
 ## Seeds every starting value at spawn. [param balance] and [param personality]
@@ -175,7 +207,7 @@ func seed_from(
 		travel_willingness = personality.travel_willingness
 
 	if balance != null:
-		_engagement_decay_per_decision = balance.engagement_decay_per_decision
+		_need_decay_per_decision = balance.needs_decay_per_decision
 
 		wealth = roundi(
 			randf_range(
@@ -306,6 +338,16 @@ func update_remaining_visit_time(current_world_minutes: float) -> void:
 	)
 
 
+## Real 0.0-1.0 needs only - see the class doc comment. Anything raw
+## ([method get_context_value]'s ids) is deliberately unreachable here: a
+## [NeedThresholdCondition] misconfigured with [code]need_id =
+## &"remaining_visit_minutes"[/code] now gets a loud warning and a 0.0
+## contribution instead of silently reading an unbounded minute count as if
+## it were a 0-1 need - the exact defect DECISIONS.md §20 names
+## (`docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md`'s "raw values
+## need a naming or type-level distinction" correction). Every caller that
+## used to read a raw id through this API now calls
+## [method adjust_context_value]/[method get_context_value] instead.
 func adjust(
 	need_id: StringName,
 	delta: float
@@ -317,37 +359,25 @@ func set_need(
 	need_id: StringName,
 	value: float
 ) -> void:
-	var clamped: float = value
-
-	if (
-		need_id != &"wealth"
-		and need_id != &"remaining_visit_minutes"
-		and need_id != &"relax_count"
-		and need_id != &"drinks_consumed"
-		and need_id != &"socialise_count"
-		and need_id != &"darts_count"
-	):
-		clamped = clampf(value, 0.0, 1.0)
+	var clamped: float = clampf(value, 0.0, 1.0)
 
 	match need_id:
 		&"mood": mood = clamped
-		&"wealth": wealth = int(clamped)
 		&"patience": patience = clamped
 		&"energy": energy = clamped
 		&"intoxication": intoxication = clamped
 		&"thirst": thirst = clamped
 		&"social_tendency": social_tendency = clamped
-		&"remaining_visit_minutes": remaining_visit_minutes = clamped
-		&"relax_count": relax_count = clamped
-		&"drinks_consumed": drinks_consumed = clamped
-		&"socialise_count": socialise_count = clamped
-		&"darts_count": darts_count = clamped
-		&"engagement": engagement = clamped
+		&"social": social = clamped
+		&"entertainment": entertainment = clamped
+		&"relaxation": relaxation = clamped
 		_:
 			push_warning(
-				"CustomerNeeds has no need called '"
+				"CustomerNeeds has no 0-1 need called '"
 				+ String(need_id)
-				+ "'."
+				+ "' - if this is meant to be a raw value (wealth, "
+				+ "remaining_visit_minutes, a repeat count, ...), use "
+				+ "adjust_context_value()/set_context_value() instead."
 			)
 			return
 
@@ -357,37 +387,94 @@ func set_need(
 func get_need(need_id: StringName) -> float:
 	match need_id:
 		&"mood": return mood
-		&"wealth": return float(wealth)
 		&"patience": return patience
 		&"energy": return energy
 		&"intoxication": return intoxication
 		&"thirst": return thirst
 		&"social_tendency": return social_tendency
+		&"social": return social
+		&"entertainment": return entertainment
+		&"relaxation": return relaxation
+		_:
+			push_warning(
+				"CustomerNeeds has no 0-1 need called '"
+				+ String(need_id)
+				+ "' - if this is meant to be a raw value (wealth, "
+				+ "remaining_visit_minutes, a repeat count, ...), use "
+				+ "get_context_value() instead."
+			)
+			return 0.0
+
+
+## Raw, non-0-1 quantities: [member wealth], [member remaining_visit_minutes],
+## [member visit_duration_minutes], the repeat counters
+## ([member relax_count]/[member socialise_count]/[member darts_count]) and
+## [member drinks_consumed]. Deliberately a separate accessor pair from
+## [method get_need]/[method set_need] rather than one API that silently
+## handles both - see [method get_need]'s doc comment for why that
+## distinction exists.
+func adjust_context_value(
+	context_id: StringName,
+	delta: float
+) -> void:
+	set_context_value(context_id, get_context_value(context_id) + delta)
+
+
+func set_context_value(
+	context_id: StringName,
+	value: float
+) -> void:
+	match context_id:
+		&"wealth": wealth = int(value)
+		&"remaining_visit_minutes": remaining_visit_minutes = value
+		&"visit_duration_minutes": visit_duration_minutes = value
+		&"relax_count": relax_count = value
+		&"drinks_consumed": drinks_consumed = value
+		&"socialise_count": socialise_count = value
+		&"darts_count": darts_count = value
+		_:
+			push_warning(
+				"CustomerNeeds has no context value called '"
+				+ String(context_id)
+				+ "' - if this is meant to be a 0-1 need, use "
+				+ "adjust()/set_need() instead."
+			)
+			return
+
+	need_changed.emit(context_id, value)
+
+
+func get_context_value(context_id: StringName) -> float:
+	match context_id:
+		&"wealth": return float(wealth)
 		&"remaining_visit_minutes": return remaining_visit_minutes
+		&"visit_duration_minutes": return visit_duration_minutes
 		&"relax_count": return relax_count
 		&"drinks_consumed": return drinks_consumed
 		&"socialise_count": return socialise_count
 		&"darts_count": return darts_count
-		&"engagement": return engagement
 		_:
 			push_warning(
-				"CustomerNeeds has no need called '"
-				+ String(need_id)
-				+ "'."
+				"CustomerNeeds has no context value called '"
+				+ String(context_id)
+				+ "' - if this is meant to be a 0-1 need, use "
+				+ "get_need() instead."
 			)
 			return 0.0
 
 
 ## Called once per decision (CustomerBrain._build_context()) rather than on
-## its own timer - see [member engagement]'s doc comment for why. A small,
-## configurable multiplicative decay: engagement halves roughly every
+## its own timer - see [member social]'s doc comment for why. A small,
+## configurable multiplicative decay applied to all three motivational
+## needs: each halves roughly every
 ## [code]log(0.5)/log(1-decay_rate)[/code] decisions, never reaches exactly
 ## zero, and never goes negative.
-func decay_engagement() -> void:
-	if _engagement_decay_per_decision <= 0.0:
+func decay_motivational_needs() -> void:
+	if _need_decay_per_decision <= 0.0:
 		return
 
-	engagement = maxf(
-		0.0,
-		engagement * (1.0 - _engagement_decay_per_decision)
+	social = maxf(0.0, social * (1.0 - _need_decay_per_decision))
+	entertainment = maxf(
+		0.0, entertainment * (1.0 - _need_decay_per_decision)
 	)
+	relaxation = maxf(0.0, relaxation * (1.0 - _need_decay_per_decision))

@@ -405,12 +405,23 @@ func record_return_to_seat_failure(customer_id: int) -> void:
 		record.return_to_seat_failures += 1
 
 
-func record_engagement(customer_id: int, current_engagement: float) -> void:
+func record_motivational_needs(
+	customer_id: int,
+	current_social: float,
+	current_entertainment: float,
+	current_relaxation: float
+) -> void:
 	var record: VisitRecord = _active_visit_records.get(customer_id)
 
 	if record != null:
-		record.maximum_engagement_reached = maxf(
-			record.maximum_engagement_reached, current_engagement
+		record.maximum_social_reached = maxf(
+			record.maximum_social_reached, current_social
+		)
+		record.maximum_entertainment_reached = maxf(
+			record.maximum_entertainment_reached, current_entertainment
+		)
+		record.maximum_relaxation_reached = maxf(
+			record.maximum_relaxation_reached, current_relaxation
 		)
 
 

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NearbyActivityInUseCondition" format=3]
+
+[ext_resource type="Script" path="res://systems/customer_ai/activities/conditions/nearby_activity_in_use_condition.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+contribution_label = &"awareness_contribution"
+tags = Array[StringName]([&"darts"])
+maximum_bonus = 2.0
+falloff_distance = 300.0

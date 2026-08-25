@@ -191,6 +191,16 @@ func get_activity_bias(activity_id: StringName) -> float:
 	return visit_intent.get_activity_bias(activity_id)
 
 
+## Weight offset this customer's intent applies to one stage-2 motivation,
+## or 0.0 when they have no intent. Mirrors [method get_activity_bias] one
+## stage earlier - see CUSTOMER_MODEL.md §4.
+func get_motivation_bias(motivation_id: StringName) -> float:
+	if visit_intent == null:
+		return 0.0
+
+	return visit_intent.get_motivation_bias(motivation_id)
+
+
 ## Tags used for social compatibility and future information routing:
 ## the type's own tags plus its social category.
 func get_tags() -> Array[StringName]:

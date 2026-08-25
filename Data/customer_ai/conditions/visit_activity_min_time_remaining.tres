@@ -9,4 +9,5 @@ need_id = &"remaining_visit_minutes"
 comparison = 0
 threshold = 8.0
 gates = true
+value_is_context = true
 score_weight = 0.0

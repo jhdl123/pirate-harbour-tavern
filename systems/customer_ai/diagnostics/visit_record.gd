@@ -42,7 +42,11 @@ var tavern_activity_count: int = 0
 var darts_count: int = 0
 var activity_reservation_failures: int = 0
 var return_to_seat_failures: int = 0
-var maximum_engagement_reached: float = 0.0
+## Split from a single "maximum_engagement_reached" field - see
+## docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md.
+var maximum_social_reached: float = 0.0
+var maximum_entertainment_reached: float = 0.0
+var maximum_relaxation_reached: float = 0.0
 
 ## Every distinct activity_id this visit ever entered, in first-seen order -
 ## "unique activities completed".
@@ -245,7 +249,9 @@ func to_dictionary() -> Dictionary:
 		"darts_count": darts_count,
 		"activity_reservation_failures": activity_reservation_failures,
 		"return_to_seat_failures": return_to_seat_failures,
-		"maximum_engagement_reached": maximum_engagement_reached,
+		"maximum_social_reached": maximum_social_reached,
+		"maximum_entertainment_reached": maximum_entertainment_reached,
+		"maximum_relaxation_reached": maximum_relaxation_reached,
 		"unique_activities_completed": unique_activities_completed,
 		"recent_activity_history": recent_activity_history,
 		"chair_id": chair_id,

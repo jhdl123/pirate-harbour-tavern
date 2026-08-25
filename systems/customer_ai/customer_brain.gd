@@ -140,6 +140,33 @@ var _cooldowns: Dictionary = {}
 ## deterministic mode covers decisions as well as traits.
 var _rng: RandomNumberGenerator = null
 
+## Un-gated snapshot of the most recent decision, always populated
+## regardless of report_manager/diagnostics-export state - see
+## CUSTOMER_INSPECTOR.md and Stage 3 of
+## docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md's plan. The
+## export-gated report_manager path in [method _report_decision] still
+## exists unchanged for the aggregate diagnostic history; this is the
+## "right now, for this one customer" equivalent a hover/select panel
+## needs, and previously did not exist at all - candidate scores and
+## rejection reasons were computed every decision but only reached
+## anywhere when export happened to be enabled.
+var _last_decision: DecisionRecord = null
+
+## "" (nothing to report) or a short player-facing description of what
+## went wrong after the last activity was entered - set by [method _enter]
+## when a destination reservation fails. See CUSTOMER_INSPECTOR.md:
+## "Reservation and execution outcomes must appear here, not only
+## selection."
+var _last_execution_outcome: String = ""
+
+
+func get_last_decision() -> DecisionRecord:
+	return _last_decision
+
+
+func get_last_execution_outcome() -> String:
+	return _last_execution_outcome
+
 
 func configure(
 	for_actor: Node,
@@ -201,11 +228,34 @@ func think() -> void:
 			force_activity(&"leave", &"out_of_money")
 			return
 
+	# Item 4 of docs/history/2026-08-25_CUSTOMER_ARCHITECTURE_AUDIT.md's
+	# plan: this was previously computed but never consulted - the
+	# commitment floor only worked by accident, via roll_duration_minutes()
+	# keeping the current activity's own scheduled completion from firing
+	# early. That protects against the activity's own timer but not against
+	# some other caller invoking think() mid-commitment. Checked after the
+	# out-of-money override above (which must still act regardless of
+	# commitment) and before scoring - an ordinary re-decision arriving
+	# during the floor simply does nothing, leaving the current activity
+	# running; force_activity() is untouched and can still interrupt at any
+	# time, matching this method's own doc comment.
+	if is_committed(WorldTime.get_total_minutes()):
+		return
+
 	_exit_current(false)
 
 	state = State.THINKING
 
 	var context: ActivityContext = _build_context()
+
+	# Stage 2 (CUSTOMER_MODEL.md §4): what do I currently want, chosen once
+	# per think() call before any activity is scored. Mandatory pipeline
+	# steps (order_drink, drink, leave) and Wander's always-available
+	# fallback are exempt from the filter this feeds below - see the
+	# `not definition.is_mandatory` check in the loop - so this only
+	# decides which *optional* activities even compete this pass.
+	var motivation: StringName = _select_motivation(context)
+
 	var best: ActivityDefinition = null
 	var best_score: float = -INF
 
@@ -253,6 +303,25 @@ func think() -> void:
 				rejected_for_report.append({
 					"activity_id": String(definition.activity_id),
 					"reason": "cooling_down",
+				})
+
+			continue
+
+		# Stage 3 filter (CUSTOMER_MODEL.md §4): an optional activity only
+		# competes when it serves the motivation stage 2 chose. Mandatory
+		# activities and Wander (empty ActivityDefinition.satisfies) are
+		# exempt - see ActivityDefinition.serves_motivation().
+		if (
+			not definition.is_mandatory
+			and not definition.serves_motivation(motivation)
+		):
+			if record_rejections:
+				rejected_for_report.append({
+					"activity_id": String(definition.activity_id),
+					"reason": (
+						"does not serve current motivation (%s)"
+						% motivation
+					),
 				})
 
 			continue
@@ -321,7 +390,7 @@ func think() -> void:
 
 		_report_decision(
 			previous_id, eligible_for_report, rejected_for_report,
-			&"", false, &"", contributions_for_report
+			&"", false, &"", contributions_for_report, motivation
 		)
 
 		return
@@ -344,7 +413,7 @@ func think() -> void:
 
 	_report_decision(
 		previous_id, eligible_for_report, rejected_for_report,
-		best.activity_id, false, &"", contributions_for_report
+		best.activity_id, false, &"", contributions_for_report, motivation
 	)
 
 
@@ -375,7 +444,7 @@ func enter_activity(activity_id: StringName) -> bool:
 
 	_enter(definition, _build_context())
 
-	_report_decision(previous_id, [], [], activity_id, false, &"", {})
+	_report_decision(previous_id, [], [], activity_id, false, &"", {}, &"")
 
 	return true
 
@@ -423,7 +492,7 @@ func force_activity(
 
 	_enter(definition, _build_context())
 
-	_report_decision(previous_id, [], [], activity_id, true, reason, {})
+	_report_decision(previous_id, [], [], activity_id, true, reason, {}, &"")
 
 	return true
 
@@ -473,6 +542,8 @@ func _enter(
 		)
 
 	if definition.destination_tag.is_empty():
+		_last_execution_outcome = ""
+
 		_current_activity = definition
 		_current_destination = null
 
@@ -508,6 +579,15 @@ func _enter(
 		# never having had a candidate, rather than getting stuck.
 		state = State.WAITING
 
+		# Un-gated, for the inspector - see CUSTOMER_INSPECTOR.md's
+		# "Reservation and execution outcomes must appear here, not
+		# only selection." The report_manager path below still exists
+		# unchanged for the aggregate diagnostic history.
+		_last_execution_outcome = (
+			"reservation failed: no free '%s' destination"
+			% definition.destination_tag
+		)
+
 		if debug_enabled:
 			print(
 				"[CustomerBrain] ", _actor_label(),
@@ -527,6 +607,8 @@ func _enter(
 			)
 
 		return
+
+	_last_execution_outcome = ""
 
 	_current_activity = definition
 	_current_destination = reserved
@@ -639,6 +721,90 @@ func _exit_current(completed: bool) -> void:
 	activity_changed.emit(finished, null)
 
 
+## Stage 2 of CUSTOMER_MODEL.md §4: which named motivation is currently
+## most worth pursuing. [member CustomerNeeds.thirst] is already
+## demand-shaped (high means wanted) so it is read directly;
+## [member CustomerNeeds.social]/[member CustomerNeeds.entertainment]/
+## [member CustomerNeeds.relaxation] are satisfaction-shaped (they rise
+## when satisfied - see their doc comment), so [code]1.0 - value[/code]
+## gives the same "how much is this currently wanted" reading thirst gets
+## for free.
+## Personality/visit-intent bias nudges the weights the same way
+## [method CustomerIdentity.get_activity_bias] nudges stage 3, one stage
+## earlier. Group context already reaches darts specifically through the
+## existing, unchanged [code]group_not_drinking_scoring.tres[/code]
+## condition at stage 3 - deliberately not duplicated here, to avoid
+## penalising group cohesion twice for the same fact.
+func _select_motivation(context: ActivityContext) -> StringName:
+	var weights: Dictionary = {
+		&"thirst": (needs.thirst if needs != null else 0.0),
+		&"social": (1.0 - needs.social) if needs != null else 0.0,
+		&"entertainment": (
+			(1.0 - needs.entertainment) if needs != null else 0.0
+		),
+		&"relaxation": (1.0 - needs.relaxation) if needs != null else 0.0,
+	}
+
+	if identity != null:
+		for motivation_id: StringName in weights.keys():
+			weights[motivation_id] = maxf(
+				0.0,
+				(
+					float(weights[motivation_id])
+					+ identity.get_motivation_bias(motivation_id)
+				)
+			)
+
+	if context != null:
+		context.motivation_weights = weights
+
+	return _weighted_pick_motivation(weights)
+
+
+## Weighted-random among the four motivation weights, the same
+## selection-among-near-equal-candidates principle [method _select_weighted]
+## already applies at stage 3 - a motivation is not always simply the
+## single highest-weighted one, so customers stay unpredictable at this
+## stage too. Falls back to the highest weight in deterministic mode or
+## when every weight is zero.
+func _weighted_pick_motivation(weights: Dictionary) -> StringName:
+	if deterministic_decisions:
+		return _argmax_motivation(weights)
+
+	var total: float = 0.0
+
+	for value: Variant in weights.values():
+		total += maxf(0.0, float(value))
+
+	if total <= 0.0:
+		return _argmax_motivation(weights)
+
+	var roll: float = _get_rng().randf() * total
+	var running: float = 0.0
+
+	for motivation_id: StringName in weights.keys():
+		running += maxf(0.0, float(weights[motivation_id]))
+
+		if roll <= running:
+			return motivation_id
+
+	return _argmax_motivation(weights)
+
+
+func _argmax_motivation(weights: Dictionary) -> StringName:
+	var best_id: StringName = &"thirst"
+	var best_weight: float = -INF
+
+	for motivation_id: StringName in weights.keys():
+		var weight: float = float(weights[motivation_id])
+
+		if weight > best_weight:
+			best_weight = weight
+			best_id = motivation_id
+
+	return best_id
+
+
 func _build_context() -> ActivityContext:
 	var position: Vector2 = Vector2.ZERO
 
@@ -649,7 +815,7 @@ func _build_context() -> ActivityContext:
 
 	if needs != null:
 		needs.update_remaining_visit_time(WorldTime.get_total_minutes())
-		needs.decay_engagement()
+		needs.decay_motivational_needs()
 
 	var context: ActivityContext = ActivityContext.create(
 		actor,
@@ -719,11 +885,11 @@ func _report_decision(
 	selected_id: StringName,
 	was_forced: bool,
 	forced_reason: StringName,
-	contributions: Dictionary
+	contributions: Dictionary,
+	motivation: StringName = &""
 ) -> void:
-	if report_manager == null or not report_manager.is_export_enabled():
-		return
-
+	# Built unconditionally - see [member _last_decision]'s doc comment on
+	# why this no longer depends on report_manager/export being enabled.
 	var record := DecisionRecord.new()
 	record.customer_id = runtime_customer_id
 	record.game_time_minutes = WorldTime.get_total_minutes()
@@ -733,6 +899,7 @@ func _report_decision(
 	record.selected_activity_id = String(selected_id)
 	record.was_forced = was_forced
 	record.forced_reason = String(forced_reason)
+	record.motivation = String(motivation)
 
 	if not contributions.is_empty():
 		var typed_contributions: Array[Dictionary] = []
@@ -760,9 +927,15 @@ func _report_decision(
 		record.satisfaction = needs.mood
 		record.intoxication = needs.intoxication
 		record.visit_time_remaining_minutes = needs.remaining_visit_minutes
-		record.engagement = needs.engagement
+		record.social = needs.social
+		record.entertainment = needs.entertainment
+		record.relaxation = needs.relaxation
 
-		report_manager.record_engagement(runtime_customer_id, needs.engagement)
+		if report_manager != null:
+			report_manager.record_motivational_needs(
+				runtime_customer_id, needs.social, needs.entertainment,
+				needs.relaxation
+			)
 
 	if actor != null and actor.has_method("get_diagnostics_snapshot"):
 		var snapshot: Dictionary = actor.get_diagnostics_snapshot()
@@ -781,11 +954,17 @@ func _report_decision(
 			record.selected_activity_point_id != ""
 		)
 
-	record.recent_activity_history = report_manager.get_recent_activity_history(
-		runtime_customer_id
-	)
+	record.execution_outcome = _last_execution_outcome
 
-	report_manager.record_decision(record)
+	if report_manager != null:
+		record.recent_activity_history = (
+			report_manager.get_recent_activity_history(runtime_customer_id)
+		)
+
+	_last_decision = record
+
+	if report_manager != null and report_manager.is_export_enabled():
+		report_manager.record_decision(record)
 
 
 func _report_invalid_score(
