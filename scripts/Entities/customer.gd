@@ -1787,8 +1787,20 @@ func _on_socialise_finished() -> void:
 
 ## Phase 2C: starts travelling to a reserved TavernActivityPoint, called by
 ## VisitTavernActivityBehaviour once CustomerBrain has already reserved it.
-## reserved_chair is left completely untouched - see the class-level note
-## on chair retention in docs/CUSTOMER_AI_SYSTEM.md's Phase 2C section.
+## reserved_chair's reservation is left completely untouched - see the
+## class-level note on chair retention in docs/CUSTOMER_AI_SYSTEM.md's
+## Phase 2C section - but its physical occupied-zone obstacle is disabled
+## for the trip: Chair.occupied_obstacle (radius 22 + 4px offset) stays
+## avoidance_enabled from the first time this customer sat down, and is
+## only ever disabled by fully releasing the chair, never by temporarily
+## leaving it for an activity. seat_arrival_distance is 2px - far inside
+## that obstacle's own radius - so a customer returning to a chair it never
+## released was avoidance-blocked by its own obstacle before it could ever
+## get close enough to arrive, some of the time surviving on avoidance-
+## solver drift until the visit-time timer intervened, sometimes not until
+## much later. _on_returned_to_seat() already re-enables it once actually
+## seated, so this only needs disabling here, not re-enabling elsewhere.
+## See docs/history/2026-08-25_FINAL_DIAGNOSTIC.md.
 func begin_visiting_activity(
 	point: TavernActivityPoint,
 	slot: TavernActivitySlot = null
@@ -1796,6 +1808,10 @@ func begin_visiting_activity(
 	_current_activity_point = point
 	_current_activity_slot = slot
 	_activity_partner = null
+
+	if reserved_chair != null:
+		reserved_chair.set_occupied_zone_enabled(false)
+
 	_set_state(State.MOVING_TO_ACTIVITY)
 
 	_travel_to(
@@ -1826,6 +1842,12 @@ func begin_visiting_activity_as_partner(
 
 	if _brain != null:
 		_brain.assume_activity(definition, slot.reservable)
+
+	# Same reason as begin_visiting_activity() - this customer leaves its
+	# own reserved chair too, and must not be avoidance-blocked from
+	# returning to it by its own still-enabled occupied-zone obstacle.
+	if reserved_chair != null:
+		reserved_chair.set_occupied_zone_enabled(false)
 
 	_set_state(State.MOVING_TO_ACTIVITY)
 
