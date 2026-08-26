@@ -1,111 +1,384 @@
 # Roadmap
 
-Working roadmap. Nothing is complete until implemented **and** verified.
-Reconciled against `825add8`; items already built have been removed rather than
-carried forward as aspiration.
+Working roadmap. Nothing is complete until implemented **and verified**.
 
-## The strategic gap
+This roadmap describes the current development priority, not the complete
+long-term vision. The long-term vision remains in `PLAN.md`.
 
-The simulation is deep; the game is thin. Service quality is measured in detail
-and currently has **no consequence** — no reputation, no progression, no
-end-of-day spend, and one day does not differ from the next. Closing that loop
-is worth more than any additional system.
+## Strategic goal
 
-## Priority 0 — Make the day loop matter
+The simulation foundation is becoming increasingly deep, but the player needs
+to be able to perceive, understand and influence that simulation.
 
-The progression spine. Largely unbuilt, but most of the plumbing exists.
+The immediate goal is therefore to close the gap between:
 
-- **Reputation** — one value moved by events already emitted (drinks served,
-  patience departures, group outcomes). *Not implemented.*
-- **Reputation → demand** — register a `Modifier` against spawn weight.
-  `Modifiers` exists with a target registry and stacking and **nothing currently
-  registers anything**; `TavernDemandController` already consumes modifiers.
-- **End-of-day spend** — extend the existing `EndOfDaySummary` modal with a
-  small set of purchasable upgrades. *Not implemented.*
-- **Recurring costs** — wages or rent so money has somewhere to go.
-  *Not implemented.*
+**simulation → player perception → player decision → meaningful consequence**
 
-Target: day 5 should feel different from day 1 — busier, richer, one upgrade
-bought. That is the point at which this becomes a game worth showing someone.
+The next development stages should prioritise player experience and a
+convincing living tavern before adding large new world systems.
 
-## Priority 0.5 — Phase B: the customer model (in progress)
+---
 
-The customer decision architecture is being restructured. See
-`CUSTOMER_MODEL.md` for the target, `PHASE_B_BRIEF.md` for the work order.
+# Priority 0 — UI/UX Foundation
 
-It sits here rather than lower because it blocks two things above it: the
-information layer needs customers who stay and interact, and customer feel is
-the foundation those systems plug into. It is also a foundation intended to be
-built once — adding activities or interaction types afterwards should not
-require redesigning customers.
+**Current focus.**
 
-- **Two-stage decision** — motivation, then activity within that motivation.
-- **Needs normalised and audited** — no raw-valued needs.
-- **Activities declare what they satisfy** — new activities become resources.
-- **Lingering default, departure by decision.**
-- **Awareness of the room** — the one genuinely new layer.
-- **Customer inspector** — developer tier now, information UI foundation later.
+The customer AI and activity foundations have recently been substantially
+developed. Before adding another major gameplay layer, consolidate how the
+player sees, understands and interacts with those systems.
 
-## Priority 1 — Stabilise what exists
+## In-world interaction
 
-Before more features:
+- Minimal `[E] Action` prompts.
+- Closest interactable selected automatically.
+- Mouse hover overrides automatic targeting.
+- Tab can cycle nearby targets.
+- Subtle target highlighting.
+- One obvious action executes immediately.
+- Multiple actions open a contextual action panel.
+- Mouse + keyboard interaction.
+- Forgiving proximity-based interaction.
 
-- `DeliverGroupKegExecutor` validity check - status unclear, see
-  `CURRENT_STATE.md`'s Groups section; needs a live repro either way.
-- Task cancellation and group success, both re-measured worse than the
-  figures on record (see `CURRENT_STATE.md`) - re-measure at 1x speed
-  specifically, since speed itself moved these numbers a lot in every test
-  run so far.
-- Group activity participation at 0.0% - the code fix for this is likely
-  already in (see `CURRENT_STATE.md`), just never confirmed by a number.
-  Add `activity_participation_rate_percent` to an exported report so it can
-  be checked at all.
-- Behind-bar walkable strip too narrow for staff to hold position (level fix).
-- Call `record_stock_event()` from delivery and withdrawal so the diagnostic
-  stock log stops being empty.
+## Hover information
 
-## Priority 2 — Customer visits
+- World-anchored hover summaries.
+- Context-sensitive information depending on target type.
+- Short summaries rather than full information panels.
+- Customer hover information respects player knowledge.
+- Hover should remain visually unobtrusive.
 
-Multiple drinks per visit; clearer departure logic; more varied visit lengths;
-making existing customer identity and social depth **visible** to the player.
-Largely absorbed into Priority 0.5 — what remains here is whatever Phase B does
-not reach.
+## Customer inspection
 
-## Priority 3 — Staff
+- Customer contextual interaction panel.
+- Inspect action.
+- Paused character dossier.
+- Enlarged actual customer representation.
+- Progressive/knowledge-gated information.
+- Descriptive relationship information.
+- Meaningful history where available.
+- Current status where useful.
+- Hidden undiscovered information.
+- Shared dossier presentation regardless of entry point.
 
-Hiring and progression; utilisation display; player overrides. Roles, claiming,
-capabilities and executors already exist.
+The exact information/knowledge rules remain deferred to the later information
+system design.
 
-## Priority 4 — Stock and supply
+## Customer ledger foundation
 
-Shortage consequences; more suppliers; delivery timing choices. Storage,
-purchasing, warnings, restocking and physical display already exist.
+- Physical office ledger as an in-world interactable.
+- `[E] Examine Ledger` opens directly.
+- Ledger provides access to known/discovered customer records.
+- Ledger uses the same customer dossier as in-world inspection.
 
-## Priority 5 — Activities and tavern life
+The exact rules for who appears in the ledger remain deferred.
 
-Gambling; entertainment; environmental interaction; special customer
-opportunities. The activity framework exists and is data-driven.
+## General UI
 
-## Priority 6 — Reputation depth and customer identity
+- Minimal persistent HUD.
+- Unified day/time/money presentation.
+- Contextual notifications.
+- World-first state communication.
+- Consistent menus and modal stack.
+- Consistent Esc/Close navigation.
+- Contextual tooltips.
+- Custom themed cursor.
+- Scrollable lists with contextual scrollbars.
+- Consistent button states.
+- Contextual confirmation for consequential actions.
+- Readability/accessibility principles built into UI implementation.
 
-Visit history, repeat customers, relationships, VIPs, special requests.
-`CustomerIdentity` exists as a foundation.
+## Management UI
 
-## Priority 7 — Progression depth
+- Same visual language as in-world UI.
+- More information-dense than gameplay UI.
+- Categorised management navigation.
+- Do not expose future systems before they exist.
+- Preserve existing management/debug functionality while improving usability.
 
-Decoration, capacity, equipment, new drink tiers, reputation milestones.
+## Debug UI
 
-## Priority 8 — World and harbour simulation
+Debug tools remain developer-facing but should be easier to operate and
+visually coherent.
 
-Ports, ships, captains, merchants, factions, trade, weather, world events.
+Do not remove useful diagnostics simply to make the UI cleaner.
 
-## Future concepts
+---
 
-Smuggling, dynamic trade, port reputation, faction relationships, notable
-visitors, harbour intelligence. **Ideas, not commitments** — they are promoted
-into the roadmap explicitly or not at all.
+# Priority 1 — Living Tavern Behaviour
 
-## Roadmap rule
+Once the UI foundation is in place, return to the central gameplay problem:
 
-Do not jump to a lower priority because its architecture is interesting. Finish
-the playable management loop before adding another large foundation.
+**Make the tavern feel like a place where people spend time.**
+
+Customers should have reasons to remain after their immediate service need is
+met.
+
+## Immediate behaviour
+
+- Validate the recently updated customer AI in normal gameplay.
+- Confirm customers enter, navigate, sit, order, drink and leave naturally.
+- Confirm customers do not simply cycle through the tavern.
+- Confirm groups behave coherently.
+- Confirm customers can linger without becoming stuck.
+- Observe how often customers choose activities versus ordinary drinking,
+  talking and relaxing.
+
+## Activities
+
+Start with a small number of meaningful activities rather than building a large
+activity catalogue.
+
+Likely first candidates:
+
+- Darts.
+- Socialising/conversation.
+
+Then evaluate further activities based on what they add to the tavern rather
+than simply adding variety.
+
+Potential future activities include:
+
+- Cards.
+- Dice/gambling.
+- Eating.
+- Music/entertainment.
+- Watching events.
+- Environmental interactions.
+- Special customer opportunities.
+
+Activities should remain data-driven and plug into the existing activity
+framework.
+
+## Tavern-life goal
+
+The target is not "every customer is doing something."
+
+The target is a believable distribution:
+
+**drink → talk → drink → occasionally play darts → talk → perhaps order again →
+eventually leave**
+
+Customers should create emergent situations and reasons for the player to pay
+attention.
+
+---
+
+# Priority 2 — Complete the Daily Gameplay Loop
+
+The player should be able to play through multiple days without developer
+intervention.
+
+Target loop:
+
+**Opening → Service → Closing → End-of-day → Next day**
+
+Complete/verify:
+
+- Opening state.
+- Customer arrival period.
+- Active service.
+- Closing.
+- End-of-day summary.
+- Daily income.
+- Tips.
+- Sales.
+- Customers served/lost.
+- Breakages.
+- Stock usage.
+- Daily results.
+- Next-day transition.
+- Developer lifecycle/debug controls.
+
+The goal is to make one complete day feel like a meaningful unit of play.
+
+---
+
+# Priority 3 — Make the Tavern Economy Matter
+
+The existing economy needs consequences.
+
+## Reputation
+
+- Establish a player-facing reputation value.
+- Connect service/customer outcomes to reputation.
+- Use reputation to influence demand.
+
+## Money
+
+- End-of-day spending.
+- Recurring costs such as wages/rent.
+- Purchasable upgrades.
+- Meaningful financial decisions.
+
+## Target
+
+By around day 5, the player should be able to feel that the tavern is different
+from day 1:
+
+- More customers.
+- More money.
+- More responsibilities.
+- At least one meaningful improvement.
+- Consequences from previous performance.
+
+---
+
+# Priority 4 — Staff and Tavern Operations
+
+The staff foundation already exists, so the next step is making it meaningful
+to the player.
+
+- Hiring.
+- Staff progression.
+- Utilisation display.
+- Player overrides.
+- Task priorities.
+- Staff capability differences.
+- Better task/alert presentation.
+- Bartender serving/restocking behaviour.
+- Cleaning workload.
+- Delegation decisions.
+
+The goal is to move the player away from personally performing every repetitive
+task.
+
+---
+
+# Priority 5 — Stock and Supply
+
+Existing stock/storage/purchasing foundations should become meaningful through
+choices and consequences.
+
+- Shortage consequences.
+- Supplier differences.
+- Delivery timing.
+- Purchasing decisions.
+- Restocking choices.
+- Better warnings.
+- Physical stock presentation.
+- Costs and supply risk.
+
+---
+
+# Priority 6 — Customer Identity and Relationships
+
+Once the basic tavern loop is enjoyable, deepen customers into persistent
+characters.
+
+- Named customers.
+- Recognition.
+- Repeat visits.
+- Visit history.
+- Preferences.
+- Relationships.
+- Groups and crews.
+- Notable/VIP customers.
+- Special requests.
+- Customer-specific events.
+
+This phase builds on the customer dossier and knowledge-aware UI established
+earlier.
+
+---
+
+# Priority 7 — Information and Intelligence
+
+Review and design the information system deliberately before implementation.
+
+Potential information sources:
+
+- Direct conversations.
+- Observation.
+- Repeat visits.
+- Customer interactions.
+- Other customers.
+- Rumours.
+- Staff observations.
+- Events.
+- Reports.
+- Harbour/world information.
+
+Potential outputs:
+
+- Customer knowledge.
+- Rumours.
+- Relationships.
+- Faction information.
+- Harbour reports.
+- Opportunities.
+- Risks.
+
+The exact rules should be designed as a separate system rather than being
+implicitly defined by the UI.
+
+---
+
+# Priority 8 — Progression Depth
+
+Once the core loop and economy work:
+
+- Decoration.
+- Tavern capacity.
+- Equipment.
+- New drink tiers.
+- New facilities.
+- Reputation milestones.
+- Staff progression.
+- Activity improvements.
+- Tavern specialisation.
+
+Progression should change how the tavern operates, not simply increase numbers.
+
+---
+
+# Priority 9 — World and Harbour Simulation
+
+Build the larger world simulation once the tavern can meaningfully consume its
+information.
+
+Potential systems:
+
+- Ports.
+- Ships.
+- Captains.
+- Merchants.
+- Factions.
+- Trade.
+- Weather.
+- Travel.
+- World events.
+
+The tavern remains the player's primary interface with this world.
+
+---
+
+# Future Concepts
+
+Ideas rather than current commitments:
+
+- Smuggling.
+- Dynamic trade.
+- Port reputation.
+- Faction relationships.
+- Notable visitors.
+- Harbour intelligence.
+- Political influence.
+- Larger world events.
+
+These should only be promoted into the active roadmap when the existing gameplay
+loop demonstrates a need for them.
+
+---
+
+# Roadmap Rules
+
+1. **Finish the playable loop before adding another large foundation.**
+2. **Prefer player-visible improvements over invisible simulation depth.**
+3. **Use existing data-driven frameworks rather than hard-coded special cases.**
+4. **Validate behaviour in the actual game, not only through code inspection.**
+5. **Do not add activities simply to increase the activity count.**
+6. **Do not expose future systems through placeholder UI.**
+7. **Design major systems before implementing them.**
+8. **Keep the tavern itself as the player's primary interface to the world.**
+9. **When the simulation becomes deeper than the player can perceive, improve
+   communication before adding more simulation.**

@@ -8,11 +8,19 @@ extends CanvasLayer
 ## F10 developer panel, which meant the daily loop was not a gameplay feature
 ## at all - it was a debug facility. This bar is what makes it playable.
 ##
+## Also the single unified day/time/money readout (`DECISIONS.md` §43): the
+## HUD and a standalone clock label used to show overlapping, slightly
+## inconsistent versions of the same information in three places at once.
+## This bar is the one place that owns it now.
+##
 ## [b]It calls public APIs only.[/b] No button here writes to a lifecycle
 ## variable; each one asks the lifecycle to do something and then re-reads the
 ## state, so the bar can never disagree with the authority.
 ##
 ## Built in code so no scene file has to be hand-edited.
+
+
+@export var economy_manager: EconomyManager
 
 
 const BUTTON_SPECS: Array[Dictionary] = [
@@ -48,6 +56,11 @@ func _ready() -> void:
 	WorldTime.minute_passed.connect(
 		func(_stamp: GameTimeStamp) -> void: _refresh_status()
 	)
+
+	if economy_manager != null:
+		economy_manager.money_changed.connect(
+			func(_p, _c, _d) -> void: _refresh_status()
+		)
 
 	_locate_summary_screen.call_deferred()
 
@@ -86,7 +99,8 @@ func _build() -> void:
 	margin.add_child(row)
 
 	_status_label = Label.new()
-	_status_label.custom_minimum_size = Vector2(330, 0)
+	_status_label.theme_type_variation = &"HeadingLabel"
+	_status_label.custom_minimum_size = Vector2(420, 0)
 	_status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 	row.add_child(_status_label)
@@ -202,9 +216,16 @@ func _refresh_status() -> void:
 	if _status_label == null:
 		return
 
-	_status_label.text = "Day %d   %s   %s" % [
+	var money_text: String = (
+		"£%d" % economy_manager.get_money()
+		if economy_manager != null
+		else "£—"
+	)
+
+	_status_label.text = "Day %d   %s   %s   %s" % [
 		Tavern.trading_day,
 		WorldTime.get_clock_text(),
+		money_text,
 		get_state_text(),
 	]
 

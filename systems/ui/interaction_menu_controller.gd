@@ -18,6 +18,22 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 
+## Esc closes whatever menu this controller currently owns (DECISIONS.md §48 -
+## Esc and Close navigate back the same way). Centralised here rather than in
+## each [InteractionMenuView] so every menu gets it for free.
+func _unhandled_input(
+	event: InputEvent
+) -> void:
+	if not is_open():
+		return
+
+	if not event.is_action_pressed(&"ui_cancel"):
+		return
+
+	close_menu()
+	get_viewport().set_input_as_handled()
+
+
 func open_menu(
 	menu_scene: PackedScene,
 	context: Dictionary = {}

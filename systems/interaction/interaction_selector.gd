@@ -63,6 +63,16 @@ signal interaction_performed(
 @export var selector_group: StringName = &"interaction_selector"
 
 
+## Generic menu used when the selected object offers more than one action.
+##
+## Kept as a scene rather than built in code so its layout can be tuned like
+## any other menu; nothing here knows what actions look like beyond what
+## InteractionAction already exposes.
+@export var action_menu_scene: PackedScene = preload(
+	"res://scenes/ui/action_choice_menu.tscn"
+)
+
+
 @export_category("Debug")
 
 ## Prints every selection change to the Output panel.
@@ -165,6 +175,16 @@ func _update_selection() -> void:
 		_set_selected(null)
 		return
 
+	# Mouse hover wins outright (DECISIONS.md §29): it is a deliberate choice
+	# by the player and should override both automatic scoring and a manual
+	# cycle hold, not merely compete with them.
+	var hovered: Interactable = _get_hovered_candidate(candidates)
+
+	if hovered != null:
+		_clear_manual_hold()
+		_set_selected(hovered)
+		return
+
 	# A manually cycled target keeps its place until it stops being valid or
 	# the hold is released, otherwise scoring would undo the player's choice.
 	if _manual_selection and candidates.has(_selected):
@@ -181,6 +201,34 @@ func _update_selection() -> void:
 			best = candidate
 
 	_set_selected(best)
+
+
+## The nearest candidate the mouse is currently over, or null.
+##
+## Only candidates already in reach are considered - hover chooses among what
+## the player could act on, it does not extend reach itself. Nearest breaks
+## ties when two overlapping shapes are both hovered at once.
+func _get_hovered_candidate(
+	candidates: Array[Interactable]
+) -> Interactable:
+	var actor_position: Vector2 = _get_actor_position()
+
+	var nearest: Interactable = null
+	var nearest_distance: float = INF
+
+	for candidate: Interactable in candidates:
+		if not candidate.is_mouse_hovered():
+			continue
+
+		var distance: float = actor_position.distance_to(
+			candidate.get_interaction_position(actor_position)
+		)
+
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest = candidate
+
+	return nearest
 
 
 ## Every in-range interactable that has something to offer the actor now.
@@ -294,13 +342,27 @@ func _refresh_selected() -> void:
 func _refresh_prompt() -> void:
 	var action: InteractionAction = null
 
+	var new_text: String = ""
+	var new_is_available: bool = false
+
 	if _selected != null and is_instance_valid(_selected):
-		action = _selected.get_primary_action(
+		var actions: Array[InteractionAction] = _selected.get_actions(
 			_build_request(_selected)
 		)
 
-	var new_text: String = ""
-	var new_is_available: bool = false
+		if actions.size() > 1:
+			# A specific verb would misdescribe what the key actually does
+			# here (open a choice, not run one action) - the object's own
+			# name reads correctly either way: "[E] Bar Counter".
+			new_text = _selected.get_display_name()
+			new_is_available = actions.any(
+				func(candidate: InteractionAction) -> bool:
+					return candidate.is_available
+			)
+		else:
+			action = _selected.get_primary_action(
+				_build_request(_selected)
+			)
 
 	if action != null:
 		new_text = action.get_label()
@@ -418,6 +480,90 @@ func _update_manual_hold(
 # -----------------------------------------------------------------------------
 # Execution
 # -----------------------------------------------------------------------------
+
+## True when the selected object currently offers more than one action.
+##
+## The primary-interaction key should open the contextual action menu instead
+## of running a single action when this is true (DECISIONS.md §28).
+func has_multiple_actions() -> bool:
+	if _selected == null or not is_instance_valid(_selected):
+		return false
+
+	return _selected.get_actions(_build_request(_selected)).size() > 1
+
+
+## Opens the generic contextual action menu for the selected object.
+##
+## Falls back to [method perform_primary] if the object turns out to have
+## zero or one action after all - a stale caller should still do something
+## sensible rather than silently fail.
+func open_action_menu() -> bool:
+	if _selected == null or not is_instance_valid(_selected):
+		return false
+
+	var interactable: Interactable = _selected
+	var actions: Array[InteractionAction] = interactable.get_actions(
+		_build_request(interactable)
+	)
+
+	if actions.size() < 2:
+		return perform_primary()
+
+	if action_menu_scene == null:
+		push_warning(
+			"InteractionSelector has no action_menu_scene assigned."
+		)
+		return false
+
+	if not InteractionMenu.menu_closed.is_connected(_on_action_menu_closed):
+		InteractionMenu.menu_closed.connect(_on_action_menu_closed)
+
+	return InteractionMenu.open_menu(
+		action_menu_scene,
+		{
+			"interactable": interactable,
+			"actions": actions,
+			"title": interactable.get_display_name(),
+		}
+	)
+
+
+func _on_action_menu_closed(
+	result: Dictionary
+) -> void:
+	var action_id: StringName = result.get("action_id", &"")
+
+	# Empty means the player cancelled rather than chose - opening the menu
+	# does not commit to running anything.
+	if action_id == &"":
+		return
+
+	if _selected == null or not is_instance_valid(_selected):
+		return
+
+	var interactable: Interactable = _selected
+
+	var request: InteractionRequest = _build_request(
+		interactable,
+		action_id,
+		result.get("action_data", {})
+	)
+
+	var chosen_action: InteractionAction = null
+
+	for candidate_action: InteractionAction in interactable.get_actions(request):
+		if candidate_action.id == action_id:
+			chosen_action = candidate_action
+			break
+
+	var performed: bool = interactable.perform(request)
+
+	if performed:
+		interaction_performed.emit(interactable, chosen_action)
+
+	_update_selection()
+	_refresh_selected()
+
 
 ## Runs the selected object's primary action.
 ##

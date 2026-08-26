@@ -44,10 +44,32 @@ Breakage handling exists (`CleaningTask`, break-chance on `DrinkDefinition`) —
 
 ### Interaction — Verified
 Generic detection, scoring with stickiness, highlighting, prompts and action
-execution via `Interactable` + `InteractionMenu`. **Known limit:** an
-interactable returns exactly one action and there is no secondary-action UI, so
-a station can only ever offer one drink. This is why bottle service stations are
-children of their shelves.
+execution via `Interactable` + `InteractionMenu`. Closest-with-priority
+scoring, sticky selection and Tab-cycling (`InteractionSelector.cycle_next()`,
+bound to `player_cycle_target`) all predate the 2026-08-26 UI/UX foundation
+pass; that pass added:
+
+- **Mouse hover override** — `Interactable` is mouse-pickable (reusing its
+  existing collision shape, no second collider) and tracks a static
+  world-wide hovered set. `InteractionSelector` prefers a hovered, in-reach
+  candidate over automatic scoring or a manual cycle hold.
+- **Contextual action menu** — when `Interactable.get_actions()` returns more
+  than one action, `[E]` opens a generic `ActionChoiceMenu`
+  (`InteractionMenu`/`InteractionMenuView`) instead of running one arbitrarily;
+  a single action still runs directly. No shipping object currently returns
+  more than one action, so this path is dormant infrastructure, exercised only
+  by manual/code review, not a live test.
+- **Hover-summary layer** — `HoverSummaryUI` shows
+  `Interactable.get_hover_summary()` (falls back to the display name) for
+  whatever the mouse is over anywhere on screen, independent of reach; distinct
+  from the `[E]` prompt, which stays reach-limited.
+- **Contextual cursor** — `CursorController` autoload switches the OS cursor
+  shape (normal/pointing-hand) by hover state. No custom cursor art exists in
+  the project; this is the contextual behaviour only, see "Not implemented".
+
+The bar counter's one-action-per-object limit is unchanged — that constraint
+is about how many drinks one interactable offers per slot, not about whether
+the framework can present several actions at once, which it now can.
 
 ### Navigation — Verified
 `ActorNavigation`, movement profiles, arrival and recovery, RVO avoidance with
@@ -75,9 +97,31 @@ membership. `CustomerBrain.get_last_decision()`/`get_last_execution_outcome()`
 are new, un-gated per-customer caches (populated regardless of
 `report_manager`/export state). Reached via select (not hover — documented
 deviation, `DECISIONS.md` §10/§26) through the existing `Interactable`
-framework, one `&"inspect"` action, gated behind `OS.is_debug_build()`.
-Group role is simplified to "member" (no leader/non-leader distinction yet —
-`Customer` has no back-reference to its `CustomerGroup`).
+framework, one `&"inspect"` action. Group role is simplified to "member" (no
+leader/non-leader distinction yet — `Customer` has no back-reference to its
+`CustomerGroup`).
+
+### Customer AI — player-facing dossier (2026-08-26, UI/UX foundation pass)
+`Customer.get_dossier_data() -> CustomerDossierData`, rendered by
+`CustomerDossierUI` (`systems/customer_ai/inspection/`) — the same
+`&"inspect"` action now available in every build, not only debug ones. Shows
+only what a player could plausibly know: name, customer-type display name and
+authored `CustomerType.description`, a short natural-language status line
+(shared phrasing with the hover summary, both built from
+`Customer._get_hover_status_phrase()`), and an enlarged copy of the customer's
+actual sprite/texture. Relationship and history sections exist on the data
+class and in the UI but stay hidden while empty — no relationship or history
+system exists yet to populate them; nothing invents one. Opening pauses the
+simulation via `Simulation.push_state()`, matching `BarManagementMenu`'s
+existing idiom; Esc, the Close button or the dimmed backdrop all close it.
+A debug build still additionally opens the developer `CustomerInspectorUI`
+from the same `&"inspect"` action - two panels sharing one trigger, not one
+panel with two modes.
+
+**Deliberately not built this pass:** the physical office customer ledger
+(`docs/DECISIONS_UI_UX_APPEND.md` §40-42) - it depends on an undesigned "who
+counts as known" rule. `CustomerDossierUI` is written so the ledger can open
+it later with no change to this class.
 
 ### Customer AI — activity selection, Phase B two-stage decisions (2026-08-25)
 The flat-pool problem measured at `235b7ac` (below, kept as history) is
@@ -254,6 +298,34 @@ No wages, rent or recurring costs.
 ### Daily cycle — Built, lightly tested
 `DailyStatistics`, `DailyStatisticsRecorder`, `DailyControlBar`,
 `EndOfDaySummary` modal. Records per-day counters, sales, income and stock used.
+`DailyControlBar` is now the one place day, time and money are shown together
+(`DECISIONS.md` §43) - the HUD previously duplicated day/time in two more
+places (`scripts/UI/hud.gd`, since deleted, and a standalone `TimeLabel`) with
+none of the three agreeing on wording. `phase_4a_loop_test` (22/0) exercises
+the control bar end to end and still passes.
+
+### UI and presentation — Built (2026-08-26, UI/UX foundation pass)
+`UITheme` autoload (`systems/ui/ui_theme_service.gd`) builds one `Theme` from
+the pirate-tavern palette `BarManagementMenu.tscn` already established, and
+assigns it to the root `Window` so every `Control` in the game inherits it
+with no per-scene wiring - including screens built entirely in code (HUD/
+menu/debug panels almost all are). Provides shared style helpers
+(`make_panel_style`, `make_inset_panel_style`, `make_glance_panel_style`) and
+a `DestructiveButton` theme type variation for consequential actions
+(`DECISIONS.md` §53/§54 - no screen yet opts into the destructive variant,
+it is available for one that needs it).
+
+Existing modals (`BarManagementMenu`, `EndOfDaySummary`,
+`CustomerDossierUI`, `ActionChoiceMenu`) already used - or now use - the same
+push/pop idiom against `Simulation`'s state stack for pausing, and Esc/Close
+both navigate back the same way (`DECISIONS.md` §48); `InteractionMenuController`
+(the `InteractionMenu` autoload) now handles Esc centrally for every menu
+opened through it, rather than each menu re-implementing it.
+
+Not built this pass: a shared base class unifying the four modals' pause/Esc
+code, which currently repeats the same small idiom in each one rather than
+inheriting it. Judged not worth the risk of retrofitting two already-working,
+tested screens for this pass; see the final report's architectural notes.
 
 ### Diagnostics — Verified
 `CustomerAIReportManager`, `StaffReportManager`, `DiagnosticRunExporter`,
@@ -270,7 +342,11 @@ upgrades. This is the plumbing a progression system would use.
 
 Reputation · progression and upgrades · wages, rent or recurring costs ·
 gambling · entertainment · smuggling and trading · harbour/world simulation ·
-factions · weather · save/load.
+factions · weather · save/load · the physical office customer ledger ·
+custom cursor bitmap art (contextual OS cursor shapes are implemented; no
+themed art exists in the project to replace them with) · customer
+relationship/history data (the dossier's sections for both exist and render
+correctly, but nothing populates them yet).
 
 ## Known issues
 

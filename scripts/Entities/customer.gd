@@ -2998,25 +2998,95 @@ func get_inspection_data() -> CustomerInspectionData:
 
 ## Interactable provider methods (see systems/interaction/interactable.gd's
 ## duck-typing contract). Customer already carries an InteractionArea child
-## in customer.tscn - CUSTOMER_INSPECTOR.md asks for hover-to-inspect, but
-## the interaction framework here is proximity-based (arm's-reach
-## detection for gameplay actions), not screen-space mouse picking, so
-## true hover would need a second, separate detection system. Select-to-
-## inspect reuses 100% of the existing detector/selector/prompt pipeline
-## instead - the documented deviation DECISIONS.md §10 allows when it
-## makes the framework "substantially cheaper" to reuse than to bypass.
-## Developer tier only, gated the same way the F10 panel is
-## (OS.is_debug_build()) - see CUSTOMER_INSPECTOR.md's disclosure tiers.
+## in customer.tscn. [code]&"inspect"[/code] opens the player-facing
+## [CustomerDossierUI] in every build (Step 4 of the UI/UX foundation pass:
+## customer inspection is a normal gameplay interaction, not a debug-only
+## one). A debug build additionally opens the existing developer-tier
+## [CustomerInspectorUI] alongside it, unchanged from before this pass -
+## CUSTOMER_INSPECTOR.md's disclosure tiers are two panels sharing one
+## trigger, not one panel with two modes.
 func get_interaction_display_name() -> String:
 	return String(name)
+
+
+## Builds this customer's player-facing dossier snapshot - see
+## [CustomerDossierData] for the architecture rule. The one place besides
+## [method get_inspection_data] allowed to read this customer's internals for
+## presentation purposes.
+func get_dossier_data() -> CustomerDossierData:
+	var data := CustomerDossierData.new()
+
+	data.customer_name = String(name)
+
+	if customer_type != null:
+		data.type_display_name = customer_type.display_name
+		data.description = customer_type.description
+		data.portrait_texture = customer_type.customer_texture
+
+	if data.portrait_texture == null and customer_sprite != null:
+		data.portrait_texture = customer_sprite.texture
+
+	data.status_line = _get_hover_status_phrase()
+
+	if data.status_line.is_empty():
+		data.status_line = "In the tavern"
+
+	return data
+
+
+## One short, player-facing status line for the world hover-summary layer
+## (DECISIONS.md §32/§33). Deliberately built from the same public state this
+## customer already tracks for its own behaviour, not from
+## [method get_inspection_data]'s developer snapshot - no need or motivation
+## score ever reaches this string, only what a person glancing at the room
+## could plausibly read off the customer themselves.
+func get_hover_summary() -> String:
+	var type_name: String = (
+		customer_type.display_name if customer_type != null else "Customer"
+	)
+
+	var status: String = _get_hover_status_phrase()
+
+	if status.is_empty():
+		return type_name
+
+	return "%s - %s" % [type_name, status]
+
+
+func _get_hover_status_phrase() -> String:
+	var current_activity: ActivityDefinition = (
+		_brain.get_current_activity() if _brain != null else null
+	)
+
+	if current_activity != null and not current_activity.display_name.is_empty():
+		return current_activity.display_name
+
+	match current_state:
+		State.ENTERING, State.WALKING_TO_STAGING, State.MOVING_TO_SEAT:
+			return "Looking for a seat"
+		State.WAITING_TO_ORDER, State.ORDERING:
+			return "Waiting to order"
+		State.DRINKING:
+			return "Having a drink"
+		State.RELAXING:
+			return "Relaxing"
+		State.SOCIALISING:
+			return "Chatting"
+		State.MOVING_TO_ACTIVITY, State.USING_ACTIVITY, State.RETURNING_TO_SEAT:
+			return "Enjoying themselves"
+		State.MOVING_TO_GROUP_SLOT, State.IN_GROUP:
+			return "With their group"
+		State.GROUP_WAITING_OUTSIDE, State.GROUP_ENTERING, State.GROUP_INSIDE_STAGING:
+			return "Arriving"
+		State.LEAVING_TO_DOOR, State.EXITING:
+			return "Leaving"
+
+	return ""
 
 
 func get_interaction_actions(
 	_request: InteractionRequest
 ) -> Array[InteractionAction]:
-	if not OS.is_debug_build():
-		return []
-
 	return [
 		InteractionAction.create(
 			&"inspect", "Inspect", String(name)
@@ -3028,19 +3098,28 @@ func perform_interaction(request: InteractionRequest) -> bool:
 	if request.action_id != &"inspect":
 		return false
 
-	if not OS.is_debug_build():
-		return false
-
-	var ui: Node = get_tree().root.get_node_or_null(
-		^"/root/CustomerInspectorUILayer"
+	var dossier_ui: Node = get_tree().root.get_node_or_null(
+		^"/root/CustomerDossierUILayer"
 	)
 
-	if ui == null:
-		ui = CustomerInspectorUI.new()
-		ui.name = "CustomerInspectorUILayer"
-		get_tree().root.add_child(ui)
+	if dossier_ui == null:
+		dossier_ui = CustomerDossierUI.new()
+		dossier_ui.name = "CustomerDossierUILayer"
+		get_tree().root.add_child(dossier_ui)
 
-	ui.call(&"toggle_inspection", get_inspection_data())
+	dossier_ui.call(&"toggle_dossier", get_dossier_data())
+
+	if OS.is_debug_build():
+		var dev_ui: Node = get_tree().root.get_node_or_null(
+			^"/root/CustomerInspectorUILayer"
+		)
+
+		if dev_ui == null:
+			dev_ui = CustomerInspectorUI.new()
+			dev_ui.name = "CustomerInspectorUILayer"
+			get_tree().root.add_child(dev_ui)
+
+		dev_ui.call(&"toggle_inspection", get_inspection_data())
 
 	return true
 

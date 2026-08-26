@@ -49,6 +49,22 @@ func _ready() -> void:
 	Tavern.summary_available.connect(_on_summary_available)
 
 
+## Esc dismisses the summary without acknowledging it (DECISIONS.md §48) -
+## the same thing the control bar's own "View Summary" toggle already does,
+## and it stays reachable again from there afterwards.
+func _unhandled_input(
+	event: InputEvent
+) -> void:
+	if not _is_open:
+		return
+
+	if not event.is_action_pressed(&"ui_cancel"):
+		return
+
+	close_summary()
+	get_viewport().set_input_as_handled()
+
+
 func _build() -> void:
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)

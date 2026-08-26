@@ -240,10 +240,15 @@ func get_carried_drink() -> DrinkDefinition:
 # performs that action using the item, cleaning and serving systems it already
 # owns.
 
-## Runs the primary action on the currently selected interactable.
+## Runs the selected interactable's action, or opens its contextual action
+## menu when it offers more than one (DECISIONS.md §28: a single obvious
+## action executes directly, several meaningful choices open a panel).
 func try_interact() -> bool:
 	if action_runner.is_running:
 		return false
+
+	if interaction_selector.has_multiple_actions():
+		return interaction_selector.open_action_menu()
 
 	return interaction_selector.perform_primary()
 

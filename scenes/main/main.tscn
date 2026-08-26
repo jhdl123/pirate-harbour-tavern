@@ -9,13 +9,11 @@
 [ext_resource type="PackedScene" uid="uid://wfl8kjme2q47" path="res://scenes/furniture/table.tscn" id="3_k2fmo"]
 [ext_resource type="PackedScene" uid="uid://dnd6om8dg26fm" path="res://scenes/furniture/drinks_station.tscn" id="3_l3cfh"]
 [ext_resource type="Script" uid="uid://bowoxvrqsdjw6" path="res://scripts/Managers/game_manager.gd" id="7_hujxm"]
-[ext_resource type="Script" uid="uid://cduu6wuftbtkl" path="res://scripts/UI/hud.gd" id="7_yyfjg"]
 [ext_resource type="Texture2D" uid="uid://c3pebfcaim567" path="res://assets/art/furniture/32x32_medium_barrel.png" id="8_6g21x"]
 [ext_resource type="Script" uid="uid://b5wcssexr0e0" path="res://scripts/Debug/navigation_debugger.gd" id="9_b1x3f"]
 [ext_resource type="Texture2D" uid="uid://cmym75xo6n2ua" path="res://assets/art/furniture/448x32_bar.png" id="11_obdhw"]
 [ext_resource type="PackedScene" uid="uid://djtgijinluyir" path="res://scenes/environment/CustomerDoor.tscn" id="12_nvumn"]
 [ext_resource type="Resource" uid="uid://8h83yo3jwte" path="res://resources/config/default_game_config.tres" id="15_hxu8e"]
-[ext_resource type="Script" uid="uid://bc5lnr8hbl0hj" path="res://systems/time/time_display.gd" id="16_p8abn"]
 [ext_resource type="Texture2D" uid="uid://dj6a43xl8rxms" path="res://assets/art/furniture/96x64_long_desk_table_01.png" id="17_h325i"]
 [ext_resource type="Resource" uid="uid://c313r83roveas" path="res://resources/CustomerTypes/sailor_impatient.tres" id="17_necax"]
 [ext_resource type="Script" uid="uid://dp5kl21bue83r" path="res://scripts/data/customer_type.gd" id="17_r4lks"]
@@ -26,6 +24,7 @@
 [ext_resource type="Texture2D" uid="uid://dq8exxe0d0owk" path="res://assets/art/furniture/64x64_square_table_05.png" id="22_umklk"]
 [ext_resource type="Texture2D" uid="uid://cktyodi1ctkc4" path="res://assets/art/furniture/96x64_game_table_01.png" id="23_5deua"]
 [ext_resource type="Script" uid="uid://diwvfmlu4wwu7" path="res://systems/interaction/interaction_prompt_ui.gd" id="25_prompt"]
+[ext_resource type="Script" path="res://systems/interaction/hover_summary_ui.gd" id="25_hover"]
 [ext_resource type="Script" uid="uid://bqspb0rlv46mq" path="res://systems/statistics/statistics_tracker.gd" id="26_0bhws"]
 [ext_resource type="Script" uid="uid://d20pj165yrwlu" path="res://systems/simulation/simulation_debug_panel.gd" id="26_simpanel"]
 [ext_resource type="PackedScene" uid="uid://syl0miuargy" path="res://scenes/ui/BarManagementMenu.tscn" id="27_62atk"]
@@ -853,24 +852,7 @@ player_path = NodePath("../Entities/Player")
 downstairs_arrival_path = NodePath("../Markers/DownstairsArrival")
 upstairs_arrival_path = NodePath("../UpstairsFloor/Environment/Stairs/Markers/UpstairsArrival")
 
-[node name="UI" type="CanvasLayer" parent="." unique_id=1290313818 node_paths=PackedStringArray("economy_manager")]
-script = ExtResource("7_yyfjg")
-economy_manager = NodePath("../Managers/EconomyManager")
-
-[node name="MoneyLabel" type="Label" parent="UI" unique_id=25987283]
-offset_left = 60.0
-offset_top = 51.0
-offset_right = 100.0
-offset_bottom = 74.0
-theme_override_font_sizes/font_size = 30
-text = "£0"
-
-[node name="TimeLabel" type="Label" parent="UI" unique_id=1008571156]
-offset_left = 175.0
-offset_top = 56.0
-offset_right = 268.0
-offset_bottom = 92.0
-script = ExtResource("16_p8abn")
+[node name="UI" type="CanvasLayer" parent="." unique_id=1290313818]
 
 [node name="InteractionPrompt" type="Control" parent="UI" unique_id=1904772314]
 z_index = 20
@@ -889,6 +871,27 @@ theme_override_colors/font_outline_color = Color(0.0862745, 0.0588235, 0.0392157
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 16
 text = "[E] Interact"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HoverSummary" type="Control" parent="UI" unique_id=1904772320]
+z_index = 19
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1.0
+offset_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("25_hover")
+
+[node name="SummaryLabel" type="Label" parent="UI/HoverSummary" unique_id=1904772321]
+layout_mode = 0
+offset_right = 1.0
+offset_bottom = 1.0
+theme_override_colors/font_outline_color = Color(0.0862745, 0.0588235, 0.0392157, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.88, 0.83, 0.73, 1)
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -1094,8 +1097,9 @@ enabled = false
 [node name="EndOfDaySummary" type="CanvasLayer" parent="." unique_id=225030947]
 script = ExtResource("92_eod")
 
-[node name="DailyControlBar" type="CanvasLayer" parent="." unique_id=1836382527]
+[node name="DailyControlBar" type="CanvasLayer" parent="." unique_id=1836382527 node_paths=PackedStringArray("economy_manager")]
 script = ExtResource("93_bar")
+economy_manager = NodePath("../Managers/EconomyManager")
 
 [node name="CustomerBehaviourPanel" type="Node" parent="." unique_id=365676011]
 script = ExtResource("87_23bmo")

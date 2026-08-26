@@ -38,6 +38,12 @@ extends Area2D
 ##         enabled: bool, request: InteractionRequest) -> void
 ##     Custom highlight. Called repeatedly while selected, so it must be
 ##     idempotent. Omit it to get the InteractionHighlight node behaviour.
+##
+## get_hover_summary() -> String
+##     One short, player-facing line for the glance hover layer - "what am I
+##     looking at" (DECISIONS.md §32). Falls back to the display name alone.
+##     Must only describe what the player currently knows; never surface raw
+##     simulation internals just because they exist.
 ## [/codeblock]
 ##
 ## [b]Legacy providers.[/b] An object that has none of the above but does have
@@ -115,6 +121,17 @@ var interaction_priority: int = 0
 var _provider: Node = null
 var _highlight: InteractionHighlight = null
 var _is_highlighted: bool = false
+var _is_mouse_hovered: bool = false
+
+## Every interactable the mouse is currently over, most recently entered last.
+##
+## A single shared list rather than one per instance, so the world-wide
+## hover-summary layer can ask "what is the mouse over right now" without a
+## screen-space picking system of its own - it reuses whichever collision
+## shapes objects already carry (see [method get_hover_summary]'s doc
+## comment). Almost always holds zero or one entry; only overlapping shapes
+## produce more, in which case the most recently entered wins.
+static var _hovered_interactables: Array[Interactable] = []
 
 
 func _ready() -> void:
@@ -123,6 +140,63 @@ func _ready() -> void:
 
 	_resolve_provider()
 	_resolve_highlight()
+
+	# Reuses this object's existing detection shape for mouse picking rather
+	# than adding a second collider, so hover follows exactly the footprint
+	# the object already presents to the reach-based framework.
+	input_pickable = true
+
+	if not mouse_entered.is_connected(_on_mouse_entered):
+		mouse_entered.connect(_on_mouse_entered)
+
+	if not mouse_exited.is_connected(_on_mouse_exited):
+		mouse_exited.connect(_on_mouse_exited)
+
+
+func _exit_tree() -> void:
+	# A hovered object can be freed - a customer served and removed while the
+	# mouse still sits over it - without mouse_exited ever firing. Cleared
+	# here as well so the static list never keeps a stale entry.
+	_hovered_interactables.erase(self)
+
+
+func _on_mouse_entered() -> void:
+	_is_mouse_hovered = true
+
+	if not _hovered_interactables.has(self):
+		_hovered_interactables.append(self)
+
+
+func _on_mouse_exited() -> void:
+	_is_mouse_hovered = false
+	_hovered_interactables.erase(self)
+
+
+## True while the mouse cursor is directly over this object's own collision
+## shape, regardless of whether it is currently in the actor's reach.
+##
+## [InteractionSelector] only honours this for candidates already within
+## reach (DECISIONS.md §29 - forgiving, not pixel-perfect, but still
+## physically near); the hover-summary glance layer uses it unconditionally.
+func is_mouse_hovered() -> bool:
+	return _is_mouse_hovered
+
+
+## Whatever the mouse is currently over anywhere in the world, or null.
+##
+## Used by the hover-summary layer, which - unlike interaction targeting - is
+## not limited to the actor's reach: a glance should work on anything visible
+## on screen.
+static func get_world_hovered() -> Interactable:
+	while not _hovered_interactables.is_empty():
+		var candidate: Interactable = _hovered_interactables.back()
+
+		if is_instance_valid(candidate) and candidate.is_inside_tree():
+			return candidate
+
+		_hovered_interactables.pop_back()
+
+	return null
 
 
 func _resolve_provider() -> void:
@@ -218,6 +292,22 @@ func get_display_name() -> String:
 		return String(_provider.name).capitalize()
 
 	return "Object"
+
+
+## The short glance-layer line shown by the hover-summary UI.
+##
+## Falls back to the display name alone when the provider has no summary of
+## its own, so every interactable is at least nameable on hover.
+func get_hover_summary() -> String:
+	if _provider_has(&"get_hover_summary"):
+		var summary: String = String(
+			_provider.call(&"get_hover_summary")
+		)
+
+		if not summary.is_empty():
+			return summary
+
+	return get_display_name()
 
 
 ## Where the interaction is considered to happen, in world space.

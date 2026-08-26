@@ -17,6 +17,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+UITheme="*res://systems/ui/ui_theme_service.gd"
+CursorController="*res://systems/interaction/cursor_controller.gd"
 Simulation="*res://systems/simulation/simulation_controller.tscn"
 WorldTime="*res://systems/time/world_time.tscn"
 InteractionMenu="*res://systems/ui/interaction_menu_controller.gd"
@@ -25,6 +27,7 @@ Comms="*res://systems/communication/communication_service.gd"
 Modifiers="*res://systems/modifiers/modifier_service.gd"
 Tavern="*res://systems/tavern/tavern_lifecycle.gd"
 CustomerBehaviourEvents="*res://systems/customer_ai/identity/customer_behaviour_events.gd"
+BackgroundMusic="*uid://bpvgkwxndqrw"
 
 [display]
 

@@ -288,3 +288,329 @@ violations before, 0/150 after
 (`tests/weighted_selection_regression_test.gd`); a full post-fix
 transcript sweep found 0/29 real selections violating the filter, down
 from 3 confirmed instances before.
+
+## 28. UI uses a hybrid interaction model
+
+The interaction system uses two levels of interaction.
+
+A target with one obvious available action performs that action immediately.
+
+A target with multiple meaningful actions presents a contextual action panel.
+
+Why: routine tavern management should remain fast, while customers and other
+important targets can support richer interactions without forcing menus onto
+every action.
+
+## 29. Interaction targeting defaults to the closest interactable
+
+The closest valid interactable is the default target.
+
+Mouse hover overrides automatic targeting. Tab can cycle through nearby
+interactables, and mouse selection can deliberately choose a target.
+
+Why: the default behaviour should be predictable and forgiving without
+requiring precise positioning.
+
+Strict facing and line-of-sight requirements are deliberately not part of the
+initial interaction model.
+
+## 30. Interaction prompts are minimal
+
+Normal world interaction uses a compact `[E] Action` presentation.
+
+Examples:
+
+`[E] Clean`
+
+`[E] Talk`
+
+`[E] Interact`
+
+Why: the interaction prompt should communicate the available action without
+dominating the game view.
+
+## 31. Interaction feedback is primarily contextual
+
+Successful actions should normally communicate through world-state changes,
+animations and other contextual feedback.
+
+UI notifications should not be generated for every routine action.
+
+Why: the tavern world should remain visually readable and the player should be
+able to understand actions through their consequences.
+
+## 32. Hover information is a summary layer
+
+Hover information is contextual and world-anchored.
+
+It should answer "what am I looking at?" rather than provide complete details.
+
+Why: hover is intended as a glance interaction and should not replace deeper
+inspection.
+
+## 33. Customer UI represents player knowledge
+
+Customer UI must not expose complete simulation data simply because that data
+exists internally.
+
+The player sees information that they have learned.
+
+Undiscovered information is normally hidden rather than displayed as `???` or
+locked RPG fields.
+
+Why: discovering who customers are is part of the intended game experience and
+will eventually connect to rumours, relationships, reputation and intelligence.
+
+The exact rules governing knowledge acquisition remain a future information
+system decision.
+
+## 34. Customer inspection uses a shared dossier
+
+The customer inspection UI should consume a presentation snapshot rather than
+directly reading customer internals, needs, the customer brain or registries.
+
+Why: the customer simulation and information presentation must remain decoupled.
+The underlying customer architecture can change without requiring the UI to
+understand the simulation.
+
+The existing inspection architecture should remain the foundation for the
+player-facing dossier.
+
+## 35. Deep customer inspection pauses the simulation
+
+Opening a full customer dossier pauses the simulation.
+
+Closing it resumes the simulation.
+
+Why: the player needs time to read and understand character information without
+the tavern continuing to operate behind the interface.
+
+## 36. Customer dossiers use the actual customer representation
+
+The customer dossier should use an enlarged representation of the customer's
+actual in-game character rather than requiring separate portrait artwork.
+
+Why: visual recognition is part of customer identity.
+
+## 37. Customer dossier is a character record, not an RPG stat sheet
+
+The dossier should use a structured but somewhat journal-like presentation.
+
+It may contain known identity, description, relationship, preferences,
+connections, meaningful history and relevant current status.
+
+It should not expose unnecessary simulation statistics simply because they exist.
+
+Why: customers are intended to become characters rather than numerical units.
+
+## 38. Customer history records meaningful events
+
+Customer history should eventually record meaningful events rather than every
+low-level action.
+
+Why: a detailed event log is noise. History should help the player remember the
+character.
+
+The exact definition of a meaningful event belongs to the later customer
+memory/information design.
+
+## 39. Customer relationships are descriptive
+
+Customer relationships shown to the player should use meaningful descriptive
+states rather than raw numerical scores.
+
+Examples might eventually include:
+
+Unknown · Familiar · Friendly · Trusted · Hostile
+
+The underlying simulation may use numerical values internally where appropriate.
+
+Why: players should understand the meaning of a relationship rather than being
+shown implementation numbers.
+
+## 40. The office ledger is an in-world information interface
+
+The office customer ledger is a physical in-world object.
+
+The intended interaction is:
+
+`[E] Examine Ledger → Ledger UI → Customer → Shared Customer Dossier`
+
+Why: the tavern itself should provide access to its information systems.
+
+The rules determining which customers are recorded remain a future information
+system decision.
+
+## 41. The ledger opens directly
+
+The customer ledger has one obvious primary action and therefore does not need
+an intermediate interaction menu.
+
+`[E] Examine Ledger` opens it directly.
+
+Why: an additional menu would add friction without adding meaningful choice.
+
+## 42. Customer dossier has one implementation
+
+The same customer dossier is used whether it is reached through:
+
+`Customer → Inspect`
+
+or:
+
+`Office → Ledger → Customer`
+
+Why: there should be one presentation of customer information and one source of
+truth for how it is displayed.
+
+## 43. Persistent HUD is deliberately minimal
+
+Normal gameplay uses a restrained persistent HUD.
+
+Day, time and money are presented together in a compact status area.
+
+Other information should be contextual.
+
+Why: the tavern itself should remain the dominant visual element.
+
+## 44. World state communicates before alert UI
+
+Customers, objects and the environment should communicate state wherever
+possible.
+
+UI alerts supplement this when something is easy to miss or genuinely requires
+attention.
+
+Why: the game should feel like a living place rather than a collection of
+status panels.
+
+## 45. Notifications have contextual persistence
+
+Notifications are contextual rather than a permanent record of every event.
+
+Routine feedback can briefly appear and disappear.
+
+Problems requiring attention can remain visible until resolved.
+
+Important events may use stronger presentation.
+
+Why: not all information has equal urgency.
+
+## 46. Management UI shares the same visual language
+
+Management screens use the same typography, controls, hierarchy, spacing and
+visual language as the in-world UI.
+
+Management screens may be more information-dense.
+
+Why: opening a management interface should feel like entering another layer of
+the same game, not switching to a separate application.
+
+## 47. Management UI grows through categories
+
+Management screens use a small number of categorised sections rather than one
+large flat list.
+
+Only currently available systems should be exposed.
+
+Why: the interface needs room to grow without becoming cluttered or exposing
+unfinished systems.
+
+## 48. UI navigation uses a consistent modal stack
+
+Menus and deep interfaces behave as a modal stack.
+
+Esc and Close both navigate back one level.
+
+The simulation remains paused while the player moves through deeper modal
+screens.
+
+Closing the top-level modal returns to gameplay.
+
+Why: consistent navigation reduces cognitive load and prevents each UI system
+from inventing its own behaviour.
+
+## 49. Tooltips are contextual
+
+Tooltips should appear where they provide useful additional explanation,
+particularly for unfamiliar systems, icons or numerical information.
+
+Obvious controls should not require tooltips.
+
+Why: tooltips support understanding but should not compensate for unclear UI.
+
+## 50. Pause state is communicated subtly
+
+When the simulation is paused by a deep interface, the world behind it should
+be subtly dimmed rather than receiving a large "PAUSED" overlay.
+
+Why: the open modal itself communicates the current mode while preserving the
+game's visual atmosphere.
+
+## 51. Cursor is part of the interaction language
+
+The game uses a custom themed cursor with contextual states.
+
+The cursor can subtly communicate:
+
+- Normal
+- Interactable
+- Clickable UI
+- Other relevant interaction states
+
+Why: the cursor is another part of the game's interaction feedback.
+
+## 52. Scrolling uses natural PC interaction
+
+Scrollable lists use mouse-wheel scrolling and a contextual scrollbar when
+needed.
+
+Why: this provides natural desktop interaction while keeping the interface
+clean.
+
+## 53. UI controls use consistent visual states
+
+Buttons and selectable UI elements use a consistent set of subtle states:
+
+Normal · Hovered · Pressed/Selected · Disabled · Important/Destructive
+
+Why: the player should quickly understand what can be interacted with without
+every control becoming visually loud.
+
+## 54. Consequential actions use contextual confirmation
+
+Routine actions should execute without unnecessary confirmation dialogs.
+
+Potentially costly, destructive or irreversible actions may require a contextual
+confirmation.
+
+Why: constant confirmation prompts create friction, but meaningful mistakes
+should still be protected against.
+
+## 55. Accessibility is a design requirement
+
+UI should be designed with readability and accessibility in mind from the
+beginning.
+
+This includes clear hierarchy, sufficient contrast, readable text, consistent
+terminology, icons supported by text where appropriate, sensible scaling
+opportunities and avoiding reliance on colour alone.
+
+Why: accessibility should not require replacing an otherwise complete UI later.
+
+## 56. Player notes are not a near-term feature
+
+The customer dossier should not currently include editable player notes.
+
+The architecture should not prevent them being added later, but they are not a
+current design or implementation priority.
+
+## 57. Future information systems remain deliberately open
+
+The UI is designed to support future customer knowledge, rumours, relationships,
+factions, reports and intelligence systems.
+
+The UI should not prematurely define the rules for acquiring that information.
+
+Why: the presentation layer should be ready for the larger vision without
+locking the project into an information model before that system is designed.
